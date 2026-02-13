@@ -126,7 +126,7 @@ footer a { color: #c8a888; text-decoration: none; }
     <p class="subtitle">Why go beyond graphs, the adjacency and incidence matrices, the graph Laplacian, eigenvalues, spectral structure, and the discrete gradient.</p>
   </div>
 </header>
-<nav class="ch-nav"><div class="container"><a href="tdl-index.html">← Course Home</a><span class="ch-title">Chapter 1</span><a href="tdl-02-edge-signals.html">Edge Signals & the Discrete Curl →</a></div></nav>
+<nav class="ch-nav"><div class="container"><a href="tdl-index.html">← Course Home</a><span class="ch-title">Chapter 1</span><a href="tdl-02-gnn.html">Message Passing on Graphs →</a></div></nav>
 <main class="container" style="padding-top:2rem;padding-bottom:2rem;">
 <section id="sec1">
   <h2><span class="sec-num">01</span>Why Go Beyond Graphs?</h2>
@@ -879,18 +879,9 @@ footer a { color: #c8a888; text-decoration: none; }
     <div class="caption"><strong>Figure 2.8.</strong> The discrete de Rham complex: coboundary operators $\mathbf{B}_{k,k+1}^\top$ act as discrete gradient, curl, and divergence. The fundamental identity $\mathbf{B}_{k,k+1}^\top \mathbf{B}_{k-1,k}^\top = 0$ (curl of grad = 0, div of curl = 0) holds by construction — it's a consequence of the signed incidence structure.</div>
   </div>
 
-  <h3>Message Passing on Graphs</h3>
+  <h3>What's Missing? Message Passing</h3>
   <p>
-    A GNN assigns a feature vector $\mathbf{h}_v \in \mathbb{R}^d$ to each vertex $v$ and updates features iteratively by <strong>aggregating messages from neighbors</strong>:
-  </p>
-
-  <div class="math-block">
-    <div class="math-label">GNN Message Passing (one layer)</div>
-    $$\mathbf{h}_v^{(\ell+1)} = \phi\!\left(\mathbf{h}_v^{(\ell)},\; \bigoplus_{w \in \mathcal{N}(v)} \psi\!\left(\mathbf{h}_v^{(\ell)}, \mathbf{h}_w^{(\ell)}\right)\right)$$
-  </div>
-
-  <p>
-    Here $\mathcal{N}(v) = \{w : \{v,w\} \in E\}$ is the 1-hop neighborhood, $\psi$ computes a message, $\bigoplus$ aggregates (sum, mean, max), and $\phi$ updates. The key limitation: <strong>messages flow only between adjacent vertices along edges</strong>. There is no mechanism to send a message from an edge to a face, or from a volume to a surface.
+    The spectral perspective tells us that graph convolution is spectral filtering through the Laplacian eigenbasis. But in practice, GNNs work by <strong>message passing</strong>: each vertex aggregates features from its neighbors, transforms them, and updates its own state. In the next chapter, we'll deconstruct a full GCN layer step by step — with a complete numerical example on this same graph — showing exactly how the Laplacian, the adjacency matrix, and the spectral theory connect to the concrete operations a GNN performs.
   </p>
 </section>
 
@@ -899,7 +890,7 @@ footer a { color: #c8a888; text-decoration: none; }
 <!-- ============================================================ -->
 <!-- SECTION 3 -->
 <!-- ============================================================ -->
-<div class="footer-nav"><a href="tdl-index.html"><span class="dir">← Previous</span><span class="title">Course Home</span></a><a class="next" href="tdl-02-edge-signals.html"><span class="dir">Next →</span><span class="title">Edge Signals & the Discrete Curl</span></a></div>
+<div class="footer-nav"><a href="tdl-index.html"><span class="dir">← Previous</span><span class="title">Course Home</span></a><a class="next" href="tdl-02-gnn.html"><span class="dir">Next →</span><span class="title">Message Passing on Graphs</span></a></div>
 </main>
 <footer><p><a href="tdl-index.html">← Course Home</a> · <a href="index.html">All Notes</a></p></footer>
 </body>

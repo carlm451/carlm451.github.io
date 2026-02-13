@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hodge Theory &amp; the <strong>Architecture Zoo</strong> — Topological Deep Learning Course</title>
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+
+:root {
+  --bg: #faf8f5; --bg-alt: #f0ede8; --text: #2a2520; --text-muted: #6b6560;
+  --accent: #b44a2f; --accent2: #2a6b5a; --accent3: #3a5a8c; --accent4: #8b5a8c;
+  --border: #d5d0c8; --card: #ffffff;
+  --shadow: 0 2px 12px rgba(42,37,32,0.08); --shadow-lg: 0 8px 32px rgba(42,37,32,0.12);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; font-size: 17px; }
+body { font-family: 'Crimson Pro', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.72; -webkit-font-smoothing: antialiased; }
+.container { max-width: 820px; margin: 0 auto; padding: 0 2rem; }
+
+/* Header */
+header { background: linear-gradient(175deg, #1a1512 0%, #2a2018 40%, #3a2a1f 100%); color: #f0ece6; padding: 3.5rem 2rem 2.5rem; position: relative; overflow: hidden; }
+header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 600px 400px at 20% 80%, rgba(180,74,47,0.15), transparent), radial-gradient(ellipse 500px 300px at 80% 20%, rgba(42,107,90,0.12), transparent); }
+header .container { position: relative; z-index: 1; }
+header .breadcrumb { font-family: 'Source Sans 3', sans-serif; font-size: 0.82rem; color: #8a8078; margin-bottom: 0.8rem; }
+header .breadcrumb a { color: #c8a888; text-decoration: none; }
+header .breadcrumb a:hover { color: #e8a88a; }
+header .ch-num { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent); display: block; margin-bottom: 0.3rem; font-weight: 500; letter-spacing: 0.05em; }
+header h1 { font-size: 2.2rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.6rem; }
+header h1 strong { font-weight: 700; color: #e8a88a; }
+header .subtitle { font-family: 'Source Sans 3', sans-serif; font-size: 0.95rem; color: #b0a89e; max-width: 560px; line-height: 1.6; }
+
+/* Navigation */
+nav.ch-nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 0.8rem 0; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+nav.ch-nav .container { display: flex; justify-content: space-between; align-items: center; }
+nav.ch-nav a { font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; color: var(--accent); text-decoration: none; display: flex; align-items: center; gap: 0.3rem; }
+nav.ch-nav a:hover { color: #d05a3f; }
+nav.ch-nav .disabled { color: var(--border); pointer-events: none; }
+nav.ch-nav .ch-title { font-family: 'Source Sans 3', sans-serif; font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* Sections */
+section { margin-bottom: 3.5rem; padding-top: 1rem; }
+section h2 { font-size: 1.9rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--text); letter-spacing: -0.01em; }
+section h2 .sec-num { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent); display: block; margin-bottom: 0.3rem; font-weight: 500; }
+section h3 { font-size: 1.3rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.5rem; }
+section h4 { font-family: 'Source Sans 3', sans-serif; font-size: 1rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.4rem; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.04em; }
+p { margin-bottom: 1rem; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+/* Definition boxes */
+.def-box { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1.5rem 1.8rem; margin: 1.5rem 0; box-shadow: var(--shadow); }
+.def-box.green { border-left-color: var(--accent2); }
+.def-box.blue { border-left-color: var(--accent3); }
+.def-box.purple { border-left-color: var(--accent4); }
+.def-box .def-label { font-family: 'Source Sans 3', sans-serif; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+.def-box .def-label { color: var(--accent); }
+.def-box.green .def-label { color: var(--accent2); }
+.def-box.blue .def-label { color: var(--accent3); }
+.def-box.purple .def-label { color: var(--accent4); }
+
+/* Insight boxes */
+.insight { background: linear-gradient(135deg, #f8f4ee, #f5f0e8); border-radius: 8px; padding: 1.3rem 1.6rem; margin: 1.5rem 0; position: relative; }
+.insight::before { content: '💡'; position: absolute; top: -0.6rem; left: 1rem; font-size: 1.1rem; background: var(--bg); padding: 0 0.3rem; }
+.insight.physics::before { content: '⚛️'; }
+.insight.warning::before { content: '⚠️'; }
+.insight.key::before { content: '🔑'; }
+.insight p:last-child { margin-bottom: 0; }
+.insight strong { color: var(--accent); }
+
+/* Figures */
+.figure { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 2rem 0; text-align: center; box-shadow: var(--shadow); }
+.figure svg { max-width: 100%; height: auto; }
+.figure .caption { font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem; text-align: left; line-height: 1.5; }
+.figure .caption strong { color: var(--text); font-weight: 600; }
+
+/* Math */
+.math-block { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; box-shadow: var(--shadow); }
+.math-block .math-label { font-family: 'Source Sans 3', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+
+/* Tables */
+.comp-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-family: 'Source Sans 3', sans-serif; font-size: 0.9rem; }
+.comp-table th { background: var(--bg-alt); font-weight: 700; text-align: left; padding: 0.7rem 1rem; border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+.comp-table td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+
+/* Steps */
+.steps { margin: 1.5rem 0; padding-left: 0; list-style: none; counter-reset: step; }
+.steps li { counter-increment: step; padding: 0.8rem 0 0.8rem 3rem; position: relative; border-left: 2px solid var(--border); margin-left: 1rem; }
+.steps li:last-child { border-left-color: transparent; }
+.steps li::before { content: counter(step); position: absolute; left: -0.85rem; top: 0.7rem; width: 1.7rem; height: 1.7rem; background: var(--accent); color: white; border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; background: var(--bg-alt); padding: 0.15em 0.4em; border-radius: 4px; }
+.divider { border: none; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 3rem 0; }
+
+/* Footer nav */
+.footer-nav { display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.footer-nav a { font-family: 'Source Sans 3', sans-serif; text-decoration: none; color: var(--text); padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: 8px; flex: 1; transition: border-color 0.2s, box-shadow 0.2s; }
+.footer-nav a:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.footer-nav .dir { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); display: block; margin-bottom: 0.2rem; }
+.footer-nav .title { font-size: 0.9rem; font-weight: 600; }
+.footer-nav .next { text-align: right; }
+.footer-nav .spacer { flex: 1; }
+
+footer { background: #1a1512; color: #8a8078; padding: 2.5rem 2rem; margin-top: 3rem; font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; text-align: center; }
+footer a { color: #c8a888; text-decoration: none; }
+
+/* SVG tokens */
+.node-v { fill: #e8a88a; stroke: #b44a2f; }
+.node-e { fill: #8ec5b6; stroke: #2a6b5a; }
+.node-f { fill: #a8c0e0; stroke: #3a5a8c; }
+.edge-line { stroke: #6b6560; stroke-width: 1.5; }
+.label-text { font-family: 'Source Sans 3', sans-serif; font-size: 11px; fill: #2a2520; text-anchor: middle; }
+.label-sm { font-family: 'Source Sans 3', sans-serif; font-size: 10px; fill: #6b6560; text-anchor: middle; }
+
+@media (max-width: 700px) { html { font-size: 15px; } header h1 { font-size: 1.8rem; } .container { padding: 0 1.2rem; } .footer-nav { flex-direction: column; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / <a href="tdl-index.html">Topological Deep Learning</a> / Chapter 7</div>
+    <span class="ch-num">Chapter 07</span>
+    <h1>Hodge Theory &amp; the <strong>Architecture Zoo</strong></h1>
+    <p class="subtitle">The Hodge Laplacian hierarchy, spectral theory for higher-order signals, and a map of existing topological neural network architectures.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="tdl-06-message-passing.html">← Signals, Neighborhoods & Message Passing</a><span class="ch-title">Chapter 7</span><a href="tdl-08-applications.html">Applications & Reading Roadmap →</a></div></nav>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+<section id="sec9">
+  <h2><span class="sec-num">09</span>Hodge Theory &amp; the Laplacian</h2>
+
+  <p>
+    If you know the graph Laplacian $\mathbf{L} = \mathbf{D} - \mathbf{A}$ (or its normalized variants), you know that it governs diffusion on graphs and that its eigenvectors provide a spectral basis for graph signals. The <strong>Hodge Laplacian</strong> generalizes this to all ranks.
+  </p>
+
+  <div class="def-box blue">
+    <div class="def-label">Definition — Hodge Laplacian</div>
+    <p>For rank-$k$ cells in a simplicial or cell complex, the <strong>$k$-th Hodge Laplacian</strong> is:</p>
+    $$\mathbf{L}_k = \underbrace{\mathbf{B}_{k-1,k}^\top \mathbf{B}_{k-1,k}}_{\text{lower Laplacian } \mathbf{L}_k^{\text{down}}} + \underbrace{\mathbf{B}_{k,k+1} \mathbf{B}_{k,k+1}^\top}_{\text{upper Laplacian } \mathbf{L}_k^{\text{up}}}$$
+    <p>with the convention $\mathbf{B}_{-1,0} = 0$ and $\mathbf{B}_{K,K+1} = 0$. For $k=0$, this recovers the graph Laplacian: $\mathbf{L}_0 = \mathbf{B}_{0,1}\mathbf{B}_{0,1}^\top$.</p>
+  </div>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 220" width="700" height="220">
+      <!-- Chain of Laplacians -->
+      <text x="350" y="22" font-family="Source Sans 3" font-size="13" font-weight="700" fill="#2a2520" text-anchor="middle">The Hodge Laplacian Hierarchy</text>
+
+      <!-- L0 -->
+      <rect x="30" y="70" width="100" height="55" rx="8" fill="#e8a88a" fill-opacity="0.3" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="80" y="95" font-family="Source Sans 3" font-size="13" font-weight="700" fill="#b44a2f" text-anchor="middle">L₀</text>
+      <text x="80" y="115" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">on vertices</text>
+
+      <!-- B01 arrow -->
+      <line x1="130" y1="97" x2="180" y2="97" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+      <text x="155" y="88" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">B₀₁</text>
+
+      <!-- L1 -->
+      <rect x="180" y="70" width="100" height="55" rx="8" fill="#8ec5b6" fill-opacity="0.3" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="230" y="95" font-family="Source Sans 3" font-size="13" font-weight="700" fill="#2a6b5a" text-anchor="middle">L₁</text>
+      <text x="230" y="115" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">on edges</text>
+
+      <!-- B12 arrow -->
+      <line x1="280" y1="97" x2="330" y2="97" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+      <text x="305" y="88" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">B₁₂</text>
+
+      <!-- L2 -->
+      <rect x="330" y="70" width="100" height="55" rx="8" fill="#a8c0e0" fill-opacity="0.3" stroke="#3a5a8c" stroke-width="1.5"/>
+      <text x="380" y="95" font-family="Source Sans 3" font-size="13" font-weight="700" fill="#3a5a8c" text-anchor="middle">L₂</text>
+      <text x="380" y="115" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">on faces</text>
+
+      <!-- B23 arrow -->
+      <line x1="430" y1="97" x2="480" y2="97" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+      <text x="455" y="88" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">B₂₃</text>
+
+      <!-- L3 -->
+      <rect x="480" y="70" width="100" height="55" rx="8" fill="#c8a8d0" fill-opacity="0.3" stroke="#8b5a8c" stroke-width="1.5"/>
+      <text x="530" y="95" font-family="Source Sans 3" font-size="13" font-weight="700" fill="#8b5a8c" text-anchor="middle">L₃</text>
+      <text x="530" y="115" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">on volumes</text>
+
+      <text x="60" y="45" font-family="Source Sans 3" font-size="10" fill="#b44a2f" text-anchor="middle">rank 0</text>
+      <text x="210" y="45" font-family="Source Sans 3" font-size="10" fill="#2a6b5a" text-anchor="middle">rank 1</text>
+      <text x="360" y="45" font-family="Source Sans 3" font-size="10" fill="#3a5a8c" text-anchor="middle">rank 2</text>
+      <text x="510" y="45" font-family="Source Sans 3" font-size="10" fill="#8b5a8c" text-anchor="middle">rank 3</text>
+
+      <!-- Formula below -->
+      <rect x="50" y="155" width="600" height="50" rx="6" fill="#f8f4ee" stroke="#d5d0c8"/>
+      <text x="350" y="178" font-family="JetBrains Mono" font-size="11" fill="#2a2520" text-anchor="middle">L_k = B_{k-1,k}ᵀ B_{k-1,k}  +  B_{k,k+1} B_{k,k+1}ᵀ</text>
+      <text x="350" y="196" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">       └─ lower part ─┘       └─ upper part ─┘</text>
+
+      <defs>
+        <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b6560"/>
+        </marker>
+      </defs>
+    </svg>
+    <div class="caption"><strong>Figure 9.1.</strong> The hierarchy of Hodge Laplacians, connected by incidence (boundary) matrices $B_{k,k+1}$. Each $L_k$ has a "lower" part (from boundaries below) and an "upper" part (from cofaces above). The graph Laplacian $L_0$ is the first in the sequence.</div>
+  </div>
+
+  <div class="insight physics">
+    <p><strong>Physics connection — Hodge decomposition:</strong> The kernel of $L_k$ (harmonic cochains) corresponds to topological features: $\dim \ker L_k = \beta_k$, the $k$-th Betti number. For $k=0$, $\beta_0$ counts connected components. For $k=1$, $\beta_1$ counts independent loops. This is the discrete Hodge theorem — the discrete analogue of the decomposition of differential forms into exact, coexact, and harmonic components. Every $k$-cochain $\omega$ admits:
+    $$\omega = \underbrace{d_{k-1} \alpha}_{\text{exact}} + \underbrace{d_k^* \beta}_{\text{coexact}} + \underbrace{\gamma}_{\text{harmonic}}$$
+    where $d_k$ is the coboundary operator ($B_{k,k+1}^\top$ in matrix form) and $d_k^*$ is its adjoint.</p>
+  </div>
+
+  <h3>Why Hodge Matters for Neural Networks</h3>
+  <p>
+    The Hodge Laplacian provides a <strong>spectrally meaningful diffusion operator for each rank</strong>. Just as spectral GNNs use eigenvectors of $L_0$ to define graph convolutions (via the graph Fourier transform), spectral topological networks can use eigenvectors of $L_k$ to define convolutions on $k$-cochains. The Hodge decomposition ensures these convolutions respect the topological structure of the complex.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 10 -->
+<!-- ============================================================ -->
+<hr class="divider">
+<section id="sec10">
+  <h2><span class="sec-num">10</span>The Architecture Zoo</h2>
+
+  <p>
+    The Hajij et al. paper surveys and unifies a large number of architectures that had been proposed independently. Here is a map of the landscape:
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 440" width="700" height="440">
+      <!-- Background regions -->
+      <!-- Graph region -->
+      <rect x="20" y="30" width="200" height="170" rx="10" fill="#e8a88a" fill-opacity="0.1" stroke="#b44a2f" stroke-width="1" stroke-dasharray="5,4"/>
+      <text x="120" y="52" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#b44a2f" text-anchor="middle">GRAPH DOMAIN</text>
+
+      <!-- Simplicial region -->
+      <rect x="250" y="30" width="200" height="170" rx="10" fill="#8ec5b6" fill-opacity="0.1" stroke="#2a6b5a" stroke-width="1" stroke-dasharray="5,4"/>
+      <text x="350" y="52" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a6b5a" text-anchor="middle">SIMPLICIAL DOMAIN</text>
+
+      <!-- Cell region -->
+      <rect x="480" y="30" width="200" height="170" rx="10" fill="#a8c0e0" fill-opacity="0.1" stroke="#3a5a8c" stroke-width="1" stroke-dasharray="5,4"/>
+      <text x="580" y="52" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#3a5a8c" text-anchor="middle">CELL DOMAIN</text>
+
+      <!-- CC region (spanning bottom) -->
+      <rect x="20" y="230" width="660" height="170" rx="10" fill="#c8a8d0" fill-opacity="0.1" stroke="#8b5a8c" stroke-width="1" stroke-dasharray="5,4"/>
+      <text x="350" y="252" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#8b5a8c" text-anchor="middle">COMBINATORIAL COMPLEX DOMAIN (unifies all above)</text>
+
+      <!-- Architectures as cards -->
+      <!-- GCN -->
+      <rect x="40" y="70" width="80" height="35" rx="5" fill="white" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="80" y="92" font-family="JetBrains Mono" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="500">GCN</text>
+      <!-- GAT -->
+      <rect x="40" y="115" width="80" height="35" rx="5" fill="white" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="80" y="137" font-family="JetBrains Mono" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="500">GAT</text>
+      <!-- GIN -->
+      <rect x="130" y="70" width="80" height="35" rx="5" fill="white" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="170" y="92" font-family="JetBrains Mono" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="500">GraphSAGE</text>
+
+      <!-- SNN -->
+      <rect x="265" y="70" width="80" height="35" rx="5" fill="white" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="305" y="92" font-family="JetBrains Mono" font-size="10" fill="#2a6b5a" text-anchor="middle" font-weight="500">SNN</text>
+      <!-- SCA -->
+      <rect x="355" y="70" width="80" height="35" rx="5" fill="white" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="395" y="92" font-family="JetBrains Mono" font-size="10" fill="#2a6b5a" text-anchor="middle" font-weight="500">SCA</text>
+      <!-- MPSN -->
+      <rect x="265" y="115" width="80" height="35" rx="5" fill="white" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="305" y="137" font-family="JetBrains Mono" font-size="10" fill="#2a6b5a" text-anchor="middle" font-weight="500">MPSN</text>
+      <!-- SCN -->
+      <rect x="355" y="115" width="80" height="35" rx="5" fill="white" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="395" y="137" font-family="JetBrains Mono" font-size="10" fill="#2a6b5a" text-anchor="middle" font-weight="500">SCN</text>
+
+      <!-- CWN -->
+      <rect x="500" y="70" width="80" height="35" rx="5" fill="white" stroke="#3a5a8c" stroke-width="1.5"/>
+      <text x="540" y="92" font-family="JetBrains Mono" font-size="10" fill="#3a5a8c" text-anchor="middle" font-weight="500">CWN</text>
+      <!-- CAN -->
+      <rect x="590" y="70" width="80" height="35" rx="5" fill="white" stroke="#3a5a8c" stroke-width="1.5"/>
+      <text x="630" y="92" font-family="JetBrains Mono" font-size="10" fill="#3a5a8c" text-anchor="middle" font-weight="500">CAN</text>
+
+      <!-- CCXN -->
+      <rect x="130" y="280" width="120" height="45" rx="6" fill="white" stroke="#8b5a8c" stroke-width="2"/>
+      <text x="190" y="300" font-family="JetBrains Mono" font-size="11" fill="#8b5a8c" text-anchor="middle" font-weight="600">CC-XN</text>
+      <text x="190" y="316" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">General CC</text>
+
+      <!-- HMC -->
+      <rect x="290" y="280" width="120" height="45" rx="6" fill="white" stroke="#8b5a8c" stroke-width="2"/>
+      <text x="350" y="300" font-family="JetBrains Mono" font-size="11" fill="#8b5a8c" text-anchor="middle" font-weight="600">HOAN</text>
+      <text x="350" y="316" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">Higher-Order Attn</text>
+
+      <!-- Vinci -->
+      <rect x="450" y="280" width="120" height="45" rx="6" fill="#b44a2f" fill-opacity="0.1" stroke="#b44a2f" stroke-width="2"/>
+      <text x="510" y="300" font-family="JetBrains Mono" font-size="11" fill="#b44a2f" text-anchor="middle" font-weight="600">CTNN</text>
+      <text x="510" y="316" font-family="Source Sans 3" font-size="9" fill="#b44a2f" text-anchor="middle">Copresheaf (Vinci)</text>
+
+      <!-- Arrows showing subsumption -->
+      <path d="M 80,160 Q 80,230 160,275" stroke="#b0a89e" stroke-width="1" fill="none" stroke-dasharray="3,3"/>
+      <path d="M 305,155 Q 305,230 220,275" stroke="#b0a89e" stroke-width="1" fill="none" stroke-dasharray="3,3"/>
+      <path d="M 540,110 Q 540,230 480,275" stroke="#b0a89e" stroke-width="1" fill="none" stroke-dasharray="3,3"/>
+
+      <!-- Legend -->
+      <text x="350" y="370" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" text-anchor="middle" font-weight="600">KEY ARCHITECTURE ACRONYMS</text>
+      <text x="350" y="390" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">SNN = Simplicial Neural Network · SCA = Simplicial Complex Attention · MPSN = Message Passing Simplicial Network</text>
+      <text x="350" y="408" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">SCN = Simplicial Convolutional Network · CWN = CW Network · CAN = Cell Attention Network</text>
+      <text x="350" y="426" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">CC-XN = Combinatorial Complex Network · HOAN = Higher-Order Attention · CTNN = Copresheaf Topological NN</text>
+    </svg>
+    <div class="caption"><strong>Figure 10.1.</strong> The architecture landscape, organized by domain type. The combinatorial complex (bottom) subsumes all others. Dashed arrows indicate that graph, simplicial, and cell architectures are all special cases of the CC framework. The CTNN (Vinci AI) further generalizes by adding directional, learnable maps between cells (copresheaf structure).</div>
+  </div>
+
+  <h3>Selected Architecture Summaries</h3>
+
+  <h4>Simplicial Neural Networks (SNN / SCN)</h4>
+  <p>
+    Operate on simplicial complexes using the Hodge Laplacians $L_k$ as the message-passing operator. The update for rank-$k$ features is a polynomial filter on $L_k$, analogous to ChebNet on graphs. These architectures respect the Hodge decomposition.
+  </p>
+
+  <h4>Message Passing Simplicial Networks (MPSN)</h4>
+  <p>
+    The most general simplicial architecture: uses separate message functions for boundary ($\mathcal{N}_\downarrow$), coboundary ($\mathcal{N}_\uparrow$), and adjacency ($\mathcal{N}_{\text{adj}}$) neighborhoods at each rank. A strict generalization of standard MPNN.
+  </p>
+
+  <h4>CW Networks (CWN)</h4>
+  <p>
+    Extend MPSN to cell complexes, allowing non-simplicial cells. The key addition: messages can now flow along boundaries of arbitrary polygon/polyhedron cells, not just triangles and tetrahedra.
+  </p>
+
+  <h4>The Hajij et al. Unification</h4>
+  <p>
+    The paper's central technical contribution is showing that all of these architectures — and several more — can be expressed as <strong>instances of a single tensor diagram</strong> on a CC. The tensor diagram specifies which neighborhood matrices are used, how messages are computed, and how they're aggregated. Different choices of these components recover different existing architectures.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 11 -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="tdl-06-message-passing.html"><span class="dir">← Previous</span><span class="title">Signals, Neighborhoods & Message Passing</span></a><a class="next" href="tdl-08-applications.html"><span class="dir">Next →</span><span class="title">Applications & Reading Roadmap</span></a></div>
+</main>
+<footer><p><a href="tdl-index.html">← Course Home</a> · <a href="index.html">All Notes</a></p></footer>
+</body>
+</html>

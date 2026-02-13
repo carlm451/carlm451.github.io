@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Message Passing on <strong>Graphs</strong> — Topological Deep Learning Course</title>
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+
+:root {
+  --bg: #faf8f5; --bg-alt: #f0ede8; --text: #2a2520; --text-muted: #6b6560;
+  --accent: #b44a2f; --accent2: #2a6b5a; --accent3: #3a5a8c; --accent4: #8b5a8c;
+  --border: #d5d0c8; --card: #ffffff;
+  --shadow: 0 2px 12px rgba(42,37,32,0.08); --shadow-lg: 0 8px 32px rgba(42,37,32,0.12);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; font-size: 17px; }
+body { font-family: 'Crimson Pro', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.72; -webkit-font-smoothing: antialiased; }
+.container { max-width: 820px; margin: 0 auto; padding: 0 2rem; }
+
+/* Header */
+header { background: linear-gradient(175deg, #1a1512 0%, #2a2018 40%, #3a2a1f 100%); color: #f0ece6; padding: 3.5rem 2rem 2.5rem; position: relative; overflow: hidden; }
+header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 600px 400px at 20% 80%, rgba(180,74,47,0.15), transparent), radial-gradient(ellipse 500px 300px at 80% 20%, rgba(42,107,90,0.12), transparent); }
+header .container { position: relative; z-index: 1; }
+header .breadcrumb { font-family: 'Source Sans 3', sans-serif; font-size: 0.82rem; color: #8a8078; margin-bottom: 0.8rem; }
+header .breadcrumb a { color: #c8a888; text-decoration: none; }
+header .breadcrumb a:hover { color: #e8a88a; }
+header .ch-num { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent); display: block; margin-bottom: 0.3rem; font-weight: 500; letter-spacing: 0.05em; }
+header h1 { font-size: 2.2rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.6rem; }
+header h1 strong { font-weight: 700; color: #e8a88a; }
+header .subtitle { font-family: 'Source Sans 3', sans-serif; font-size: 0.95rem; color: #b0a89e; max-width: 560px; line-height: 1.6; }
+
+/* Navigation */
+nav.ch-nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 0.8rem 0; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+nav.ch-nav .container { display: flex; justify-content: space-between; align-items: center; }
+nav.ch-nav a { font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; color: var(--accent); text-decoration: none; display: flex; align-items: center; gap: 0.3rem; }
+nav.ch-nav a:hover { color: #d05a3f; }
+nav.ch-nav .disabled { color: var(--border); pointer-events: none; }
+nav.ch-nav .ch-title { font-family: 'Source Sans 3', sans-serif; font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* Sections */
+section { margin-bottom: 3.5rem; padding-top: 1rem; }
+section h2 { font-size: 1.9rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--text); letter-spacing: -0.01em; }
+section h2 .sec-num { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent); display: block; margin-bottom: 0.3rem; font-weight: 500; }
+section h3 { font-size: 1.3rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.5rem; }
+section h4 { font-family: 'Source Sans 3', sans-serif; font-size: 1rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.4rem; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.04em; }
+p { margin-bottom: 1rem; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+/* Definition boxes */
+.def-box { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1.5rem 1.8rem; margin: 1.5rem 0; box-shadow: var(--shadow); }
+.def-box.green { border-left-color: var(--accent2); }
+.def-box.blue { border-left-color: var(--accent3); }
+.def-box.purple { border-left-color: var(--accent4); }
+.def-box .def-label { font-family: 'Source Sans 3', sans-serif; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+.def-box .def-label { color: var(--accent); }
+.def-box.green .def-label { color: var(--accent2); }
+.def-box.blue .def-label { color: var(--accent3); }
+.def-box.purple .def-label { color: var(--accent4); }
+
+/* Insight boxes */
+.insight { background: linear-gradient(135deg, #f8f4ee, #f5f0e8); border-radius: 8px; padding: 1.3rem 1.6rem; margin: 1.5rem 0; position: relative; }
+.insight::before { content: '💡'; position: absolute; top: -0.6rem; left: 1rem; font-size: 1.1rem; background: var(--bg); padding: 0 0.3rem; }
+.insight.physics::before { content: '⚛️'; }
+.insight.warning::before { content: '⚠️'; }
+.insight.key::before { content: '🔑'; }
+.insight p:last-child { margin-bottom: 0; }
+.insight strong { color: var(--accent); }
+
+/* Figures */
+.figure { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 2rem 0; text-align: center; box-shadow: var(--shadow); }
+.figure svg { max-width: 100%; height: auto; }
+.figure .caption { font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem; text-align: left; line-height: 1.5; }
+.figure .caption strong { color: var(--text); font-weight: 600; }
+
+/* Math */
+.math-block { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; box-shadow: var(--shadow); }
+.math-block .math-label { font-family: 'Source Sans 3', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+
+/* Tables */
+.comp-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-family: 'Source Sans 3', sans-serif; font-size: 0.9rem; }
+.comp-table th { background: var(--bg-alt); font-weight: 700; text-align: left; padding: 0.7rem 1rem; border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+.comp-table td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+
+/* Steps */
+.steps { margin: 1.5rem 0; padding-left: 0; list-style: none; counter-reset: step; }
+.steps li { counter-increment: step; padding: 0.8rem 0 0.8rem 3rem; position: relative; border-left: 2px solid var(--border); margin-left: 1rem; }
+.steps li:last-child { border-left-color: transparent; }
+.steps li::before { content: counter(step); position: absolute; left: -0.85rem; top: 0.7rem; width: 1.7rem; height: 1.7rem; background: var(--accent); color: white; border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; background: var(--bg-alt); padding: 0.15em 0.4em; border-radius: 4px; }
+.divider { border: none; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 3rem 0; }
+
+/* Footer nav */
+.footer-nav { display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.footer-nav a { font-family: 'Source Sans 3', sans-serif; text-decoration: none; color: var(--text); padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: 8px; flex: 1; transition: border-color 0.2s, box-shadow 0.2s; }
+.footer-nav a:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.footer-nav .dir { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); display: block; margin-bottom: 0.2rem; }
+.footer-nav .title { font-size: 0.9rem; font-weight: 600; }
+.footer-nav .next { text-align: right; }
+.footer-nav .spacer { flex: 1; }
+
+footer { background: #1a1512; color: #8a8078; padding: 2.5rem 2rem; margin-top: 3rem; font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; text-align: center; }
+footer a { color: #c8a888; text-decoration: none; }
+
+/* SVG tokens */
+.node-v { fill: #e8a88a; stroke: #b44a2f; }
+.node-e { fill: #8ec5b6; stroke: #2a6b5a; }
+.node-f { fill: #a8c0e0; stroke: #3a5a8c; }
+.edge-line { stroke: #6b6560; stroke-width: 1.5; }
+.label-text { font-family: 'Source Sans 3', sans-serif; font-size: 11px; fill: #2a2520; text-anchor: middle; }
+.label-sm { font-family: 'Source Sans 3', sans-serif; font-size: 10px; fill: #6b6560; text-anchor: middle; }
+
+@media (max-width: 700px) { html { font-size: 15px; } header h1 { font-size: 1.8rem; } .container { padding: 0 1.2rem; } .footer-nav { flex-direction: column; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / <a href="tdl-index.html">Topological Deep Learning</a> / Chapter 2</div>
+    <span class="ch-num">Chapter 02</span>
+    <h1>Message Passing on <strong>Graphs</strong></h1>
+    <p class="subtitle">From feedforward networks to graph neural networks — the GCN layer deconstructed with a full numerical walkthrough on our running example.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="tdl-01-graphs.html">← Graphs as Combinatorial Objects</a><span class="ch-title">Chapter 2</span><a href="tdl-03-edge-signals.html">Edge Signals & the Discrete Curl →</a></div></nav>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<section>
+  <h2><span class="sec-num">03</span>Quick Review: Feedforward Neural Networks</h2>
+
+  <p>
+    Before diving into GNNs, let's recall the simplest neural network architecture — the <strong>feedforward network</strong> (multilayer perceptron). If this is already familiar, skim through; the purpose is to establish the notation and identify exactly what changes when we move to graphs.
+  </p>
+
+  <div class="def-box">
+    <div class="def-label">A Single Feedforward Layer</div>
+    <p>Given an input vector $\mathbf{x} \in \mathbb{R}^{d_{\text{in}}}$, one layer computes:</p>
+    $$\mathbf{y} = \sigma(\mathbf{W}\mathbf{x} + \mathbf{b})$$
+    <p>where $\mathbf{W} \in \mathbb{R}^{d_{\text{out}} \times d_{\text{in}}}$ is a learnable <strong>weight matrix</strong>, $\mathbf{b} \in \mathbb{R}^{d_{\text{out}}}$ is a learnable <strong>bias</strong>, and $\sigma$ is a nonlinear <strong>activation function</strong> (ReLU, tanh, etc.).</p>
+  </div>
+
+  <div class="figure">
+    <svg viewBox="0 0 660 230" width="660" height="230">
+      <text x="330" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">A Feedforward Layer: Wx + b → σ</text>
+
+      <!-- Input -->
+      <text x="60" y="52" font-family="Source Sans 3" font-size="11" font-weight="600" fill="#b44a2f" text-anchor="middle">Input x</text>
+      <circle cx="60" cy="80" r="14" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="60" y="85" fill="white" font-family="JetBrains Mono" font-size="10" text-anchor="middle" font-weight="500">x₁</text>
+      <circle cx="60" cy="130" r="14" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="60" y="135" fill="white" font-family="JetBrains Mono" font-size="10" text-anchor="middle" font-weight="500">x₂</text>
+      <circle cx="60" cy="180" r="14" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="60" y="185" fill="white" font-family="JetBrains Mono" font-size="10" text-anchor="middle" font-weight="500">x₃</text>
+
+      <!-- Weights -->
+      <line x1="74" y1="80" x2="186" y2="95" stroke="#d5d0c8" stroke-width="1"/>
+      <line x1="74" y1="80" x2="186" y2="145" stroke="#d5d0c8" stroke-width="1"/>
+      <line x1="74" y1="130" x2="186" y2="95" stroke="#d5d0c8" stroke-width="1"/>
+      <line x1="74" y1="130" x2="186" y2="145" stroke="#d5d0c8" stroke-width="1"/>
+      <line x1="74" y1="180" x2="186" y2="95" stroke="#d5d0c8" stroke-width="1"/>
+      <line x1="74" y1="180" x2="186" y2="145" stroke="#d5d0c8" stroke-width="1"/>
+
+      <text x="130" y="72" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle" font-style="italic">W (weights)</text>
+
+      <!-- Summation -->
+      <text x="200" y="52" font-family="Source Sans 3" font-size="11" font-weight="600" fill="#3a5a8c" text-anchor="middle">Σ + b</text>
+      <circle cx="200" cy="95" r="14" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="200" y="100" fill="white" font-family="JetBrains Mono" font-size="10" text-anchor="middle">Σ</text>
+      <circle cx="200" cy="145" r="14" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="200" y="150" fill="white" font-family="JetBrains Mono" font-size="10" text-anchor="middle">Σ</text>
+
+      <!-- Activation -->
+      <line x1="214" y1="95" x2="276" y2="95" stroke="#6b6560" stroke-width="1.5"/>
+      <line x1="214" y1="145" x2="276" y2="145" stroke="#6b6560" stroke-width="1.5"/>
+      <text x="245" y="82" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">σ(·)</text>
+
+      <rect x="276" y="80" width="50" height="30" rx="5" fill="#2a6b5a" fill-opacity="0.15" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="301" y="100" font-family="Source Sans 3" font-size="10" fill="#2a6b5a" text-anchor="middle" font-weight="600">ReLU</text>
+      <rect x="276" y="130" width="50" height="30" rx="5" fill="#2a6b5a" fill-opacity="0.15" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="301" y="150" font-family="Source Sans 3" font-size="10" fill="#2a6b5a" text-anchor="middle" font-weight="600">ReLU</text>
+
+      <!-- Output -->
+      <line x1="326" y1="95" x2="376" y2="95" stroke="#6b6560" stroke-width="1.5"/>
+      <line x1="326" y1="145" x2="376" y2="145" stroke="#6b6560" stroke-width="1.5"/>
+      <circle cx="390" cy="95" r="14" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="390" y="100" fill="white" font-family="JetBrains Mono" font-size="10" text-anchor="middle" font-weight="500">y₁</text>
+      <circle cx="390" cy="145" r="14" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="390" y="150" fill="white" font-family="JetBrains Mono" font-size="10" text-anchor="middle" font-weight="500">y₂</text>
+      <text x="390" y="52" font-family="Source Sans 3" font-size="11" font-weight="600" fill="#2a6b5a" text-anchor="middle">Output y</text>
+
+      <!-- Key insight box -->
+      <rect x="440" y="60" width="200" height="145" rx="8" fill="#f8f4ee" stroke="#d5d0c8"/>
+      <text x="455" y="82" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a2520">The key ingredients:</text>
+      <text x="455" y="104" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">1. Linear transform (W, b)</text>
+      <text x="455" y="120" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">2. Nonlinearity (σ)</text>
+      <text x="455" y="145" font-family="Source Sans 3" font-size="10.5" fill="#b44a2f" font-weight="600">What's missing?</text>
+      <text x="455" y="163" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Each input is processed</text>
+      <text x="455" y="179" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">independently. There's no</text>
+      <text x="455" y="195" font-family="Source Sans 3" font-size="10.5" fill="#b44a2f" font-weight="600">communication between nodes.</text>
+    </svg>
+    <div class="caption"><strong>Figure 3.1.</strong> A single feedforward layer transforms each input independently: linear map + nonlinearity. If we applied this to each vertex of a graph, vertex 0 would have no idea what vertex 1's features look like. A GNN adds exactly one ingredient: <em>aggregation from neighbors</em>.</div>
+  </div>
+
+  <p>
+    The critical observation: a feedforward network applied to graph vertices would process each vertex in isolation. Vertex $v_0$ at 50°C would have no idea that its neighbor $v_1$ is at 20°C. This is useless for tasks like heat conduction or social influence — where the whole point is that <em>neighbors affect each other</em>.
+  </p>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2><span class="sec-num">04</span>From Feedforward to Graph: Adding Neighborhood Aggregation</h2>
+
+  <p>
+    A graph neural network adds one fundamental operation before the linear transform: <strong>aggregate features from neighbors</strong>. Here is the general message passing framework:
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">GNN Message Passing — One Layer (General Form)</div>
+    $$\mathbf{h}_v^{(\ell+1)} = \phi\!\left(\mathbf{h}_v^{(\ell)},\; \bigoplus_{w \in \mathcal{N}(v)} \psi\!\left(\mathbf{h}_v^{(\ell)}, \mathbf{h}_w^{(\ell)}\right)\right)$$
+    <p>Three components:</p>
+    <p style="margin-left:1.5rem;">
+      $\psi$ = <strong>message function</strong>: computes a "message" from neighbor $w$ to node $v$<br>
+      $\bigoplus$ = <strong>aggregation</strong>: combines all incoming messages (sum, mean, max, ...)<br>
+      $\phi$ = <strong>update function</strong>: combines old features with aggregated messages to produce new features
+    </p>
+  </div>
+
+  <p>
+    This looks abstract, so let's see the most concrete and widely-used instantiation: the <strong>Graph Convolutional Network</strong> (GCN) of Kipf &amp; Welling (2017).
+  </p>
+
+  <h3>The GCN Layer — Making it Concrete</h3>
+
+  <p>
+    In a GCN, the message, aggregation, and update functions are collapsed into a single elegant matrix operation:
+  </p>
+
+  <div class="def-box">
+    <div class="def-label">GCN Layer (Kipf &amp; Welling, 2017)</div>
+    $$\mathbf{H}^{(\ell+1)} = \sigma\!\left(\hat{\mathbf{A}} \, \mathbf{H}^{(\ell)} \, \mathbf{W}^{(\ell)}\right)$$
+    <p>where:</p>
+    <p style="margin-left:1.5rem;">
+      $\mathbf{H}^{(\ell)} \in \mathbb{R}^{n \times d_\ell}$ = feature matrix (row $v$ = feature vector of vertex $v$ at layer $\ell$)<br>
+      $\mathbf{W}^{(\ell)} \in \mathbb{R}^{d_\ell \times d_{\ell+1}}$ = learnable weight matrix (shared across all vertices)<br>
+      $\hat{\mathbf{A}} = \tilde{\mathbf{D}}^{-1/2} \tilde{\mathbf{A}} \tilde{\mathbf{D}}^{-1/2}$ = normalized adjacency with self-loops<br>
+      $\tilde{\mathbf{A}} = \mathbf{A} + \mathbf{I}$ = adjacency + self-loops, &ensp; $\tilde{\mathbf{D}}_{ii} = \sum_j \tilde{A}_{ij}$<br>
+      $\sigma$ = activation function (typically ReLU)
+    </p>
+  </div>
+
+  <p>
+    Let's unpack what each piece does. Reading the equation <strong>right to left</strong>:
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 680 180" width="680" height="180">
+      <text x="340" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">Reading the GCN Equation: σ( Â · H · W )</text>
+
+      <!-- Step 1: HW -->
+      <rect x="20" y="45" width="195" height="120" rx="8" fill="white" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="117" y="68" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#b44a2f" text-anchor="middle">① H · W</text>
+      <text x="35" y="90" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Transform each vertex's</text>
+      <text x="35" y="106" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">features independently</text>
+      <text x="35" y="126" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Same as feedforward:</text>
+      <text x="35" y="142" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">linear map per vertex</text>
+      <text x="35" y="158" font-family="JetBrains Mono" font-size="9" fill="#b44a2f">d_in → d_out features</text>
+
+      <!-- Step 2: Â · (HW) -->
+      <rect x="240" y="45" width="195" height="120" rx="8" fill="white" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="337" y="68" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a6b5a" text-anchor="middle">② Â · (result)</text>
+      <text x="255" y="90" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Mix each vertex with its</text>
+      <text x="255" y="106" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">neighbors via normalized</text>
+      <text x="255" y="122" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">weighted average</text>
+      <text x="255" y="146" font-family="Source Sans 3" font-size="10.5" fill="#2a6b5a" font-weight="600" font-style="italic">This is the graph part!</text>
+      <text x="255" y="158" font-family="JetBrains Mono" font-size="9" fill="#2a6b5a">structure-aware aggregation</text>
+
+      <!-- Step 3: σ -->
+      <rect x="460" y="45" width="195" height="120" rx="8" fill="white" stroke="#3a5a8c" stroke-width="1.5"/>
+      <text x="557" y="68" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#3a5a8c" text-anchor="middle">③ σ(·)</text>
+      <text x="475" y="90" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Apply nonlinearity</text>
+      <text x="475" y="106" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">(ReLU: keep positives,</text>
+      <text x="475" y="122" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">zero out negatives)</text>
+      <text x="475" y="146" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Same as feedforward:</text>
+      <text x="475" y="158" font-family="JetBrains Mono" font-size="9" fill="#3a5a8c">element-wise activation</text>
+    </svg>
+    <div class="caption"><strong>Figure 4.1.</strong> The three steps of a GCN layer. Step ① is a standard feedforward transform (same weights for every vertex). Step ② is the <em>only</em> step that uses the graph structure — it mixes each vertex with its neighbors. Step ③ is a standard nonlinearity. The graph topology enters through $\hat{\mathbf{A}}$ alone.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2><span class="sec-num">05</span>Building $\hat{\mathbf{A}}$: The Normalized Adjacency</h2>
+
+  <p>
+    Before we can run a GCN layer, we need to construct $\hat{\mathbf{A}}$. Let's build it step by step for our Figure 2.1 graph.
+  </p>
+
+  <h3>Step 1: Add Self-Loops</h3>
+
+  <p>
+    Without self-loops, the aggregation would only look at <em>neighbors</em>, forgetting the vertex's own features. Adding $\mathbf{I}$ ensures each vertex also "sends a message to itself":
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 650 155" width="650" height="155">
+      <text x="100" y="22" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#2a2520" text-anchor="middle">A (adjacency)</text>
+      <text x="50" y="50" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[<tspan fill="#b0a89e">0</tspan> 1 1 1]</text>
+      <text x="50" y="68" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[1 <tspan fill="#b0a89e">0</tspan> 1 0]</text>
+      <text x="50" y="86" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[1 1 <tspan fill="#b0a89e">0</tspan> 1]</text>
+      <text x="50" y="104" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[1 0 1 <tspan fill="#b0a89e">0</tspan>]</text>
+
+      <text x="230" y="75" font-family="Source Sans 3" font-size="20" fill="#6b6560">+</text>
+
+      <text x="310" y="22" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#2a2520" text-anchor="middle">I (identity)</text>
+      <text x="265" y="50" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a">[<tspan font-weight="600">1</tspan> 0 0 0]</text>
+      <text x="265" y="68" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a">[0 <tspan font-weight="600">1</tspan> 0 0]</text>
+      <text x="265" y="86" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a">[0 0 <tspan font-weight="600">1</tspan> 0]</text>
+      <text x="265" y="104" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a">[0 0 0 <tspan font-weight="600">1</tspan>]</text>
+
+      <text x="435" y="75" font-family="Source Sans 3" font-size="20" fill="#6b6560">=</text>
+
+      <text x="560" y="22" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#b44a2f" text-anchor="middle">Ã = A + I</text>
+      <text x="490" y="50" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[<tspan fill="#b44a2f" font-weight="600">1</tspan> 1 1 1]</text>
+      <text x="490" y="68" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[1 <tspan fill="#b44a2f" font-weight="600">1</tspan> 1 0]</text>
+      <text x="490" y="86" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[1 1 <tspan fill="#b44a2f" font-weight="600">1</tspan> 1]</text>
+      <text x="490" y="104" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[1 0 1 <tspan fill="#b44a2f" font-weight="600">1</tspan>]</text>
+
+      <text x="490" y="135" font-family="Source Sans 3" font-size="10" fill="#6b6560">Row sums → d̃: [4, 3, 4, 3]</text>
+      <text x="490" y="150" font-family="Source Sans 3" font-size="10" fill="#6b6560">(original degree + 1 for self-loop)</text>
+    </svg>
+    <div class="caption"><strong>Figure 5.1.</strong> Adding self-loops. The diagonal of $\mathbf{A}$ was zero (a vertex isn't its own neighbor); adding $\mathbf{I}$ puts 1s on the diagonal. Now each row sums to $\deg(v) + 1$.</div>
+  </div>
+
+  <h3>Step 2: Symmetric Normalization</h3>
+
+  <p>
+    Without normalization, high-degree vertices would dominate (they sum more neighbors). The symmetric normalization $\hat{\mathbf{A}} = \tilde{\mathbf{D}}^{-1/2}\tilde{\mathbf{A}}\tilde{\mathbf{D}}^{-1/2}$ produces a <em>weighted average</em> where each edge is downweighted by both endpoint degrees:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Normalization coefficient</div>
+    $$\hat{A}_{ij} = \frac{\tilde{A}_{ij}}{\sqrt{\tilde{d}_i}\sqrt{\tilde{d}_j}}$$
+  </div>
+
+  <div class="figure">
+    <svg viewBox="0 0 650 210" width="650" height="210">
+      <text x="325" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">Building Â for Our Graph</text>
+
+      <rect x="20" y="42" width="610" height="155" rx="8" fill="#f8f4ee" stroke="#d5d0c8"/>
+      <text x="35" y="68" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a2520">Normalization coefficients: Â(i,j) = 1 / (√d̃ᵢ · √d̃ⱼ)  when Ã(i,j) = 1</text>
+
+      <text x="35" y="100" font-family="JetBrains Mono" font-size="11" fill="#2a2520">Â(0,0) = 1/(√4·√4) = 1/4  = <tspan fill="#b44a2f" font-weight="600">0.250</tspan>  (self)</text>
+      <text x="35" y="118" font-family="JetBrains Mono" font-size="11" fill="#2a2520">Â(0,1) = 1/(√4·√3) = 1/2√3 = <tspan fill="#b44a2f" font-weight="600">0.289</tspan>  (v0↔v1)</text>
+      <text x="35" y="136" font-family="JetBrains Mono" font-size="11" fill="#2a2520">Â(0,2) = 1/(√4·√4) = 1/4  = <tspan fill="#b44a2f" font-weight="600">0.250</tspan>  (v0↔v2)</text>
+      <text x="35" y="154" font-family="JetBrains Mono" font-size="11" fill="#2a2520">Â(0,3) = 1/(√4·√3) = 1/2√3 = <tspan fill="#b44a2f" font-weight="600">0.289</tspan>  (v0↔v3)</text>
+      <text x="35" y="178" font-family="Source Sans 3" font-size="11" fill="#6b6560">Row sum for v0: 0.250 + 0.289 + 0.250 + 0.289 = 1.077 ≈ 1 (approximate average)</text>
+
+      <!-- Matrix -->
+      <text x="430" y="100" font-family="JetBrains Mono" font-size="11" fill="#6b6560">        v0    v1    v2    v3</text>
+      <text x="420" y="118" font-family="JetBrains Mono" font-size="11" fill="#2a2520">v0 [.250 .289 .250 .289]</text>
+      <text x="420" y="136" font-family="JetBrains Mono" font-size="11" fill="#2a2520">v1 [.289 .333 .289  0  ]</text>
+      <text x="420" y="154" font-family="JetBrains Mono" font-size="11" fill="#2a2520">v2 [.250 .289 .250 .289]</text>
+      <text x="420" y="172" font-family="JetBrains Mono" font-size="11" fill="#2a2520">v3 [.289  0   .289 .333]</text>
+    </svg>
+    <div class="caption"><strong>Figure 5.2.</strong> The normalized adjacency matrix $\hat{\mathbf{A}}$. Each entry is $1/\sqrt{\tilde{d}_i \tilde{d}_j}$ where a connection exists, 0 otherwise. Row sums are approximately 1, so $\hat{\mathbf{A}}$ acts as a soft averaging operator. The degree-3 vertices (v1, v3) get slightly higher self-weight (0.333 vs 0.250) because they have fewer neighbors to dilute over.</div>
+  </div>
+
+  <div class="insight">
+    <p><strong>Why symmetric?</strong> Left-multiplying by $\tilde{\mathbf{D}}^{-1}$ alone (i.e., simple row-normalization) would give an exact row-stochastic average, but it breaks the symmetry of the operator. The symmetric form $\tilde{\mathbf{D}}^{-1/2}\tilde{\mathbf{A}}\tilde{\mathbf{D}}^{-1/2}$ keeps $\hat{\mathbf{A}}$ symmetric, which preserves the spectral theory from Chapter 1 — the eigenvalues are real, the eigenvectors are orthogonal, and the connection to the Laplacian ($\mathbf{L}_0 = \mathbf{I} - \hat{\mathbf{A}}_{\text{(without self-loops)}}$) is maintained.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2><span class="sec-num">06</span>Full Numerical Walkthrough: One GCN Layer</h2>
+
+  <p>
+    Now let's run a complete GCN layer on our graph, tracking every number. We'll use 2-dimensional input features (for readability) and map to 3-dimensional outputs.
+  </p>
+
+  <h3>Setup: Initial Features</h3>
+
+  <p>Assign each vertex a 2D feature vector — think of these as (normalized temperature, thermal conductivity):</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 650 200" width="650" height="200">
+      <text x="325" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">Initial Vertex Features H⁰ ∈ ℝ⁴ˣ²</text>
+
+      <!-- Graph with features -->
+      <line x1="90" y1="100" x2="200" y2="65" stroke="#d5d0c8" stroke-width="2"/>
+      <line x1="90" y1="100" x2="200" y2="150" stroke="#d5d0c8" stroke-width="2"/>
+      <line x1="200" y1="65" x2="200" y2="150" stroke="#d5d0c8" stroke-width="2"/>
+      <line x1="90" y1="100" x2="130" y2="180" stroke="#d5d0c8" stroke-width="2"/>
+      <line x1="200" y1="150" x2="130" y2="180" stroke="#d5d0c8" stroke-width="2"/>
+
+      <circle cx="90" cy="100" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="90" y="105" fill="white" font-family="Source Sans 3" font-size="11" text-anchor="middle" font-weight="600">0</text>
+      <circle cx="200" cy="65" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="200" y="70" fill="white" font-family="Source Sans 3" font-size="11" text-anchor="middle" font-weight="600">1</text>
+      <circle cx="200" cy="150" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="200" y="155" fill="white" font-family="Source Sans 3" font-size="11" text-anchor="middle" font-weight="600">2</text>
+      <circle cx="130" cy="180" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="130" y="185" fill="white" font-family="Source Sans 3" font-size="11" text-anchor="middle" font-weight="600">3</text>
+
+      <!-- Feature labels -->
+      <rect x="38" y="72" width="40" height="14" rx="3" fill="#b44a2f"/>
+      <text x="58" y="83" font-family="JetBrains Mono" font-size="8" fill="white" text-anchor="middle">1.0, 0.2</text>
+      <rect x="218" y="52" width="40" height="14" rx="3" fill="#2a6b5a"/>
+      <text x="238" y="63" font-family="JetBrains Mono" font-size="8" fill="white" text-anchor="middle">0.4, 0.8</text>
+      <rect x="218" y="143" width="40" height="14" rx="3" fill="#3a5a8c"/>
+      <text x="238" y="154" font-family="JetBrains Mono" font-size="8" fill="white" text-anchor="middle">0.7, 0.3</text>
+      <rect x="142" y="186" width="40" height="14" rx="3" fill="#8b5a8c"/>
+      <text x="162" y="197" font-family="JetBrains Mono" font-size="8" fill="white" text-anchor="middle">0.2, 0.9</text>
+
+      <!-- Matrix form -->
+      <rect x="320" y="40" width="310" height="150" rx="8" fill="white" stroke="#d5d0c8"/>
+      <text x="475" y="65" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#2a2520" text-anchor="middle">Feature matrix H⁰</text>
+
+      <text x="415" y="90" font-family="JetBrains Mono" font-size="10" fill="#6b6560">      f₁    f₂</text>
+      <text x="400" y="110" font-family="JetBrains Mono" font-size="12" fill="#b44a2f">v₀  [1.0   0.2]</text>
+      <text x="400" y="128" font-family="JetBrains Mono" font-size="12" fill="#2a6b5a">v₁  [0.4   0.8]</text>
+      <text x="400" y="146" font-family="JetBrains Mono" font-size="12" fill="#3a5a8c">v₂  [0.7   0.3]</text>
+      <text x="400" y="164" font-family="JetBrains Mono" font-size="12" fill="#8b5a8c">v₃  [0.2   0.9]</text>
+    </svg>
+    <div class="caption"><strong>Figure 6.1.</strong> The initial features. Each vertex carries a 2D vector. The feature matrix $\mathbf{H}^{(0)}$ stacks all vertex features into a $4 \times 2$ matrix.</div>
+  </div>
+
+  <h3>Step 1: Aggregate — $\hat{\mathbf{A}} \cdot \mathbf{H}^{(0)}$</h3>
+
+  <p>
+    Multiplying $\hat{\mathbf{A}} \cdot \mathbf{H}^{(0)}$ computes a <strong>normalized weighted average</strong> of each vertex's own features and its neighbors' features. Let's trace vertex $v_0$ in full detail:
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 680 340" width="680" height="340">
+      <text x="340" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">Detailed: Computing the Aggregated Feature for v₀</text>
+
+      <!-- Graph highlighting v0's neighborhood -->
+      <line x1="70" y1="95" x2="160" y2="65" stroke="#b44a2f" stroke-width="2.5"/>
+      <line x1="70" y1="95" x2="160" y2="140" stroke="#b44a2f" stroke-width="2.5"/>
+      <line x1="160" y1="65" x2="160" y2="140" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="70" y1="95" x2="100" y2="170" stroke="#b44a2f" stroke-width="2.5"/>
+      <line x1="160" y1="140" x2="100" y2="170" stroke="#d5d0c8" stroke-width="1.5"/>
+
+      <circle cx="70" cy="95" r="18" fill="#b44a2f" stroke="#8a2a1a" stroke-width="2.5"/>
+      <text x="70" y="100" fill="white" font-family="Source Sans 3" font-size="12" text-anchor="middle" font-weight="700">0</text>
+      <circle cx="160" cy="65" r="14" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="160" y="70" fill="white" font-family="Source Sans 3" font-size="10" text-anchor="middle">1</text>
+      <circle cx="160" cy="140" r="14" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="160" y="145" fill="white" font-family="Source Sans 3" font-size="10" text-anchor="middle">2</text>
+      <circle cx="100" cy="170" r="14" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="100" y="175" fill="white" font-family="Source Sans 3" font-size="10" text-anchor="middle">3</text>
+
+      <text x="110" y="210" font-family="Source Sans 3" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="600">v₀ receives from all</text>
+      <text x="110" y="224" font-family="Source Sans 3" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="600">3 neighbors + itself</text>
+
+      <!-- Computation -->
+      <rect x="220" y="40" width="440" height="280" rx="8" fill="white" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="440" y="65" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#b44a2f" text-anchor="middle">Aggregated feature for v₀ = Row 0 of Â · H⁰</text>
+
+      <text x="240" y="92" font-family="JetBrains Mono" font-size="11" fill="#2a2520">ĥ(v₀) = <tspan fill="#b44a2f" font-weight="600">0.250</tspan>·h(v₀) + <tspan fill="#2a6b5a" font-weight="600">0.289</tspan>·h(v₁) + <tspan fill="#3a5a8c" font-weight="600">0.250</tspan>·h(v₂) + <tspan fill="#8b5a8c" font-weight="600">0.289</tspan>·h(v₃)</text>
+
+      <text x="240" y="122" font-family="JetBrains Mono" font-size="11" fill="#b44a2f">  self:     0.250 × [1.0, 0.2] = [0.250, 0.050]</text>
+      <text x="240" y="142" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a">  from v₁:  0.289 × [0.4, 0.8] = [0.115, 0.231]</text>
+      <text x="240" y="162" font-family="JetBrains Mono" font-size="11" fill="#3a5a8c">  from v₂:  0.250 × [0.7, 0.3] = [0.175, 0.075]</text>
+      <text x="240" y="182" font-family="JetBrains Mono" font-size="11" fill="#8b5a8c">  from v₃:  0.289 × [0.2, 0.9] = [0.058, 0.260]</text>
+
+      <line x1="240" y1="192" x2="500" y2="192" stroke="#d5d0c8" stroke-width="1"/>
+
+      <text x="240" y="215" font-family="JetBrains Mono" font-size="12" fill="#b44a2f" font-weight="600">  SUM:                         = [0.598, 0.616]</text>
+
+      <text x="240" y="248" font-family="Source Sans 3" font-size="11" fill="#2a2520">The input feature for v₀ was <tspan font-family="JetBrains Mono" font-size="10" font-weight="600">[1.0, 0.2]</tspan>.</text>
+      <text x="240" y="268" font-family="Source Sans 3" font-size="11" fill="#2a2520">After aggregation: <tspan font-family="JetBrains Mono" font-size="10" font-weight="600">[0.598, 0.616]</tspan>.</text>
+      <text x="240" y="288" font-family="Source Sans 3" font-size="11" fill="#6b6560" font-style="italic">→ Feature 1 dropped (diluted by lower-valued neighbors)</text>
+      <text x="240" y="306" font-family="Source Sans 3" font-size="11" fill="#6b6560" font-style="italic">→ Feature 2 rose (pulled up by higher-valued neighbors)</text>
+    </svg>
+    <div class="caption"><strong>Figure 6.2.</strong> Tracing vertex $v_0$ through the aggregation step. Each neighbor contributes its feature vector, weighted by the normalization coefficient. The result is a smoothed feature that blends $v_0$'s own values with its neighborhood — exactly the kind of local averaging that makes GNNs powerful for tasks like heat prediction or community detection.</div>
+  </div>
+
+  <p>Repeating for all vertices, the full aggregated matrix is:</p>
+
+  <div class="math-block">
+    <div class="math-label">Aggregated features: $\hat{\mathbf{A}} \cdot \mathbf{H}^{(0)}$</div>
+    $$\hat{\mathbf{A}} \cdot \mathbf{H}^{(0)} = \begin{pmatrix} 0.598 & 0.616 \\ 0.624 & 0.411 \\ 0.598 & 0.616 \\ 0.557 & 0.444 \end{pmatrix}$$
+  </div>
+
+  <p>
+    Notice that vertices $v_0$ and $v_2$ get <em>identical</em> aggregated features. This makes sense — they have the same degree (3) and the same set of neighbors ($\{v_0/v_2, v_1, v_3\}$ plus self), so the weighted average is the same. This is a feature of GCN's symmetric normalization: structurally equivalent vertices get identical representations.
+  </p>
+
+  <h3>Step 2: Linear Transform — $(\hat{\mathbf{A}} \mathbf{H}^{(0)}) \cdot \mathbf{W}$</h3>
+
+  <p>
+    The weight matrix $\mathbf{W}^{(0)} \in \mathbb{R}^{2 \times 3}$ maps from 2 features to 3 features. These are the <strong>learnable parameters</strong> — the only part of the GCN that training adjusts:
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 660 200" width="660" height="200">
+      <text x="330" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">Step 2: Linear Transform (Â·H⁰)·W</text>
+
+      <rect x="20" y="42" width="620" height="145" rx="8" fill="#f8f4ee" stroke="#d5d0c8"/>
+
+      <text x="35" y="68" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a2520">Weight matrix W⁰ (2×3) — learned during training:</text>
+      <text x="35" y="92" font-family="JetBrains Mono" font-size="12" fill="#2a2520">W = [ 0.5  −0.3   0.8]    ← row for input feature 1</text>
+      <text x="35" y="112" font-family="JetBrains Mono" font-size="12" fill="#2a2520">    [−0.2   0.7   0.4]    ← row for input feature 2</text>
+
+      <text x="35" y="142" font-family="Source Sans 3" font-size="11" font-weight="600" fill="#2a2520">For vertex v₀:  ĥ(v₀) · W = [0.598, 0.616] · W</text>
+      <text x="35" y="162" font-family="JetBrains Mono" font-size="11" fill="#2a2520">  out₁ = 0.598×(0.5) + 0.616×(−0.2) = 0.299 − 0.123 = <tspan fill="#b44a2f" font-weight="600">0.176</tspan></text>
+      <text x="35" y="178" font-family="JetBrains Mono" font-size="11" fill="#2a2520">  out₂ = 0.598×(−0.3) + 0.616×(0.7) = −0.179 + 0.431 = <tspan fill="#b44a2f" font-weight="600">0.252</tspan></text>
+    </svg>
+    <div class="caption"><strong>Figure 6.3.</strong> The linear transform projects the aggregated 2D features into a 3D output space. The same weight matrix is applied at every vertex — this is the <em>parameter sharing</em> that makes GNNs efficient and equivariant.</div>
+  </div>
+
+  <h3>Step 3: Activation — $\sigma(\cdot)$</h3>
+
+  <p>Apply ReLU element-wise: $\text{ReLU}(x) = \max(0, x)$. In our example, all pre-activation values happen to be positive, so nothing gets zeroed:</p>
+
+  <div class="math-block">
+    <div class="math-label">Final output: $\mathbf{H}^{(1)} = \text{ReLU}(\hat{\mathbf{A}} \mathbf{H}^{(0)} \mathbf{W}^{(0)})$</div>
+    $$\mathbf{H}^{(1)} = \text{ReLU}\begin{pmatrix} 0.176 & 0.252 & 0.725 \\ 0.230 & 0.101 & 0.664 \\ 0.176 & 0.252 & 0.725 \\ 0.190 & 0.144 & 0.624 \end{pmatrix} = \begin{pmatrix} 0.176 & 0.252 & 0.725 \\ 0.230 & 0.101 & 0.664 \\ 0.176 & 0.252 & 0.725 \\ 0.190 & 0.144 & 0.624 \end{pmatrix}$$
+  </div>
+
+  <p>
+    Each vertex now has a <strong>3-dimensional feature vector</strong> that encodes both its own original features <em>and</em> information from its neighbors. Vertex $v_0$ "knows" something about $v_1$, $v_2$, and $v_3$, even though it never saw their features directly — it received them through the aggregation step.
+  </p>
+
+  <h3>The Complete Pipeline — One Picture</h3>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 270" width="700" height="270">
+      <text x="350" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">One GCN Layer: The Complete Data Flow</text>
+
+      <!-- H0 -->
+      <rect x="15" y="50" width="100" height="100" rx="6" fill="#e8a88a" fill-opacity="0.2" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="65" y="45" font-family="Source Sans 3" font-size="10" font-weight="700" fill="#b44a2f" text-anchor="middle">H⁰ (4×2)</text>
+      <text x="35" y="73" font-family="JetBrains Mono" font-size="8" fill="#2a2520">1.0  0.2</text>
+      <text x="35" y="90" font-family="JetBrains Mono" font-size="8" fill="#2a2520">0.4  0.8</text>
+      <text x="35" y="107" font-family="JetBrains Mono" font-size="8" fill="#2a2520">0.7  0.3</text>
+      <text x="35" y="124" font-family="JetBrains Mono" font-size="8" fill="#2a2520">0.2  0.9</text>
+
+      <!-- Arrow -->
+      <line x1="115" y1="100" x2="148" y2="100" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="131" y="92" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">Â×</text>
+
+      <!-- Aggregated -->
+      <rect x="150" y="50" width="100" height="100" rx="6" fill="#8ec5b6" fill-opacity="0.2" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="200" y="45" font-family="Source Sans 3" font-size="10" font-weight="700" fill="#2a6b5a" text-anchor="middle">Â·H⁰ (4×2)</text>
+      <text x="165" y="73" font-family="JetBrains Mono" font-size="8" fill="#2a2520">0.60  0.62</text>
+      <text x="165" y="90" font-family="JetBrains Mono" font-size="8" fill="#2a2520">0.62  0.41</text>
+      <text x="165" y="107" font-family="JetBrains Mono" font-size="8" fill="#2a2520">0.60  0.62</text>
+      <text x="165" y="124" font-family="JetBrains Mono" font-size="8" fill="#2a2520">0.56  0.44</text>
+
+      <!-- Arrow -->
+      <line x1="250" y1="100" x2="283" y2="100" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="266" y="92" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">×W</text>
+
+      <!-- Pre-activation -->
+      <rect x="285" y="50" width="130" height="100" rx="6" fill="#a8c0e0" fill-opacity="0.2" stroke="#3a5a8c" stroke-width="1.5"/>
+      <text x="350" y="45" font-family="Source Sans 3" font-size="10" font-weight="700" fill="#3a5a8c" text-anchor="middle">(Â·H⁰)·W (4×3)</text>
+      <text x="300" y="73" font-family="JetBrains Mono" font-size="8" fill="#2a2520">.176  .252  .725</text>
+      <text x="300" y="90" font-family="JetBrains Mono" font-size="8" fill="#2a2520">.230  .101  .664</text>
+      <text x="300" y="107" font-family="JetBrains Mono" font-size="8" fill="#2a2520">.176  .252  .725</text>
+      <text x="300" y="124" font-family="JetBrains Mono" font-size="8" fill="#2a2520">.190  .144  .624</text>
+
+      <!-- Arrow -->
+      <line x1="415" y1="100" x2="448" y2="100" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="431" y="92" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">ReLU</text>
+
+      <!-- Output H1 -->
+      <rect x="450" y="50" width="130" height="100" rx="6" fill="#c8a8d0" fill-opacity="0.2" stroke="#8b5a8c" stroke-width="1.5"/>
+      <text x="515" y="45" font-family="Source Sans 3" font-size="10" font-weight="700" fill="#8b5a8c" text-anchor="middle">H¹ (4×3)</text>
+      <text x="465" y="73" font-family="JetBrains Mono" font-size="8" fill="#2a2520">.176  .252  .725</text>
+      <text x="465" y="90" font-family="JetBrains Mono" font-size="8" fill="#2a2520">.230  .101  .664</text>
+      <text x="465" y="107" font-family="JetBrains Mono" font-size="8" fill="#2a2520">.176  .252  .725</text>
+      <text x="465" y="124" font-family="JetBrains Mono" font-size="8" fill="#2a2520">.190  .144  .624</text>
+
+      <!-- Annotations -->
+      <text x="65" y="175" font-family="Source Sans 3" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="600">Each vertex</text>
+      <text x="65" y="188" font-family="Source Sans 3" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="600">is isolated</text>
+
+      <text x="200" y="175" font-family="Source Sans 3" font-size="10" fill="#2a6b5a" text-anchor="middle" font-weight="600">Neighbors</text>
+      <text x="200" y="188" font-family="Source Sans 3" font-size="10" fill="#2a6b5a" text-anchor="middle" font-weight="600">are mixed in</text>
+
+      <text x="350" y="175" font-family="Source Sans 3" font-size="10" fill="#3a5a8c" text-anchor="middle" font-weight="600">Projected to</text>
+      <text x="350" y="188" font-family="Source Sans 3" font-size="10" fill="#3a5a8c" text-anchor="middle" font-weight="600">new dimension</text>
+
+      <text x="515" y="175" font-family="Source Sans 3" font-size="10" fill="#8b5a8c" text-anchor="middle" font-weight="600">Nonlinearity</text>
+      <text x="515" y="188" font-family="Source Sans 3" font-size="10" fill="#8b5a8c" text-anchor="middle" font-weight="600">applied</text>
+
+      <!-- Receptive field note -->
+      <rect x="100" y="210" width="500" height="48" rx="6" fill="#f8f4ee" stroke="#d5d0c8"/>
+      <text x="350" y="232" font-family="Source Sans 3" font-size="11" fill="#2a2520" text-anchor="middle" font-weight="600">After 1 layer, each vertex knows about its immediate neighbors (1-hop).</text>
+      <text x="350" y="250" font-family="Source Sans 3" font-size="11" fill="#6b6560" text-anchor="middle" font-style="italic">After 2 layers → 2-hop.  After k layers → k-hop.  This is the "receptive field."</text>
+
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b6560"/></marker></defs>
+    </svg>
+    <div class="caption"><strong>Figure 6.4.</strong> The complete data flow of one GCN layer. The 4×2 input is aggregated (mixed with neighbors), projected (2D → 3D by the learned weight matrix), and passed through ReLU. After one layer, each vertex's representation encodes its 1-hop neighborhood.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2><span class="sec-num">07</span>Stacking Layers and the Receptive Field</h2>
+
+  <p>
+    A single layer gives each vertex access to its immediate neighbors. What happens with multiple layers?
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 680 200" width="680" height="200">
+      <text x="340" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">Receptive Field Growth: How Information Propagates</text>
+
+      <!-- Layer 0 -->
+      <rect x="15" y="50" width="140" height="130" rx="8" fill="white" stroke="#d5d0c8"/>
+      <text x="85" y="72" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#b44a2f" text-anchor="middle">Layer 0 (input)</text>
+      <line x1="50" y1="110" x2="110" y2="90" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="50" y1="110" x2="110" y2="140" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="110" y1="90" x2="110" y2="140" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="50" y1="110" x2="70" y2="160" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="110" y1="140" x2="70" y2="160" stroke="#d5d0c8" stroke-width="1.5"/>
+      <circle cx="50" cy="110" r="12" fill="#b44a2f" stroke="#8a2a1a" stroke-width="2"/>
+      <circle cx="110" cy="90" r="9" fill="#e0d8d0" stroke="#b0a89e" stroke-width="1"/>
+      <circle cx="110" cy="140" r="9" fill="#e0d8d0" stroke="#b0a89e" stroke-width="1"/>
+      <circle cx="70" cy="160" r="9" fill="#e0d8d0" stroke="#b0a89e" stroke-width="1"/>
+      <text x="50" y="114" fill="white" font-family="Source Sans 3" font-size="9" text-anchor="middle" font-weight="600">0</text>
+      <text x="85" y="178" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">v₀ sees: only itself</text>
+
+      <!-- Arrow -->
+      <text x="175" y="120" font-family="Source Sans 3" font-size="14" fill="#6b6560">→</text>
+
+      <!-- Layer 1 -->
+      <rect x="195" y="50" width="140" height="130" rx="8" fill="white" stroke="#d5d0c8"/>
+      <text x="265" y="72" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a6b5a" text-anchor="middle">After 1 layer</text>
+      <line x1="230" y1="110" x2="290" y2="90" stroke="#2a6b5a" stroke-width="2"/>
+      <line x1="230" y1="110" x2="290" y2="140" stroke="#2a6b5a" stroke-width="2"/>
+      <line x1="290" y1="90" x2="290" y2="140" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="230" y1="110" x2="250" y2="160" stroke="#2a6b5a" stroke-width="2"/>
+      <line x1="290" y1="140" x2="250" y2="160" stroke="#d5d0c8" stroke-width="1.5"/>
+      <circle cx="230" cy="110" r="12" fill="#b44a2f" stroke="#8a2a1a" stroke-width="2"/>
+      <circle cx="290" cy="90" r="10" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <circle cx="290" cy="140" r="10" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <circle cx="250" cy="160" r="10" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="230" y="114" fill="white" font-family="Source Sans 3" font-size="9" text-anchor="middle" font-weight="600">0</text>
+      <text x="265" y="178" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">v₀ sees: 1-hop (v1,v2,v3)</text>
+
+      <!-- Arrow -->
+      <text x="355" y="120" font-family="Source Sans 3" font-size="14" fill="#6b6560">→</text>
+
+      <!-- Layer 2 -->
+      <rect x="375" y="50" width="140" height="130" rx="8" fill="white" stroke="#d5d0c8"/>
+      <text x="445" y="72" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#3a5a8c" text-anchor="middle">After 2 layers</text>
+      <line x1="410" y1="110" x2="470" y2="90" stroke="#3a5a8c" stroke-width="2"/>
+      <line x1="410" y1="110" x2="470" y2="140" stroke="#3a5a8c" stroke-width="2"/>
+      <line x1="470" y1="90" x2="470" y2="140" stroke="#3a5a8c" stroke-width="2"/>
+      <line x1="410" y1="110" x2="430" y2="160" stroke="#3a5a8c" stroke-width="2"/>
+      <line x1="470" y1="140" x2="430" y2="160" stroke="#3a5a8c" stroke-width="2"/>
+      <circle cx="410" cy="110" r="12" fill="#b44a2f" stroke="#8a2a1a" stroke-width="2"/>
+      <circle cx="470" cy="90" r="10" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/>
+      <circle cx="470" cy="140" r="10" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/>
+      <circle cx="430" cy="160" r="10" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/>
+      <text x="410" y="114" fill="white" font-family="Source Sans 3" font-size="9" text-anchor="middle" font-weight="600">0</text>
+      <text x="445" y="178" font-family="Source Sans 3" font-size="9" fill="#6b6560" text-anchor="middle">v₀ sees: entire graph</text>
+
+      <!-- Insight -->
+      <rect x="540" y="60" width="140" height="110" rx="6" fill="#f8f4ee" stroke="#d5d0c8"/>
+      <text x="555" y="82" font-family="Source Sans 3" font-size="10" font-weight="700" fill="#2a2520">On this graph:</text>
+      <text x="555" y="102" font-family="Source Sans 3" font-size="10" fill="#2a2520">Diameter = 2</text>
+      <text x="555" y="118" font-family="Source Sans 3" font-size="10" fill="#2a2520">So 2 layers suffice</text>
+      <text x="555" y="134" font-family="Source Sans 3" font-size="10" fill="#2a2520">for global info.</text>
+      <text x="555" y="158" font-family="Source Sans 3" font-size="10" fill="#b44a2f" font-weight="600">Too many layers →</text>
+      <text x="555" y="173" font-family="Source Sans 3" font-size="10" fill="#b44a2f" font-weight="600">"oversmoothing"</text>
+    </svg>
+    <div class="caption"><strong>Figure 7.1.</strong> Receptive field growth. After $k$ GCN layers, each vertex has aggregated information from all vertices within $k$ hops. On our small graph (diameter 2), two layers already give every vertex a global view. On large graphs, this creates the classic GNN trade-off: more layers = wider receptive field, but also more risk of "oversmoothing" where all vertex representations converge.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2><span class="sec-num">08</span>The GCN–Laplacian Connection</h2>
+
+  <p>
+    There's a deep connection between the GCN layer and the Laplacian from Chapter 1. The original (unnormalized) adjacency acts as a <strong>diffusion step</strong>, and the GCN normalization is a specific choice of diffusion rate:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">GCN as a spectral filter</div>
+    $$\hat{\mathbf{A}} = \mathbf{I} - \hat{\mathbf{L}}_0 \qquad \text{where}\qquad \hat{\mathbf{L}}_0 = \mathbf{I} - \tilde{\mathbf{D}}^{-1/2}\tilde{\mathbf{A}}\tilde{\mathbf{D}}^{-1/2}$$
+  </div>
+
+  <p>
+    So $\hat{\mathbf{A}}\mathbf{H} = (\mathbf{I} - \hat{\mathbf{L}}_0)\mathbf{H} = \mathbf{H} - \hat{\mathbf{L}}_0\mathbf{H}$. This is exactly <strong>one step of heat diffusion</strong>: the output is the input minus a Laplacian-weighted correction. High-frequency components (large eigenvalues of $\hat{\mathbf{L}}_0$) get attenuated more — the GCN layer is a <em>low-pass filter</em>.
+  </p>
+
+  <div class="insight key">
+    <p><strong>The bridge to TDL:</strong> A GCN layer uses $\hat{\mathbf{A}}$ (derived from the graph Laplacian $\mathbf{L}_0$) to pass messages between vertices along edges. In Chapters 3–5, we'll build boundary operators $\mathbf{B}_{1,2}$, $\mathbf{B}_{2,3}$, ... that connect edges to faces to volumes. The <strong>higher-order message passing</strong> framework replaces $\hat{\mathbf{A}}$ with Hodge Laplacians and incidence matrices, enabling messages to flow between objects of <em>any rank</em> — not just between adjacent vertices. That's the core innovation of topological deep learning.</p>
+  </div>
+</section>
+
+<div class="footer-nav"><a href="tdl-01-graphs.html"><span class="dir">← Previous</span><span class="title">Graphs as Combinatorial Objects</span></a><a class="next" href="tdl-03-edge-signals.html"><span class="dir">Next →</span><span class="title">Edge Signals & the Discrete Curl</span></a></div>
+</main>
+<footer><p><a href="tdl-index.html">← Course Home</a> · <a href="index.html">All Notes</a></p></footer>
+</body>
+</html>

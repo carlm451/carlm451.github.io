@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Applications &amp; <strong>Reading Roadmap</strong> — Topological Deep Learning Course</title>
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+
+:root {
+  --bg: #faf8f5; --bg-alt: #f0ede8; --text: #2a2520; --text-muted: #6b6560;
+  --accent: #b44a2f; --accent2: #2a6b5a; --accent3: #3a5a8c; --accent4: #8b5a8c;
+  --border: #d5d0c8; --card: #ffffff;
+  --shadow: 0 2px 12px rgba(42,37,32,0.08); --shadow-lg: 0 8px 32px rgba(42,37,32,0.12);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; font-size: 17px; }
+body { font-family: 'Crimson Pro', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.72; -webkit-font-smoothing: antialiased; }
+.container { max-width: 820px; margin: 0 auto; padding: 0 2rem; }
+
+/* Header */
+header { background: linear-gradient(175deg, #1a1512 0%, #2a2018 40%, #3a2a1f 100%); color: #f0ece6; padding: 3.5rem 2rem 2.5rem; position: relative; overflow: hidden; }
+header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 600px 400px at 20% 80%, rgba(180,74,47,0.15), transparent), radial-gradient(ellipse 500px 300px at 80% 20%, rgba(42,107,90,0.12), transparent); }
+header .container { position: relative; z-index: 1; }
+header .breadcrumb { font-family: 'Source Sans 3', sans-serif; font-size: 0.82rem; color: #8a8078; margin-bottom: 0.8rem; }
+header .breadcrumb a { color: #c8a888; text-decoration: none; }
+header .breadcrumb a:hover { color: #e8a88a; }
+header .ch-num { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent); display: block; margin-bottom: 0.3rem; font-weight: 500; letter-spacing: 0.05em; }
+header h1 { font-size: 2.2rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.6rem; }
+header h1 strong { font-weight: 700; color: #e8a88a; }
+header .subtitle { font-family: 'Source Sans 3', sans-serif; font-size: 0.95rem; color: #b0a89e; max-width: 560px; line-height: 1.6; }
+
+/* Navigation */
+nav.ch-nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 0.8rem 0; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+nav.ch-nav .container { display: flex; justify-content: space-between; align-items: center; }
+nav.ch-nav a { font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; color: var(--accent); text-decoration: none; display: flex; align-items: center; gap: 0.3rem; }
+nav.ch-nav a:hover { color: #d05a3f; }
+nav.ch-nav .disabled { color: var(--border); pointer-events: none; }
+nav.ch-nav .ch-title { font-family: 'Source Sans 3', sans-serif; font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* Sections */
+section { margin-bottom: 3.5rem; padding-top: 1rem; }
+section h2 { font-size: 1.9rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--text); letter-spacing: -0.01em; }
+section h2 .sec-num { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent); display: block; margin-bottom: 0.3rem; font-weight: 500; }
+section h3 { font-size: 1.3rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.5rem; }
+section h4 { font-family: 'Source Sans 3', sans-serif; font-size: 1rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.4rem; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.04em; }
+p { margin-bottom: 1rem; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+/* Definition boxes */
+.def-box { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1.5rem 1.8rem; margin: 1.5rem 0; box-shadow: var(--shadow); }
+.def-box.green { border-left-color: var(--accent2); }
+.def-box.blue { border-left-color: var(--accent3); }
+.def-box.purple { border-left-color: var(--accent4); }
+.def-box .def-label { font-family: 'Source Sans 3', sans-serif; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+.def-box .def-label { color: var(--accent); }
+.def-box.green .def-label { color: var(--accent2); }
+.def-box.blue .def-label { color: var(--accent3); }
+.def-box.purple .def-label { color: var(--accent4); }
+
+/* Insight boxes */
+.insight { background: linear-gradient(135deg, #f8f4ee, #f5f0e8); border-radius: 8px; padding: 1.3rem 1.6rem; margin: 1.5rem 0; position: relative; }
+.insight::before { content: '💡'; position: absolute; top: -0.6rem; left: 1rem; font-size: 1.1rem; background: var(--bg); padding: 0 0.3rem; }
+.insight.physics::before { content: '⚛️'; }
+.insight.warning::before { content: '⚠️'; }
+.insight.key::before { content: '🔑'; }
+.insight p:last-child { margin-bottom: 0; }
+.insight strong { color: var(--accent); }
+
+/* Figures */
+.figure { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 2rem 0; text-align: center; box-shadow: var(--shadow); }
+.figure svg { max-width: 100%; height: auto; }
+.figure .caption { font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem; text-align: left; line-height: 1.5; }
+.figure .caption strong { color: var(--text); font-weight: 600; }
+
+/* Math */
+.math-block { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; box-shadow: var(--shadow); }
+.math-block .math-label { font-family: 'Source Sans 3', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+
+/* Tables */
+.comp-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-family: 'Source Sans 3', sans-serif; font-size: 0.9rem; }
+.comp-table th { background: var(--bg-alt); font-weight: 700; text-align: left; padding: 0.7rem 1rem; border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+.comp-table td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+
+/* Steps */
+.steps { margin: 1.5rem 0; padding-left: 0; list-style: none; counter-reset: step; }
+.steps li { counter-increment: step; padding: 0.8rem 0 0.8rem 3rem; position: relative; border-left: 2px solid var(--border); margin-left: 1rem; }
+.steps li:last-child { border-left-color: transparent; }
+.steps li::before { content: counter(step); position: absolute; left: -0.85rem; top: 0.7rem; width: 1.7rem; height: 1.7rem; background: var(--accent); color: white; border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; background: var(--bg-alt); padding: 0.15em 0.4em; border-radius: 4px; }
+.divider { border: none; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 3rem 0; }
+
+/* Footer nav */
+.footer-nav { display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.footer-nav a { font-family: 'Source Sans 3', sans-serif; text-decoration: none; color: var(--text); padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: 8px; flex: 1; transition: border-color 0.2s, box-shadow 0.2s; }
+.footer-nav a:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.footer-nav .dir { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); display: block; margin-bottom: 0.2rem; }
+.footer-nav .title { font-size: 0.9rem; font-weight: 600; }
+.footer-nav .next { text-align: right; }
+.footer-nav .spacer { flex: 1; }
+
+footer { background: #1a1512; color: #8a8078; padding: 2.5rem 2rem; margin-top: 3rem; font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; text-align: center; }
+footer a { color: #c8a888; text-decoration: none; }
+
+/* SVG tokens */
+.node-v { fill: #e8a88a; stroke: #b44a2f; }
+.node-e { fill: #8ec5b6; stroke: #2a6b5a; }
+.node-f { fill: #a8c0e0; stroke: #3a5a8c; }
+.edge-line { stroke: #6b6560; stroke-width: 1.5; }
+.label-text { font-family: 'Source Sans 3', sans-serif; font-size: 11px; fill: #2a2520; text-anchor: middle; }
+.label-sm { font-family: 'Source Sans 3', sans-serif; font-size: 10px; fill: #6b6560; text-anchor: middle; }
+
+@media (max-width: 700px) { html { font-size: 15px; } header h1 { font-size: 1.8rem; } .container { padding: 0 1.2rem; } .footer-nav { flex-direction: column; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / <a href="tdl-index.html">Topological Deep Learning</a> / Chapter 8</div>
+    <span class="ch-num">Chapter 08</span>
+    <h1>Applications &amp; <strong>Reading Roadmap</strong></h1>
+    <p class="subtitle">Connecting topological deep learning to thermal physics simulation, and a guided roadmap through the full Hajij et al. paper.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="tdl-07-architectures.html">← Hodge Theory & the Architecture Zoo</a><span class="ch-title">Chapter 8</span><a href="tdl-index.html">Course Home →</a></div></nav>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+<section id="sec11">
+  <h2><span class="sec-num">11</span>From Topology to Thermal Physics</h2>
+
+  <p>
+    With the mathematical framework in place, we can now see <strong>why topological deep learning is a natural fit for thermal simulation</strong> — the application that Vinci AI has commercialized.
+  </p>
+
+  <h3>A Chip Package as a Combinatorial Complex</h3>
+  <p>
+    Consider a 3D stacked IC package. Its structure maps naturally to a CC:
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 280" width="700" height="280">
+      <text x="350" y="22" font-family="Source Sans 3" font-size="13" font-weight="700" fill="#2a2520" text-anchor="middle">Chip Package → Combinatorial Complex</text>
+
+      <!-- Physical side -->
+      <rect x="20" y="40" width="300" height="220" rx="8" fill="white" stroke="#d5d0c8"/>
+      <text x="170" y="65" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a2520" text-anchor="middle">Physical Structure</text>
+
+      <!-- Stack of layers -->
+      <rect x="60" y="80" width="220" height="25" rx="3" fill="#c8a8d0" fill-opacity="0.3" stroke="#8b5a8c"/>
+      <text x="170" y="97" font-family="Source Sans 3" font-size="10" fill="#8b5a8c" text-anchor="middle">TIM (volume)</text>
+
+      <rect x="60" y="110" width="220" height="25" rx="3" fill="#a8c0e0" fill-opacity="0.3" stroke="#3a5a8c"/>
+      <text x="170" y="127" font-family="Source Sans 3" font-size="10" fill="#3a5a8c" text-anchor="middle">Carrier Si (volume)</text>
+
+      <rect x="60" y="140" width="220" height="25" rx="3" fill="#8ec5b6" fill-opacity="0.2" stroke="#2a6b5a"/>
+      <text x="170" y="157" font-family="Source Sans 3" font-size="10" fill="#2a6b5a" text-anchor="middle">BEOL (detailed geometry)</text>
+
+      <rect x="60" y="170" width="220" height="25" rx="3" fill="#e8d8a8" fill-opacity="0.3" stroke="#8b7a3c"/>
+      <text x="170" y="187" font-family="Source Sans 3" font-size="10" fill="#8b7a3c" text-anchor="middle">Hybrid Bonding (volume)</text>
+
+      <rect x="60" y="200" width="220" height="25" rx="3" fill="#a8c0e0" fill-opacity="0.3" stroke="#3a5a8c"/>
+      <text x="170" y="217" font-family="Source Sans 3" font-size="10" fill="#3a5a8c" text-anchor="middle">Si 2 (volume)</text>
+
+      <!-- Interfaces marked -->
+      <line x1="55" y1="108" x2="285" y2="108" stroke="#b44a2f" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <text x="295" y="112" font-family="Source Sans 3" font-size="9" fill="#b44a2f" text-anchor="start">interface</text>
+      <line x1="55" y1="138" x2="285" y2="138" stroke="#b44a2f" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <line x1="55" y1="168" x2="285" y2="168" stroke="#b44a2f" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <line x1="55" y1="198" x2="285" y2="198" stroke="#b44a2f" stroke-width="1.5" stroke-dasharray="3,2"/>
+
+      <!-- CC side -->
+      <rect x="380" y="40" width="300" height="220" rx="8" fill="white" stroke="#d5d0c8"/>
+      <text x="530" y="65" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a2520" text-anchor="middle">CC Representation</text>
+
+      <!-- Rank assignments -->
+      <text x="400" y="95" font-family="Source Sans 3" font-size="11" fill="#b44a2f" font-weight="600">Rank 0 (vertices)</text>
+      <text x="400" y="112" font-family="Source Sans 3" font-size="10" fill="#6b6560">Grid points, via nodes</text>
+
+      <text x="400" y="142" font-family="Source Sans 3" font-size="11" fill="#2a6b5a" font-weight="600">Rank 1 (edges)</text>
+      <text x="400" y="159" font-family="Source Sans 3" font-size="10" fill="#6b6560">Material interfaces, thermal paths</text>
+
+      <text x="400" y="189" font-family="Source Sans 3" font-size="11" fill="#3a5a8c" font-weight="600">Rank 2 (faces / tiles)</text>
+      <text x="400" y="206" font-family="Source Sans 3" font-size="10" fill="#6b6560">Homogenization regions, surfaces</text>
+
+      <text x="400" y="236" font-family="Source Sans 3" font-size="11" fill="#8b5a8c" font-weight="600">Rank 3 (volumes)</text>
+      <text x="400" y="253" font-family="Source Sans 3" font-size="10" fill="#6b6560">Material layers, package volumes</text>
+
+      <!-- Arrow -->
+      <text x="345" y="155" font-family="Source Sans 3" font-size="22" fill="#b0a89e" text-anchor="middle">→</text>
+    </svg>
+    <div class="caption"><strong>Figure 11.1.</strong> A chip package maps to a CC: grid nodes are rank-0 cells, material interfaces are rank-1, homogenization tiles are rank-2, and volumetric layers are rank-3. Heat source distributions, boundary conditions, and material properties become features (cochains) at the appropriate rank.</div>
+  </div>
+
+  <h3>Why Anisotropic Message Passing Matters</h3>
+  <p>
+    In the EPTC 2025 paper, the BEOL layer exhibits extreme anisotropy: $k_y^{\text{eff}} / k_z^{\text{eff}} \approx 23\times$. Heat flows much more easily in-plane than through-plane. A standard GNN treats all message-passing directions identically. The <strong>copresheaf structure</strong> (Hajij et al., NeurIPS 2025, arXiv:2505.21251) adds direction-dependent, learnable linear maps between cells — the network can <em>learn</em> that vertical and horizontal information flow have fundamentally different character, without this being hard-coded.
+  </p>
+
+  <div class="insight key">
+    <p><strong>The CTNN advantage for physics:</strong> In a copresheaf topological neural network, the "restriction maps" between cells are learnable linear operators, not fixed aggregation rules. For thermal simulation, this means the network can learn that information flowing from a BEOL tile to its neighbor <em>through a shared edge</em> should be weighted differently than information flowing <em>up through a layer interface</em> — because these represent physically different thermal transport pathways.</p>
+  </div>
+
+  <h3>From Message Passing to PDE Solving</h3>
+  <p>
+    The steady-state heat equation $\nabla \cdot (k \nabla T) = 0$ is, on a discrete mesh, equivalent to a system $\mathbf{L}\mathbf{T} = \mathbf{f}$ where $\mathbf{L}$ is a Laplacian operator weighted by thermal conductivities. The Hodge Laplacian $L_k$ on a CC is a direct generalization. The connection is not merely analogical — <strong>message passing on a CC with Hodge-Laplacian-weighted adjacency is literally performing iterative relaxation of the discrete heat equation</strong>.
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">The connection: Message Passing ↔ PDE Iteration</div>
+    $$\underbrace{\mathbf{T}^{(n+1)} = \mathbf{T}^{(n)} - \alpha \mathbf{L}_k \mathbf{T}^{(n)}}_{\text{Jacobi iteration on heat equation}} \quad \longleftrightarrow \quad \underbrace{\mathbf{H}^{(\ell+1)} = \sigma\!\left(\hat{\mathbf{L}}_k \mathbf{H}^{(\ell)} \mathbf{W}^{(\ell)}\right)}_{\text{Topological neural network layer}}$$
+  </div>
+
+  <p>
+    The neural network version replaces the fixed step size $\alpha$ with <em>learned</em> weights $\mathbf{W}$, the linear update with a nonlinear activation $\sigma$, and the single Laplacian with a <em>combination</em> of adjacency matrices from multiple ranks and neighborhoods. This is why a well-trained topological neural network can solve PDEs much faster than traditional iterative solvers — it learns an optimized, nonlinear, multi-scale iteration scheme.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 12 -->
+<!-- ============================================================ -->
+<hr class="divider">
+<section id="sec12">
+  <h2><span class="sec-num">12</span>Roadmap to the Full Paper</h2>
+
+  <p>
+    You now have the conceptual and mathematical vocabulary needed to read Hajij et al., "Topological Deep Learning: Going Beyond Graph Data" (arXiv:2206.00606). Here is a guide to the paper's structure, mapped to what you've learned:
+  </p>
+
+  <table class="comp-table">
+    <thead>
+      <tr><th>Paper Section</th><th>What You'll Find</th><th>Background from This Guide</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>§1–2: Introduction</td>
+        <td>Motivation, related work</td>
+        <td>Section 1 (Why Go Beyond Graphs)</td>
+      </tr>
+      <tr>
+        <td>§3: Topological Domains</td>
+        <td>Formal definitions of simplicial, cell, and combinatorial complexes</td>
+        <td>Sections 3–5</td>
+      </tr>
+      <tr>
+        <td>§4: Topological Signals</td>
+        <td>Cochains, cochain spaces</td>
+        <td>Section 6</td>
+      </tr>
+      <tr>
+        <td>§5: Higher-Order Neighborhoods</td>
+        <td>Adjacency and incidence matrices, neighborhood functions</td>
+        <td>Section 7</td>
+      </tr>
+      <tr>
+        <td>§6: Tensor Diagrams</td>
+        <td>Unified computational framework — <em>new material</em>, build on Section 8</td>
+        <td>Section 8 (HOMP)</td>
+      </tr>
+      <tr>
+        <td>§7: Message Passing</td>
+        <td>General HOMP framework, push-forward and merge operators</td>
+        <td>Section 8</td>
+      </tr>
+      <tr>
+        <td>§8: Topological Pooling</td>
+        <td>Coarsening strategies — <em>new material</em></td>
+        <td>Analogous to graph pooling</td>
+      </tr>
+      <tr>
+        <td>§9: Architectures</td>
+        <td>Detailed review of SNN, MPSN, CWN, etc.</td>
+        <td>Section 10</td>
+      </tr>
+      <tr>
+        <td>Appendices</td>
+        <td>Homology, Betti numbers, Hodge theory</td>
+        <td>Section 9</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Key Papers for Further Study</h3>
+
+  <ol class="steps">
+    <li>
+      <strong>The foundational paper</strong> — Hajij et al., "Topological Deep Learning: Going Beyond Graph Data." arXiv:2206.00606 (2022). <em>Read this next.</em>
+    </li>
+    <li>
+      <strong>The Vinci architecture</strong> — Hajij, Bastian, Osentoski, Kabaria et al., "Copresheaf Topological Neural Networks." arXiv:2505.21251 (2025), NeurIPS 2025. <em>Adds the directional/learnable message-passing maps (copresheaf structure).</em>
+    </li>
+    <li>
+      <strong>Open-source implementation</strong> — TopoModelX (github.com/pyt-team/TopoModelX). <em>PyTorch implementations of the architectures discussed in the paper.</em>
+    </li>
+    <li>
+      <strong>Benchmarking</strong> — Hajij et al., "A Framework for Benchmarking Topological Deep Learning." arXiv:2406.06642 (2024). <em>Systematic comparison of TDL architectures on standardized tasks.</em>
+    </li>
+    <li>
+      <strong>The thermal application</strong> — Kabaria et al., "Thermal Sensitivity Analysis of 3D IC Face-to-Back Stacking Using Foundation Models for Physics." IEEE EPTC 2025. <em>Shows TDL applied to real semiconductor thermal simulation.</em>
+    </li>
+  </ol>
+
+  <div class="insight">
+    <p><strong>The big picture:</strong> Topological deep learning isn't just a new flavor of GNN. It's a <em>category-theoretic</em> framework that treats deep learning layers as functors on topological domains. The combinatorial complex provides the most general domain; cochains provide the signals; higher-order message passing provides the computation; and the Hodge Laplacian provides spectral grounding. The Vinci/CTNN extension adds morphisms between feature spaces (the copresheaf), turning each message-passing step into a <em>structure-preserving map</em> rather than a flat aggregation. This is what enables it to capture the anisotropic, heterogeneous physics of semiconductor thermal simulation.</p>
+  </div>
+</section>
+<div class="footer-nav"><a href="tdl-07-architectures.html"><span class="dir">← Previous</span><span class="title">Hodge Theory & the Architecture Zoo</span></a><a class="next" href="tdl-index.html"><span class="dir">Next →</span><span class="title">Course Home</span></a></div>
+</main>
+<footer><p><a href="tdl-index.html">← Course Home</a> · <a href="index.html">All Notes</a></p></footer>
+</body>
+</html>

@@ -129,22 +129,32 @@ footer a { color: var(--accent); text-decoration: none; }
     </div>
   </a>
 
-  <a class="ch-card" href="tdl-02-edge-signals.html">
+  <a class="ch-card" href="tdl-02-gnn.html">
     <div class="ch-num">02</div>
+    <div class="ch-body">
+      <h3>Message Passing on Graphs</h3>
+      <p>From feedforward neural networks to GNNs. The GCN layer deconstructed: normalized adjacency, neighborhood aggregation, linear transform, and activation — with a full numerical walkthrough on our running example.</p>
+      <div class="topics">Feedforward review · GCN equation · Â construction · Complete toy example · Receptive field</div>
+      <div class="rank-dots"><span class="rank-dot r0" title="rank 0"></span><span class="rank-dot r1" title="rank 1"></span></div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="tdl-03-edge-signals.html">
+    <div class="ch-num">03</div>
     <div class="ch-body">
       <h3>Edge Signals &amp; the Discrete Curl</h3>
       <p>Promoting the graph to a simplicial complex. The boundary matrix B₁₂, oriented face boundaries, 1-cochains as edge flows, the discrete curl, and the Hodge Laplacian L₁ on edges.</p>
-      <div class="topics">Sections 3–6 · Oriented boundaries · curl(grad) = 0 · L₁ = L₁ᵈᵒʷⁿ + L₁ᵘᵖ</div>
+      <div class="topics">Oriented boundaries · curl(grad) = 0 · L₁ = L₁ᵈᵒʷⁿ + L₁ᵘᵖ</div>
       <div class="rank-dots"><span class="rank-dot r0" title="rank 0"></span><span class="rank-dot r1" title="rank 1"></span><span class="rank-dot r2" title="rank 2"></span></div>
     </div>
   </a>
 
-  <a class="ch-card" href="tdl-03-face-signals.html">
-    <div class="ch-num">03</div>
+  <a class="ch-card" href="tdl-04-face-signals.html">
+    <div class="ch-num">04</div>
     <div class="ch-body">
       <h3>Face Signals &amp; the Hodge Story</h3>
       <p>2-cochains on faces, the face Laplacian L₂, Betti numbers as topological invariants, the Euler characteristic, and the complete discrete de Rham complex with all operators and eigenvalues.</p>
-      <div class="topics">Sections 7–8 · Betti numbers · Euler–Poincaré theorem · Full Hodge diamond</div>
+      <div class="topics">Betti numbers · Euler–Poincaré theorem · Full Hodge diamond</div>
       <div class="rank-dots"><span class="rank-dot r0" title="rank 0"></span><span class="rank-dot r1" title="rank 1"></span><span class="rank-dot r2" title="rank 2"></span></div>
     </div>
   </a>
@@ -152,12 +162,12 @@ footer a { color: var(--accent); text-decoration: none; }
   <!-- PART II -->
   <div class="section-label">Part II — Topological Domains</div>
 
-  <a class="ch-card" href="tdl-04-complexes.html">
-    <div class="ch-num">04</div>
+  <a class="ch-card" href="tdl-05-complexes.html">
+    <div class="ch-num">05</div>
     <div class="ch-body">
       <h3>Simplicial, Cell &amp; Combinatorial Complexes</h3>
       <p>The hierarchy of topological domains: simplicial complexes (rigid triangulations), cell complexes (flexible polygons), and combinatorial complexes (the maximally general setting from Hajij et al.).</p>
-      <div class="topics">Sections 3–5 from paper · Closure properties · CC axioms · Comparison table</div>
+      <div class="topics">Closure properties · CC axioms · Comparison table</div>
       <div class="rank-dots"><span class="rank-dot r0" title="rank 0"></span><span class="rank-dot r1" title="rank 1"></span><span class="rank-dot r2" title="rank 2"></span><span class="rank-dot r3" title="rank 3"></span></div>
     </div>
   </a>
@@ -165,30 +175,30 @@ footer a { color: var(--accent); text-decoration: none; }
   <!-- PART III -->
   <div class="section-label">Part III — Neural Networks on Topological Domains</div>
 
-  <a class="ch-card" href="tdl-05-message-passing.html">
-    <div class="ch-num">05</div>
+  <a class="ch-card" href="tdl-06-message-passing.html">
+    <div class="ch-num">06</div>
     <div class="ch-body">
       <h3>Signals, Neighborhoods &amp; Message Passing</h3>
       <p>Feature spaces on cells of any rank (cochains), the three types of topological adjacency, and the general higher-order message passing (HOMP) framework.</p>
-      <div class="topics">Sections 4–7 from paper · Co-adjacency · Incidence · Upper/lower adjacency · HOMP update rule</div>
+      <div class="topics">Co-adjacency · Incidence · Upper/lower adjacency · HOMP update rule</div>
     </div>
   </a>
 
-  <a class="ch-card" href="tdl-06-architectures.html">
-    <div class="ch-num">06</div>
+  <a class="ch-card" href="tdl-07-architectures.html">
+    <div class="ch-num">07</div>
     <div class="ch-body">
       <h3>Hodge Theory &amp; the Architecture Zoo</h3>
       <p>The Hodge Laplacian hierarchy, spectral methods for higher-order signals, and a map of existing topological neural network architectures: SNN, MPSN, CWN, CAN, CTNN, and more.</p>
-      <div class="topics">Sections 7, 9 from paper · Hodge decomposition · Architecture landscape · Hajij unification</div>
+      <div class="topics">Hodge decomposition · Architecture landscape · Hajij unification</div>
     </div>
   </a>
 
-  <a class="ch-card" href="tdl-07-applications.html">
-    <div class="ch-num">07</div>
+  <a class="ch-card" href="tdl-08-applications.html">
+    <div class="ch-num">08</div>
     <div class="ch-body">
       <h3>Applications &amp; Reading Roadmap</h3>
       <p>Connecting topological deep learning to thermal physics and semiconductor simulation. Message passing as PDE iteration. Section-by-section guide to the full Hajij et al. paper.</p>
-      <div class="topics">Sections 11–12 · Chip package → CC mapping · Anisotropic message passing · Key papers</div>
+      <div class="topics">Chip package → CC mapping · Anisotropic message passing · Key papers</div>
     </div>
   </a>
 
