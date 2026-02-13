@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Guided Introduction to Topological Deep Learning — Course Home</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #faf8f5; --text: #2a2520; --text-muted: #6b6560;
+  --accent: #b44a2f; --accent2: #2a6b5a; --accent3: #3a5a8c; --accent4: #8b5a8c;
+  --border: #d5d0c8; --card: #ffffff;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 17px; }
+body { font-family: 'Crimson Pro', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.72; -webkit-font-smoothing: antialiased; }
+
+header {
+  background: linear-gradient(175deg, #1a1512 0%, #2a2018 40%, #3a2a1f 100%);
+  color: #f0ece6; padding: 4rem 2rem 3rem; position: relative; overflow: hidden;
+}
+header::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 600px 400px at 20% 80%, rgba(180,74,47,0.15), transparent),
+    radial-gradient(ellipse 500px 300px at 80% 20%, rgba(42,107,90,0.12), transparent);
+}
+header .container { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; }
+header .back { font-family: 'Source Sans 3', sans-serif; font-size: 0.82rem; color: #8a8078; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+header .back:hover { color: #e8a88a; }
+header h1 { font-size: 2.3rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.6rem; }
+header h1 strong { font-weight: 700; color: #e8a88a; }
+header .subtitle { font-family: 'Source Sans 3', sans-serif; font-size: 0.95rem; color: #b0a89e; max-width: 560px; line-height: 1.6; }
+
+main { max-width: 780px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+.section-label {
+  font-family: 'Source Sans 3', sans-serif; font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.13em; color: var(--text-muted);
+  margin-bottom: 1rem; margin-top: 2.5rem;
+  display: flex; align-items: center; gap: 0.8rem;
+}
+.section-label:first-child { margin-top: 0; }
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.ch-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 1.3rem 1.6rem; margin-bottom: 0.7rem;
+  box-shadow: 0 2px 8px rgba(42,37,32,0.06);
+  transition: box-shadow 0.25s, border-color 0.25s, transform 0.25s;
+  text-decoration: none; display: flex; align-items: flex-start; gap: 1.2rem; color: var(--text);
+}
+a.ch-card:hover { box-shadow: 0 6px 24px rgba(42,37,32,0.12); border-color: var(--accent); transform: translateY(-1px); }
+
+.ch-card .ch-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 500;
+  color: var(--border); min-width: 2.2rem; text-align: center; line-height: 1;
+  padding-top: 0.3rem;
+}
+a.ch-card:hover .ch-num { color: var(--accent); }
+
+.ch-card .ch-body { flex: 1; }
+.ch-card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.2rem; line-height: 1.3; }
+.ch-card p {
+  font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem;
+  color: var(--text-muted); line-height: 1.45; margin: 0;
+}
+.ch-card .topics {
+  font-family: 'Source Sans 3', sans-serif; font-size: 0.75rem;
+  color: #b0a89e; margin-top: 0.3rem;
+}
+
+.ch-card .rank-dots { display: flex; gap: 0.3rem; margin-top: 0.4rem; }
+.rank-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.rank-dot.r0 { background: var(--accent); }
+.rank-dot.r1 { background: var(--accent2); }
+.rank-dot.r2 { background: var(--accent3); }
+.rank-dot.r3 { background: var(--accent4); }
+
+.prereq {
+  background: #f8f4ee; border: 1px solid var(--border); border-radius: 8px;
+  padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+  font-family: 'Source Sans 3', sans-serif; font-size: 0.9rem; color: var(--text-muted);
+}
+.prereq strong { color: var(--text); }
+
+footer {
+  text-align: center; padding: 2.5rem 2rem;
+  font-family: 'Source Sans 3', sans-serif; font-size: 0.82rem; color: var(--text-muted);
+  border-top: 1px solid var(--border); max-width: 780px; margin: 0 auto;
+}
+footer a { color: var(--accent); text-decoration: none; }
+
+@media (max-width: 640px) { html { font-size: 15px; } header h1 { font-size: 1.8rem; } main { padding: 2rem 1.2rem; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a class="back" href="index.html">← All Courses</a>
+    <h1>A Guided Introduction to<br><strong>Topological Deep Learning</strong></h1>
+    <p class="subtitle">
+      Background for reading Hajij et al., "Topological Deep Learning: Going Beyond Graph Data."
+      Builds from scratch with worked examples, step-by-step matrix computations, and connections to physics.
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <div class="prereq">
+    <strong>Prerequisites:</strong> Linear algebra (matrix multiplication, eigenvalues, null spaces), basic calculus, some familiarity with neural networks. No algebraic topology background assumed — everything is built from first principles.
+  </div>
+
+  <!-- PART I -->
+  <div class="section-label">Part I — The Discrete de Rham Complex</div>
+
+  <a class="ch-card" href="tdl-01-graphs.html">
+    <div class="ch-num">01</div>
+    <div class="ch-body">
+      <h3>Graphs as Combinatorial Objects</h3>
+      <p>Why go beyond graphs. The adjacency matrix, signed incidence matrix, degree matrix, and graph Laplacian. Full eigendecomposition and spectral structure. The graph Fourier transform.</p>
+      <div class="topics">Sections 1–2 · 8 figures · Worked eigenvalue example · Spectral graph convolution</div>
+      <div class="rank-dots"><span class="rank-dot r0" title="rank 0"></span><span class="rank-dot r1" title="rank 1"></span></div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="tdl-02-edge-signals.html">
+    <div class="ch-num">02</div>
+    <div class="ch-body">
+      <h3>Edge Signals &amp; the Discrete Curl</h3>
+      <p>Promoting the graph to a simplicial complex. The boundary matrix B₁₂, oriented face boundaries, 1-cochains as edge flows, the discrete curl, and the Hodge Laplacian L₁ on edges.</p>
+      <div class="topics">Sections 3–6 · Oriented boundaries · curl(grad) = 0 · L₁ = L₁ᵈᵒʷⁿ + L₁ᵘᵖ</div>
+      <div class="rank-dots"><span class="rank-dot r0" title="rank 0"></span><span class="rank-dot r1" title="rank 1"></span><span class="rank-dot r2" title="rank 2"></span></div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="tdl-03-face-signals.html">
+    <div class="ch-num">03</div>
+    <div class="ch-body">
+      <h3>Face Signals &amp; the Hodge Story</h3>
+      <p>2-cochains on faces, the face Laplacian L₂, Betti numbers as topological invariants, the Euler characteristic, and the complete discrete de Rham complex with all operators and eigenvalues.</p>
+      <div class="topics">Sections 7–8 · Betti numbers · Euler–Poincaré theorem · Full Hodge diamond</div>
+      <div class="rank-dots"><span class="rank-dot r0" title="rank 0"></span><span class="rank-dot r1" title="rank 1"></span><span class="rank-dot r2" title="rank 2"></span></div>
+    </div>
+  </a>
+
+  <!-- PART II -->
+  <div class="section-label">Part II — Topological Domains</div>
+
+  <a class="ch-card" href="tdl-04-complexes.html">
+    <div class="ch-num">04</div>
+    <div class="ch-body">
+      <h3>Simplicial, Cell &amp; Combinatorial Complexes</h3>
+      <p>The hierarchy of topological domains: simplicial complexes (rigid triangulations), cell complexes (flexible polygons), and combinatorial complexes (the maximally general setting from Hajij et al.).</p>
+      <div class="topics">Sections 3–5 from paper · Closure properties · CC axioms · Comparison table</div>
+      <div class="rank-dots"><span class="rank-dot r0" title="rank 0"></span><span class="rank-dot r1" title="rank 1"></span><span class="rank-dot r2" title="rank 2"></span><span class="rank-dot r3" title="rank 3"></span></div>
+    </div>
+  </a>
+
+  <!-- PART III -->
+  <div class="section-label">Part III — Neural Networks on Topological Domains</div>
+
+  <a class="ch-card" href="tdl-05-message-passing.html">
+    <div class="ch-num">05</div>
+    <div class="ch-body">
+      <h3>Signals, Neighborhoods &amp; Message Passing</h3>
+      <p>Feature spaces on cells of any rank (cochains), the three types of topological adjacency, and the general higher-order message passing (HOMP) framework.</p>
+      <div class="topics">Sections 4–7 from paper · Co-adjacency · Incidence · Upper/lower adjacency · HOMP update rule</div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="tdl-06-architectures.html">
+    <div class="ch-num">06</div>
+    <div class="ch-body">
+      <h3>Hodge Theory &amp; the Architecture Zoo</h3>
+      <p>The Hodge Laplacian hierarchy, spectral methods for higher-order signals, and a map of existing topological neural network architectures: SNN, MPSN, CWN, CAN, CTNN, and more.</p>
+      <div class="topics">Sections 7, 9 from paper · Hodge decomposition · Architecture landscape · Hajij unification</div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="tdl-07-applications.html">
+    <div class="ch-num">07</div>
+    <div class="ch-body">
+      <h3>Applications &amp; Reading Roadmap</h3>
+      <p>Connecting topological deep learning to thermal physics and semiconductor simulation. Message passing as PDE iteration. Section-by-section guide to the full Hajij et al. paper.</p>
+      <div class="topics">Sections 11–12 · Chip package → CC mapping · Anisotropic message passing · Key papers</div>
+    </div>
+  </a>
+
+</main>
+
+<footer>
+  <p><a href="index.html">← All Courses</a> · <a href="https://github.com/carlm451/carlm451.github.io">Source on GitHub</a></p>
+</footer>
+
+</body>
+</html>

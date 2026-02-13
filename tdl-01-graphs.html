@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graphs as <strong>Combinatorial Objects</strong> — Topological Deep Learning Course</title>
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+
+:root {
+  --bg: #faf8f5; --bg-alt: #f0ede8; --text: #2a2520; --text-muted: #6b6560;
+  --accent: #b44a2f; --accent2: #2a6b5a; --accent3: #3a5a8c; --accent4: #8b5a8c;
+  --border: #d5d0c8; --card: #ffffff;
+  --shadow: 0 2px 12px rgba(42,37,32,0.08); --shadow-lg: 0 8px 32px rgba(42,37,32,0.12);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; font-size: 17px; }
+body { font-family: 'Crimson Pro', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.72; -webkit-font-smoothing: antialiased; }
+.container { max-width: 820px; margin: 0 auto; padding: 0 2rem; }
+
+/* Header */
+header { background: linear-gradient(175deg, #1a1512 0%, #2a2018 40%, #3a2a1f 100%); color: #f0ece6; padding: 3.5rem 2rem 2.5rem; position: relative; overflow: hidden; }
+header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 600px 400px at 20% 80%, rgba(180,74,47,0.15), transparent), radial-gradient(ellipse 500px 300px at 80% 20%, rgba(42,107,90,0.12), transparent); }
+header .container { position: relative; z-index: 1; }
+header .breadcrumb { font-family: 'Source Sans 3', sans-serif; font-size: 0.82rem; color: #8a8078; margin-bottom: 0.8rem; }
+header .breadcrumb a { color: #c8a888; text-decoration: none; }
+header .breadcrumb a:hover { color: #e8a88a; }
+header .ch-num { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent); display: block; margin-bottom: 0.3rem; font-weight: 500; letter-spacing: 0.05em; }
+header h1 { font-size: 2.2rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.6rem; }
+header h1 strong { font-weight: 700; color: #e8a88a; }
+header .subtitle { font-family: 'Source Sans 3', sans-serif; font-size: 0.95rem; color: #b0a89e; max-width: 560px; line-height: 1.6; }
+
+/* Navigation */
+nav.ch-nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 0.8rem 0; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+nav.ch-nav .container { display: flex; justify-content: space-between; align-items: center; }
+nav.ch-nav a { font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; color: var(--accent); text-decoration: none; display: flex; align-items: center; gap: 0.3rem; }
+nav.ch-nav a:hover { color: #d05a3f; }
+nav.ch-nav .disabled { color: var(--border); pointer-events: none; }
+nav.ch-nav .ch-title { font-family: 'Source Sans 3', sans-serif; font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* Sections */
+section { margin-bottom: 3.5rem; padding-top: 1rem; }
+section h2 { font-size: 1.9rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--text); letter-spacing: -0.01em; }
+section h2 .sec-num { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent); display: block; margin-bottom: 0.3rem; font-weight: 500; }
+section h3 { font-size: 1.3rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.5rem; }
+section h4 { font-family: 'Source Sans 3', sans-serif; font-size: 1rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.4rem; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.04em; }
+p { margin-bottom: 1rem; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+/* Definition boxes */
+.def-box { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1.5rem 1.8rem; margin: 1.5rem 0; box-shadow: var(--shadow); }
+.def-box.green { border-left-color: var(--accent2); }
+.def-box.blue { border-left-color: var(--accent3); }
+.def-box.purple { border-left-color: var(--accent4); }
+.def-box .def-label { font-family: 'Source Sans 3', sans-serif; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+.def-box .def-label { color: var(--accent); }
+.def-box.green .def-label { color: var(--accent2); }
+.def-box.blue .def-label { color: var(--accent3); }
+.def-box.purple .def-label { color: var(--accent4); }
+
+/* Insight boxes */
+.insight { background: linear-gradient(135deg, #f8f4ee, #f5f0e8); border-radius: 8px; padding: 1.3rem 1.6rem; margin: 1.5rem 0; position: relative; }
+.insight::before { content: '💡'; position: absolute; top: -0.6rem; left: 1rem; font-size: 1.1rem; background: var(--bg); padding: 0 0.3rem; }
+.insight.physics::before { content: '⚛️'; }
+.insight.warning::before { content: '⚠️'; }
+.insight.key::before { content: '🔑'; }
+.insight p:last-child { margin-bottom: 0; }
+.insight strong { color: var(--accent); }
+
+/* Figures */
+.figure { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 2rem 0; text-align: center; box-shadow: var(--shadow); }
+.figure svg { max-width: 100%; height: auto; }
+.figure .caption { font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem; text-align: left; line-height: 1.5; }
+.figure .caption strong { color: var(--text); font-weight: 600; }
+
+/* Math */
+.math-block { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; box-shadow: var(--shadow); }
+.math-block .math-label { font-family: 'Source Sans 3', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+
+/* Tables */
+.comp-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-family: 'Source Sans 3', sans-serif; font-size: 0.9rem; }
+.comp-table th { background: var(--bg-alt); font-weight: 700; text-align: left; padding: 0.7rem 1rem; border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+.comp-table td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+
+/* Steps */
+.steps { margin: 1.5rem 0; padding-left: 0; list-style: none; counter-reset: step; }
+.steps li { counter-increment: step; padding: 0.8rem 0 0.8rem 3rem; position: relative; border-left: 2px solid var(--border); margin-left: 1rem; }
+.steps li:last-child { border-left-color: transparent; }
+.steps li::before { content: counter(step); position: absolute; left: -0.85rem; top: 0.7rem; width: 1.7rem; height: 1.7rem; background: var(--accent); color: white; border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; background: var(--bg-alt); padding: 0.15em 0.4em; border-radius: 4px; }
+.divider { border: none; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 3rem 0; }
+
+/* Footer nav */
+.footer-nav { display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.footer-nav a { font-family: 'Source Sans 3', sans-serif; text-decoration: none; color: var(--text); padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: 8px; flex: 1; transition: border-color 0.2s, box-shadow 0.2s; }
+.footer-nav a:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.footer-nav .dir { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); display: block; margin-bottom: 0.2rem; }
+.footer-nav .title { font-size: 0.9rem; font-weight: 600; }
+.footer-nav .next { text-align: right; }
+.footer-nav .spacer { flex: 1; }
+
+footer { background: #1a1512; color: #8a8078; padding: 2.5rem 2rem; margin-top: 3rem; font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; text-align: center; }
+footer a { color: #c8a888; text-decoration: none; }
+
+/* SVG tokens */
+.node-v { fill: #e8a88a; stroke: #b44a2f; }
+.node-e { fill: #8ec5b6; stroke: #2a6b5a; }
+.node-f { fill: #a8c0e0; stroke: #3a5a8c; }
+.edge-line { stroke: #6b6560; stroke-width: 1.5; }
+.label-text { font-family: 'Source Sans 3', sans-serif; font-size: 11px; fill: #2a2520; text-anchor: middle; }
+.label-sm { font-family: 'Source Sans 3', sans-serif; font-size: 10px; fill: #6b6560; text-anchor: middle; }
+
+@media (max-width: 700px) { html { font-size: 15px; } header h1 { font-size: 1.8rem; } .container { padding: 0 1.2rem; } .footer-nav { flex-direction: column; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / <a href="tdl-index.html">Topological Deep Learning</a> / Chapter 1</div>
+    <span class="ch-num">Chapter 01</span>
+    <h1>Graphs as <strong>Combinatorial Objects</strong></h1>
+    <p class="subtitle">Why go beyond graphs, the adjacency and incidence matrices, the graph Laplacian, eigenvalues, spectral structure, and the discrete gradient.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="tdl-index.html">← Course Home</a><span class="ch-title">Chapter 1</span><a href="tdl-02-edge-signals.html">Edge Signals & the Discrete Curl →</a></div></nav>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+<section id="sec1">
+  <h2><span class="sec-num">01</span>Why Go Beyond Graphs?</h2>
+
+  <p>
+    Graph neural networks (GNNs) have been spectacularly successful: molecular property prediction, social network analysis, physics simulation, recommendation systems. But graphs encode only <strong>pairwise relationships</strong> — an edge connects exactly two nodes. Many real-world phenomena involve <em>multi-way interactions</em> that are not naturally decomposable into pairs.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 220" width="700" height="220">
+      <!-- Graph (pairwise) -->
+      <text x="120" y="20" font-family="Source Sans 3, sans-serif" font-size="13" font-weight="600" fill="#2a2520" text-anchor="middle">Graph (pairwise)</text>
+      <circle cx="70" cy="100" r="14" class="node-v" stroke-width="2"/>
+      <circle cx="170" cy="70" r="14" class="node-v" stroke-width="2"/>
+      <circle cx="170" cy="140" r="14" class="node-v" stroke-width="2"/>
+      <circle cx="120" cy="180" r="14" class="node-v" stroke-width="2"/>
+      <line x1="70" y1="100" x2="170" y2="70" class="edge-line"/>
+      <line x1="70" y1="100" x2="170" y2="140" class="edge-line"/>
+      <line x1="170" y1="70" x2="170" y2="140" class="edge-line"/>
+      <line x1="70" y1="100" x2="120" y2="180" class="edge-line"/>
+      <text x="60" y="105" class="label-text" font-size="10" fill="white" text-anchor="middle">A</text>
+      <text x="170" y="75" class="label-text" font-size="10" fill="white" text-anchor="middle">B</text>
+      <text x="170" y="145" class="label-text" font-size="10" fill="white" text-anchor="middle">C</text>
+      <text x="120" y="185" class="label-text" font-size="10" fill="white" text-anchor="middle">D</text>
+
+      <!-- Arrow -->
+      <text x="270" y="110" font-family="Source Sans 3, sans-serif" font-size="24" fill="#b0a89e" text-anchor="middle">→</text>
+
+      <!-- Simplicial complex (with filled triangle) -->
+      <text x="430" y="20" font-family="Source Sans 3, sans-serif" font-size="13" font-weight="600" fill="#2a2520" text-anchor="middle">Simplicial Complex</text>
+      <polygon points="370,100 470,70 470,140" fill="#a8c0e0" fill-opacity="0.3" stroke="#3a5a8c" stroke-width="1.5"/>
+      <line x1="370" y1="100" x2="470" y2="70" class="edge-line" stroke="#2a6b5a"/>
+      <line x1="370" y1="100" x2="470" y2="140" class="edge-line" stroke="#2a6b5a"/>
+      <line x1="470" y1="70" x2="470" y2="140" class="edge-line" stroke="#2a6b5a"/>
+      <line x1="370" y1="100" x2="420" y2="180" class="edge-line" stroke="#2a6b5a"/>
+      <circle cx="370" cy="100" r="14" class="node-v" stroke-width="2"/>
+      <circle cx="470" cy="70" r="14" class="node-v" stroke-width="2"/>
+      <circle cx="470" cy="140" r="14" class="node-v" stroke-width="2"/>
+      <circle cx="420" cy="180" r="14" class="node-v" stroke-width="2"/>
+      <text x="430" y="112" class="label-sm" fill="#3a5a8c" font-weight="600">2-cell</text>
+
+      <!-- Arrow -->
+      <text x="550" y="110" font-family="Source Sans 3, sans-serif" font-size="24" fill="#b0a89e" text-anchor="middle">→</text>
+
+      <!-- Combinatorial complex (with non-triangular higher cell) -->
+      <text x="650" y="20" font-family="Source Sans 3, sans-serif" font-size="13" font-weight="600" fill="#2a2520" text-anchor="middle">Combinatorial Complex</text>
+      <path d="M 590,95 Q 620,50 670,65 Q 700,90 690,130 Q 660,160 620,150 Q 590,130 590,95 Z" fill="#c8a8d0" fill-opacity="0.25" stroke="#8b5a8c" stroke-width="1.5"/>
+      <line x1="600" y1="90" x2="670" y2="65" class="edge-line" stroke="#2a6b5a"/>
+      <line x1="600" y1="90" x2="640" y2="150" class="edge-line" stroke="#2a6b5a"/>
+      <line x1="670" y1="65" x2="690" y2="125" class="edge-line" stroke="#2a6b5a"/>
+      <line x1="690" y1="125" x2="640" y2="150" class="edge-line" stroke="#2a6b5a"/>
+      <line x1="600" y1="90" x2="620" y2="190" class="edge-line" stroke="#2a6b5a"/>
+      <circle cx="600" cy="90" r="12" class="node-v" stroke-width="2"/>
+      <circle cx="670" cy="65" r="12" class="node-v" stroke-width="2"/>
+      <circle cx="690" cy="125" r="12" class="node-v" stroke-width="2"/>
+      <circle cx="640" cy="150" r="12" class="node-v" stroke-width="2"/>
+      <circle cx="620" cy="190" r="12" class="node-v" stroke-width="2"/>
+      <text x="650" y="108" class="label-sm" fill="#8b5a8c" font-weight="600">2-cell</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.1.</strong> From pairwise to higher-order. A graph captures only edges between pairs. A simplicial complex can represent a filled triangle (a 3-body interaction). A combinatorial complex allows arbitrary higher-order cells — here, a 2-cell spanning four nodes that isn't a triangle.</div>
+  </div>
+
+  <p>
+    Consider heat conduction through a chip package. A graph can model pairwise thermal contacts between adjacent layers, but <strong>a volumetric region of material</strong> — a BEOL tile, say — is fundamentally a higher-dimensional object. Its thermal behavior depends on the collective interaction of all boundary faces, not just pairwise contacts. Topological deep learning provides the mathematical machinery to assign features to, and pass messages between, objects of <em>any dimension</em>.
+  </p>
+
+  <div class="insight physics">
+    <p><strong>Physics analogy:</strong> In electromagnetism, you already work with objects of different dimension — charges live on points (0-cells), currents flow along paths (1-cells), flux passes through surfaces (2-cells), and charge density fills volumes (3-cells). The de Rham complex formalizes this hierarchy. Topological deep learning is, in a precise sense, the neural network version of that same idea.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 2 -->
+<!-- ============================================================ -->
+<hr class="divider">
+<section id="sec2">
+  <h2><span class="sec-num">02</span>Graphs as Combinatorial Objects</h2>
+
+  <p>
+    Before building up, let's establish the language carefully. A <strong>graph</strong> $G = (V, E)$ consists of a set of <em>vertices</em> (or <em>nodes</em>) $V$ and a set of <em>edges</em> $E \subseteq \binom{V}{2}$, where each edge is an unordered pair of distinct vertices.
+  </p>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Graph</div>
+    <p>A graph $G = (V, E)$ is a pair where $V$ is a finite set (vertices) and $E \subseteq \{\{v, w\} : v, w \in V, \, v \neq w\}$ is a set of unordered pairs (edges).</p>
+  </div>
+
+  <p>
+    Key point: every vertex has <strong>rank 0</strong>, and every edge has <strong>rank 1</strong>. This rank corresponds to dimension — a vertex is a 0-dimensional object, an edge is 1-dimensional. A graph has exactly two ranks. The entire enterprise of topological deep learning is about allowing <em>more ranks</em>.
+  </p>
+
+  <h3>Adjacency and Incidence</h3>
+  <p>
+    Two vertices $v, w$ are <strong>adjacent</strong> (written $v \sim w$) if $\{v,w\} \in E$. A vertex $v$ is <strong>incident</strong> to an edge $e$ if $v \in e$. These two relations — adjacency (same rank) and incidence (cross rank) — are the only structural relationships in a graph. The adjacency matrix $\mathbf{A} \in \{0,1\}^{|V| \times |V|}$ and the incidence matrix $\mathbf{B}_1 \in \{-1,0,1\}^{|V| \times |E|}$ encode these.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 600 200" width="600" height="200">
+      <!-- Graph -->
+      <circle cx="80" cy="60" r="16" class="node-v" stroke-width="2"/>
+      <circle cx="180" cy="40" r="16" class="node-v" stroke-width="2"/>
+      <circle cx="180" cy="130" r="16" class="node-v" stroke-width="2"/>
+      <circle cx="80" cy="150" r="16" class="node-v" stroke-width="2"/>
+      <line x1="80" y1="60" x2="180" y2="40" class="edge-line"/>
+      <line x1="80" y1="60" x2="180" y2="130" class="edge-line"/>
+      <line x1="180" y1="40" x2="180" y2="130" class="edge-line"/>
+      <line x1="80" y1="60" x2="80" y2="150" class="edge-line"/>
+      <line x1="80" y1="150" x2="180" y2="130" class="edge-line"/>
+      <text x="80" y="65" fill="white" font-family="Source Sans 3" font-size="11" text-anchor="middle" font-weight="600">0</text>
+      <text x="180" y="45" fill="white" font-family="Source Sans 3" font-size="11" text-anchor="middle" font-weight="600">1</text>
+      <text x="180" y="135" fill="white" font-family="Source Sans 3" font-size="11" text-anchor="middle" font-weight="600">2</text>
+      <text x="80" y="155" fill="white" font-family="Source Sans 3" font-size="11" text-anchor="middle" font-weight="600">3</text>
+      <!-- Edge labels -->
+      <text x="138" y="38" class="label-sm" fill="#2a6b5a" font-weight="600">a</text>
+      <text x="143" y="105" class="label-sm" fill="#2a6b5a" font-weight="600">b</text>
+      <text x="192" y="90" class="label-sm" fill="#2a6b5a" font-weight="600">c</text>
+      <text x="65" y="110" class="label-sm" fill="#2a6b5a" font-weight="600">d</text>
+      <text x="138" y="153" class="label-sm" fill="#2a6b5a" font-weight="600">e</text>
+
+      <!-- Adjacency Matrix -->
+      <text x="340" y="25" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#6b6560" text-anchor="middle">ADJACENCY A</text>
+      <text x="340" y="60" font-family="JetBrains Mono" font-size="12" fill="#2a2520" text-anchor="middle">0 1 1 1</text>
+      <text x="340" y="80" font-family="JetBrains Mono" font-size="12" fill="#2a2520" text-anchor="middle">1 0 1 0</text>
+      <text x="340" y="100" font-family="JetBrains Mono" font-size="12" fill="#2a2520" text-anchor="middle">1 1 0 1</text>
+      <text x="340" y="120" font-family="JetBrains Mono" font-size="12" fill="#2a2520" text-anchor="middle">1 0 1 0</text>
+      <!-- brackets -->
+      <text x="290" y="90" font-family="Crimson Pro" font-size="60" fill="#b0a89e" text-anchor="middle">[</text>
+      <text x="390" y="90" font-family="Crimson Pro" font-size="60" fill="#b0a89e" text-anchor="middle">]</text>
+
+      <!-- Incidence Matrix -->
+      <text x="520" y="25" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#6b6560" text-anchor="middle">INCIDENCE B₁</text>
+      <text x="520" y="55" font-family="JetBrains Mono" font-size="11" fill="#2a2520" text-anchor="middle">a  b  c  d  e</text>
+      <text x="520" y="75" font-family="JetBrains Mono" font-size="11" fill="#2a2520" text-anchor="middle"> 1  1  0  1  0</text>
+      <text x="520" y="92" font-family="JetBrains Mono" font-size="11" fill="#2a2520" text-anchor="middle">-1  0  1  0  0</text>
+      <text x="520" y="109" font-family="JetBrains Mono" font-size="11" fill="#2a2520" text-anchor="middle"> 0 -1 -1  0  1</text>
+      <text x="520" y="126" font-family="JetBrains Mono" font-size="11" fill="#2a2520" text-anchor="middle"> 0  0  0 -1 -1</text>
+      <text x="458" y="98" font-family="Crimson Pro" font-size="55" fill="#b0a89e" text-anchor="middle">[</text>
+      <text x="582" y="98" font-family="Crimson Pro" font-size="55" fill="#b0a89e" text-anchor="middle">]</text>
+
+      <text x="300" y="175" font-family="Source Sans 3" font-size="11" fill="#6b6560">Note: B₁ᵀB₁ = L₀ (the graph Laplacian, up to sign/degree corrections)</text>
+    </svg>
+    <div class="caption"><strong>Figure 2.1.</strong> A graph with 4 vertices and 5 edges, its adjacency matrix <strong>A</strong>, and its signed incidence matrix <strong>B₁</strong>. The Laplacian $L_0 = D - A$ (where $D$ is the degree matrix) governs diffusion on the graph — this is the discrete analogue of $\nabla^2$.</div>
+  </div>
+
+  <h3>The Signed Incidence Matrix: Why the ±1?</h3>
+
+  <p>
+    You'll notice the incidence matrix $\mathbf{B}_1$ contains $+1$ and $-1$ entries, not just 0/1. This is not an arbitrary convention — it's what turns the incidence matrix into a <strong>discrete gradient operator</strong>, connecting graph theory to the calculus you already know.
+  </p>
+
+  <p>
+    A graph is inherently unordered — edge $\{v_0, v_1\}$ has no preferred direction. But to do linear algebra (and especially to connect to calculus-like operators), we <strong>arbitrarily assign an orientation</strong> to each edge: pick one vertex as the "tail" (source) and the other as the "head" (target), like drawing an arrow.
+  </p>
+
+  <div class="def-box">
+    <div class="def-label">Convention — Signed Incidence</div>
+    <p>For an edge $e$ oriented as $v_{\text{tail}} \to v_{\text{head}}$:</p>
+    $$(\mathbf{B}_1)_{v,e} = \begin{cases} +1 & \text{if } v \text{ is the tail (source) of } e \\ -1 & \text{if } v \text{ is the head (target) of } e \\ 0 & \text{if } v \notin e \end{cases}$$
+  </div>
+
+  <p>
+    <strong>Why bother with signs?</strong> Because they make $\mathbf{B}_1^\top$ act as a <strong>discrete gradient</strong>. If $f$ is a scalar function on vertices (a 0-cochain — think temperature at nodes), then $\mathbf{B}_1^\top f$ gives the <em>difference</em> along each edge:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Discrete gradient</div>
+    $$\left(\mathbf{B}_1^\top f\right)_e \;=\; f(v_{\text{head}}) - f(v_{\text{tail}}) \quad\longleftrightarrow\quad (\nabla f) \cdot \hat{e}$$
+  </div>
+
+  <p>
+    This is the key payoff: the graph Laplacian emerges naturally as
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 660 210" width="660" height="210">
+      <!-- Edge with orientation -->
+      <text x="330" y="20" font-family="Source Sans 3" font-size="13" font-weight="700" fill="#2a2520" text-anchor="middle">Orientation and the Discrete Gradient</text>
+
+      <!-- Left: oriented edge -->
+      <circle cx="80" cy="100" r="18" class="node-v" stroke-width="2"/>
+      <circle cx="230" cy="100" r="18" class="node-v" stroke-width="2"/>
+      <line x1="98" y1="100" x2="208" y2="100" stroke="#2a6b5a" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+      <text x="80" y="106" fill="white" font-family="Source Sans 3" font-size="12" text-anchor="middle" font-weight="600">v₀</text>
+      <text x="230" y="106" fill="white" font-family="Source Sans 3" font-size="12" text-anchor="middle" font-weight="600">v₁</text>
+      <text x="155" y="88" font-family="Source Sans 3" font-size="11" fill="#2a6b5a" text-anchor="middle" font-weight="600">edge a</text>
+      <text x="80" y="140" font-family="Source Sans 3" font-size="11" fill="#b44a2f" text-anchor="middle" font-weight="600">+1 (tail)</text>
+      <text x="230" y="140" font-family="Source Sans 3" font-size="11" fill="#3a5a8c" text-anchor="middle" font-weight="600">−1 (head)</text>
+
+      <!-- Right: the gradient interpretation -->
+      <rect x="320" y="50" width="320" height="130" rx="8" fill="#f8f4ee" stroke="#d5d0c8"/>
+      <text x="480" y="75" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a2520" text-anchor="middle">If f(v₀) = 20°C, f(v₁) = 35°C:</text>
+      <text x="480" y="105" font-family="JetBrains Mono" font-size="12" fill="#2a2520" text-anchor="middle">(B₁ᵀf)_a = f(head) − f(tail)</text>
+      <text x="480" y="130" font-family="JetBrains Mono" font-size="12" fill="#2a6b5a" text-anchor="middle">         = 35 − 20 = +15</text>
+      <text x="480" y="160" font-family="Source Sans 3" font-size="11" fill="#6b6560" text-anchor="middle">→ "temperature rises along edge a"</text>
+    </svg>
+    <div class="caption"><strong>Figure 2.2.</strong> An arbitrary orientation on edge $a$ makes the incidence matrix a signed operator. Applying $\mathbf{B}_1^\top$ to a vertex signal computes the directional difference — a discrete gradient. The sign tells you the direction of increase.</div>
+  </div>
+
+  <h3>The Degree Matrix, the Laplacian, and Why We Care</h3>
+
+  <p>
+    Three matrices — the <strong>adjacency matrix</strong> $\mathbf{A}$, the <strong>degree matrix</strong> $\mathbf{D}$, and the <strong>incidence matrix</strong> $\mathbf{B}_1$ — are connected by a beautiful identity that turns graph structure into a diffusion operator. Let's define each precisely and then verify the identity by hand on our example.
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">Definition — Degree Matrix</div>
+    <p>The <strong>degree matrix</strong> $\mathbf{D} \in \mathbb{R}^{|V| \times |V|}$ is a <em>diagonal</em> matrix where each diagonal entry is the degree (number of incident edges) of that vertex:</p>
+    $$D_{vv} = \deg(v) = |\{e \in E : v \in e\}|, \qquad D_{vw} = 0 \;\text{ for } v \neq w$$
+    <p>It counts, for each vertex, how many connections it has. All off-diagonal entries are zero.</p>
+  </div>
+
+  <p>For the graph in Figure 2.1: vertex 0 touches edges $a, b, d$ (degree 3); vertex 1 touches $a, c$ (degree 2); vertex 2 touches $b, c, e$ (degree 3); vertex 3 touches $d, e$ (degree 2). So:</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 490" width="700" height="490">
+      <text x="350" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">Worked Example: B₁B₁ᵀ = D − A on the Figure 2.1 Graph</text>
+
+      <!-- Step 1: The three matrices -->
+      <text x="25" y="60" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#b44a2f">Step 1: Write down B₁, D, and A</text>
+
+      <!-- B₁ -->
+      <text x="95" y="88" font-family="Source Sans 3" font-size="11" font-weight="600" fill="#2a2520" text-anchor="middle">B₁ (4×5)</text>
+      <text x="45" y="108" font-family="JetBrains Mono" font-size="10" fill="#6b6560">a  b  c  d  e</text>
+      <text x="30" y="126" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[ 1  1  0  1  0]</text>
+      <text x="30" y="143" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[-1  0  1  0  0]</text>
+      <text x="30" y="160" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[ 0 -1 -1  0  1]</text>
+      <text x="30" y="177" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[ 0  0  0 -1 -1]</text>
+      <text x="8" y="126" font-family="JetBrains Mono" font-size="9" fill="#6b6560">0</text>
+      <text x="8" y="143" font-family="JetBrains Mono" font-size="9" fill="#6b6560">1</text>
+      <text x="8" y="160" font-family="JetBrains Mono" font-size="9" fill="#6b6560">2</text>
+      <text x="8" y="177" font-family="JetBrains Mono" font-size="9" fill="#6b6560">3</text>
+
+      <!-- D -->
+      <text x="310" y="88" font-family="Source Sans 3" font-size="11" font-weight="600" fill="#2a2520" text-anchor="middle">D (4×4)</text>
+      <text x="260" y="126" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[<tspan fill="#b44a2f" font-weight="600">3</tspan>  0  0  0]</text>
+      <text x="260" y="143" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[0  <tspan fill="#b44a2f" font-weight="600">2</tspan>  0  0]</text>
+      <text x="260" y="160" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[0  0  <tspan fill="#b44a2f" font-weight="600">3</tspan>  0]</text>
+      <text x="260" y="177" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[0  0  0  <tspan fill="#b44a2f" font-weight="600">2</tspan>]</text>
+      <text x="380" y="150" font-family="Source Sans 3" font-size="10" fill="#6b6560">← degrees on</text>
+      <text x="380" y="164" font-family="Source Sans 3" font-size="10" fill="#6b6560">   the diagonal</text>
+
+      <!-- A -->
+      <text x="560" y="88" font-family="Source Sans 3" font-size="11" font-weight="600" fill="#2a2520" text-anchor="middle">A (4×4)</text>
+      <text x="505" y="126" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[0  <tspan fill="#2a6b5a">1</tspan>  <tspan fill="#2a6b5a">1</tspan>  <tspan fill="#2a6b5a">1</tspan>]</text>
+      <text x="505" y="143" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[<tspan fill="#2a6b5a">1</tspan>  0  <tspan fill="#2a6b5a">1</tspan>  0]</text>
+      <text x="505" y="160" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[<tspan fill="#2a6b5a">1</tspan>  <tspan fill="#2a6b5a">1</tspan>  0  <tspan fill="#2a6b5a">1</tspan>]</text>
+      <text x="505" y="177" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[<tspan fill="#2a6b5a">1</tspan>  0  <tspan fill="#2a6b5a">1</tspan>  0]</text>
+
+      <!-- Divider -->
+      <line x1="25" y1="198" x2="680" y2="198" stroke="#d5d0c8" stroke-width="1"/>
+
+      <!-- Step 2: Compute B₁B₁ᵀ -->
+      <text x="25" y="224" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#b44a2f">Step 2: Compute B₁B₁ᵀ (each entry is a dot product of two rows of B₁)</text>
+
+      <!-- Highlight one calculation -->
+      <rect x="25" y="238" width="650" height="110" rx="6" fill="#f8f4ee" stroke="#d5d0c8"/>
+
+      <text x="40" y="260" font-family="Source Sans 3" font-size="11" fill="#2a2520" font-weight="600">Diagonal entries (row dotted with itself):</text>
+      <text x="40" y="280" font-family="JetBrains Mono" font-size="10.5" fill="#2a2520">(B₁B₁ᵀ)₀₀ = (1)²+(1)²+(0)²+(1)²+(0)² = <tspan fill="#b44a2f" font-weight="600">3</tspan>  = deg(v₀) ✓</text>
+      <text x="40" y="296" font-family="JetBrains Mono" font-size="10.5" fill="#2a2520">(B₁B₁ᵀ)₁₁ = (-1)²+(0)²+(1)²+(0)²+(0)² = <tspan fill="#b44a2f" font-weight="600">2</tspan>  = deg(v₁) ✓</text>
+
+      <text x="40" y="318" font-family="Source Sans 3" font-size="11" fill="#2a2520" font-weight="600">Off-diagonal entries (row 0 · row 1, row 0 · row 2, etc.):</text>
+      <text x="40" y="338" font-family="JetBrains Mono" font-size="10.5" fill="#2a2520">(B₁B₁ᵀ)₀₁ = (1)(-1)+(1)(0)+(0)(1)+(1)(0)+(0)(0) = <tspan fill="#3a5a8c" font-weight="600">−1</tspan>  (v₀~v₁: adjacent)</text>
+      <text x="40" y="355" font-family="JetBrains Mono" font-size="10.5" fill="#2a2520">(B₁B₁ᵀ)₁₃ = (-1)(0)+(0)(0)+(1)(0)+(0)(-1)+(0)(-1) = <tspan fill="#6b6560" font-weight="600"> 0</tspan>  (v₁≁v₃: not adjacent)</text>
+
+      <!-- Divider -->
+      <line x1="25" y1="370" x2="680" y2="370" stroke="#d5d0c8" stroke-width="1"/>
+
+      <!-- Step 3: Compare -->
+      <text x="25" y="396" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#b44a2f">Step 3: Verify B₁B₁ᵀ = D − A</text>
+
+      <!-- B₁B₁ᵀ result -->
+      <text x="95" y="418" font-family="Source Sans 3" font-size="11" font-weight="600" fill="#2a2520" text-anchor="middle">B₁B₁ᵀ</text>
+      <text x="40" y="438" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[ <tspan fill="#b44a2f" font-weight="600">3</tspan> -1 -1 -1]</text>
+      <text x="40" y="455" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[-1  <tspan fill="#b44a2f" font-weight="600">2</tspan> -1  0]</text>
+      <text x="40" y="472" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[-1 -1  <tspan fill="#b44a2f" font-weight="600">3</tspan> -1]</text>
+      <text x="40" y="489" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[-1  0 -1  <tspan fill="#b44a2f" font-weight="600">2</tspan>]</text>
+
+      <!-- Equals -->
+      <text x="218" y="465" font-family="Source Sans 3" font-size="22" fill="#2a6b5a" text-anchor="middle">=</text>
+
+      <!-- D - A -->
+      <text x="340" y="418" font-family="Source Sans 3" font-size="11" font-weight="600" fill="#2a2520" text-anchor="middle">D − A</text>
+      <text x="260" y="438" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[<tspan fill="#b44a2f">3</tspan>-0  0-<tspan fill="#2a6b5a">1</tspan>  0-<tspan fill="#2a6b5a">1</tspan>  0-<tspan fill="#2a6b5a">1</tspan>]</text>
+      <text x="260" y="455" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[0-<tspan fill="#2a6b5a">1</tspan>  <tspan fill="#b44a2f">2</tspan>-0  0-<tspan fill="#2a6b5a">1</tspan>  0-0]</text>
+      <text x="260" y="472" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[0-<tspan fill="#2a6b5a">1</tspan>  0-<tspan fill="#2a6b5a">1</tspan>  <tspan fill="#b44a2f">3</tspan>-0  0-<tspan fill="#2a6b5a">1</tspan>]</text>
+      <text x="260" y="489" font-family="JetBrains Mono" font-size="11" fill="#2a2520">[0-<tspan fill="#2a6b5a">1</tspan>  0-0  0-<tspan fill="#2a6b5a">1</tspan>  <tspan fill="#b44a2f">2</tspan>-0]</text>
+
+      <!-- Second equals -->
+      <text x="468" y="465" font-family="Source Sans 3" font-size="22" fill="#2a6b5a" text-anchor="middle">=</text>
+
+      <!-- Result -->
+      <text x="580" y="418" font-family="Source Sans 3" font-size="11" font-weight="600" fill="#2a6b5a" text-anchor="middle">L₀ ✓</text>
+      <text x="500" y="438" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a" font-weight="600">[ 3 -1 -1 -1]</text>
+      <text x="500" y="455" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a" font-weight="600">[-1  2 -1  0]</text>
+      <text x="500" y="472" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a" font-weight="600">[-1 -1  3 -1]</text>
+      <text x="500" y="489" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a" font-weight="600">[-1  0 -1  2]</text>
+    </svg>
+    <div class="caption"><strong>Figure 2.3.</strong> Full worked verification of $\mathbf{B}_1\mathbf{B}_1^\top = \mathbf{D} - \mathbf{A} = \mathbf{L}_0$ for the Figure 2.1 graph. The diagonal of $\mathbf{B}_1\mathbf{B}_1^\top$ always gives the degree (each row's squared entries sum to the number of incident edges). The off-diagonal entry at $(v,w)$ is $-1$ if $v$ and $w$ share an edge (they appear with opposite signs in exactly one column of $\mathbf{B}_1$), and $0$ otherwise.</div>
+  </div>
+
+  <p>This isn't a coincidence — it works for <em>any</em> graph, and the proof is short:</p>
+
+  <div class="def-box blue">
+    <div class="def-label">Why it always works</div>
+    <p>Entry $(v,w)$ of $\mathbf{B}_1\mathbf{B}_1^\top$ is the dot product of rows $v$ and $w$ of $\mathbf{B}_1$.</p>
+    <p style="margin-left:1.5rem;">
+      <strong>If $v = w$:</strong> You're dotting row $v$ with itself. Each edge incident to $v$ contributes $(\pm 1)^2 = 1$, everything else contributes $0$. Sum = $\deg(v) = D_{vv}$. ✓<br><br>
+      <strong>If $v \sim w$ (adjacent):</strong> They share exactly one edge $e$. In column $e$, one has $+1$ and the other $-1$ (tail vs head). Product = $-1$. In all other columns, at most one of them is nonzero, so product = $0$. Sum = $-1 = 0 - A_{vw} = (D-A)_{vw}$. ✓<br><br>
+      <strong>If $v \not\sim w$ (not adjacent):</strong> No edge contains both. In every column, at least one of them is $0$. Sum = $0 = 0 - 0 = (D-A)_{vw}$. ✓
+    </p>
+  </div>
+
+  <h3>Why the Laplacian Matters: Discrete Diffusion</h3>
+
+  <p>
+    So $\mathbf{L}_0 = \mathbf{D} - \mathbf{A}$ has degrees on the diagonal and $-1$ wherever two vertices share an edge. Why is this the right operator for physics?
+  </p>
+
+  <p>
+    Apply $\mathbf{L}_0$ to a temperature vector $\mathbf{T}$. The result at vertex $v$ is:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Laplacian applied to a signal</div>
+    $$(\mathbf{L}_0 \mathbf{T})_v = \deg(v) \cdot T_v - \sum_{w \sim v} T_w = \sum_{w \sim v}\left(T_v - T_w\right)$$
+  </div>
+
+  <p>
+    Read that last expression: <strong>the Laplacian at $v$ sums up all the temperature <em>differences</em> between $v$ and its neighbors</strong>. This is exactly the discrete version of $\nabla^2 T$ — the divergence of the gradient — which governs heat diffusion. The equivalence $\deg(v) \cdot T_v - \sum T_w = \sum(T_v - T_w)$ is why $\mathbf{D} - \mathbf{A}$ is the right combination: the degree term and the adjacency term conspire to produce pairwise differences.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 660 230" width="660" height="230">
+      <text x="330" y="22" font-family="Source Sans 3" font-size="13" font-weight="700" fill="#2a2520" text-anchor="middle">The Laplacian Measures "How Different Am I From My Neighbors?"</text>
+
+      <!-- Graph with temperatures -->
+      <circle cx="100" cy="110" r="28" class="node-v" stroke-width="2"/>
+      <circle cx="230" cy="70" r="28" class="node-v" stroke-width="2"/>
+      <circle cx="230" cy="155" r="28" class="node-v" stroke-width="2"/>
+      <circle cx="140" cy="190" r="28" class="node-v" stroke-width="2"/>
+      <line x1="125" y1="100" x2="205" y2="78" class="edge-line"/>
+      <line x1="125" y1="120" x2="205" y2="145" class="edge-line"/>
+      <line x1="230" y1="98" x2="230" y2="127" class="edge-line"/>
+      <line x1="110" y1="136" x2="130" y2="165" class="edge-line"/>
+      <line x1="160" y1="180" x2="210" y2="163" class="edge-line"/>
+
+      <!-- Temperature labels -->
+      <text x="100" y="115" fill="white" font-family="JetBrains Mono" font-size="13" text-anchor="middle" font-weight="600">50°</text>
+      <text x="230" y="75" fill="white" font-family="JetBrains Mono" font-size="13" text-anchor="middle" font-weight="600">20°</text>
+      <text x="230" y="160" fill="white" font-family="JetBrains Mono" font-size="13" text-anchor="middle" font-weight="600">30°</text>
+      <text x="140" y="195" fill="white" font-family="JetBrains Mono" font-size="13" text-anchor="middle" font-weight="600">10°</text>
+
+      <!-- Computation for vertex 0 -->
+      <rect x="330" y="45" width="310" height="170" rx="8" fill="#f8f4ee" stroke="#d5d0c8"/>
+      <text x="345" y="70" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#b44a2f">(L₀T)₀ at vertex 0 (T₀ = 50°):</text>
+
+      <text x="345" y="98" font-family="JetBrains Mono" font-size="11" fill="#2a2520">= (50−20) + (50−30) + (50−10)</text>
+      <text x="345" y="118" font-family="JetBrains Mono" font-size="11" fill="#6b6560">    ↑ v₁       ↑ v₂       ↑ v₃</text>
+      <text x="345" y="142" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a" font-weight="600">= 30 + 20 + 40 = 90</text>
+
+      <text x="345" y="172" font-family="Source Sans 3" font-size="11" fill="#2a2520">Large positive → v₀ is much <tspan font-weight="600" fill="#b44a2f">hotter</tspan></text>
+      <text x="345" y="190" font-family="Source Sans 3" font-size="11" fill="#2a2520">than its neighbors → heat flows <tspan font-weight="600">out</tspan></text>
+      <text x="345" y="208" font-family="Source Sans 3" font-size="11" fill="#6b6560">(L₀T = 0 means thermal equilibrium)</text>
+    </svg>
+    <div class="caption"><strong>Figure 2.4.</strong> The Laplacian applied to a temperature field. At vertex 0 (50°), surrounded by cooler neighbors (20°, 30°, 10°), the Laplacian gives a large positive value — indicating net heat outflow. A vertex in equilibrium with its neighbors gives $(L_0 T)_v = 0$. The steady-state heat equation $L_0 T = 0$ says: every vertex is at the average temperature of its neighbors.</div>
+  </div>
+
+  <p>This gives three reasons why the Laplacian is the central object:</p>
+
+  <div class="insight key">
+    <p><strong>1. Diffusion:</strong> The heat equation $\dot{T} = -\alpha \mathbf{L}_0 T$ says temperature evolves by flowing from hot to cold — directly from the "sum of differences" structure.</p>
+    <p><strong>2. Conservation:</strong> $\mathbf{L}_0$ is positive semi-definite (since $\mathbf{L}_0 = \mathbf{B}_1\mathbf{B}_1^\top$ is a Gram matrix) and its row sums are zero ($\mathbf{L}_0 \mathbf{1} = 0$). This means total "heat" is conserved under diffusion — a physical requirement.</p>
+    <p><strong>3. Spectral structure:</strong> The eigenvalues $0 = \lambda_0 \leq \lambda_1 \leq \cdots$ measure connectivity. $\lambda_1 = 0$ iff the graph is disconnected. The eigenvectors form a Fourier-like basis for graph signals — the foundation of spectral GNNs (ChebNet, GCN).</p>
+  </div>
+
+  <p>
+    Without the signs in $\mathbf{B}_1$, you'd get $\mathbf{D} + \mathbf{A}$ instead — which sums neighbor values rather than computing differences. That operator doesn't conserve anything, isn't positive semi-definite, and has no connection to diffusion. The signs are what make the Laplacian a <em>second-order difference operator</em> (discrete $\nabla^2$).
+  </p>
+
+  <div class="insight">
+    <p><strong>The choice of orientation is arbitrary.</strong> Flipping an edge's direction just negates that column of $\mathbf{B}_1$. All derived quantities — the Laplacian $\mathbf{L}_0 = \mathbf{B}_1\mathbf{B}_1^\top$, Hodge Laplacians, message-passing operators — involve products like $\mathbf{B}^\top\mathbf{B}$ where the signs cancel, so they are <strong>invariant</strong> to the orientation choice. The orientation is a bookkeeping device, not a physical assumption.</p>
+  </div>
+
+  <h3>Spectral Structure: Eigenvalues and Eigenvectors of $\mathbf{L}_0$</h3>
+
+  <p>
+    The three properties above — diffusion, conservation, spectral structure — all flow from the <em>eigendecomposition</em> of $\mathbf{L}_0$. Let's work through this completely for our example, starting from the definition of diagonalization.
+  </p>
+
+  <h4>Review: Matrix Diagonalization</h4>
+
+  <p>
+    A real symmetric matrix $\mathbf{M} \in \mathbb{R}^{n \times n}$ can always be decomposed as:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eigendecomposition (Spectral Theorem)</div>
+    $$\mathbf{M} = \mathbf{P} \boldsymbol{\Lambda} \mathbf{P}^\top \qquad\text{where}\qquad \boldsymbol{\Lambda} = \text{diag}(\lambda_0, \lambda_1, \ldots, \lambda_{n-1})$$
+  </div>
+
+  <p>
+    Here $\boldsymbol{\Lambda}$ is diagonal (eigenvalues on the diagonal), and $\mathbf{P}$ is an orthogonal matrix whose columns are the corresponding eigenvectors: $\mathbf{P} = [\mathbf{v}_0 \mid \mathbf{v}_1 \mid \cdots \mid \mathbf{v}_{n-1}]$. Orthogonal means $\mathbf{P}^\top\mathbf{P} = \mathbf{I}$ — the eigenvectors form an orthonormal basis.
+  </p>
+
+  <p>
+    The defining property of each eigenpair is:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eigenvector equation</div>
+    $$\mathbf{M}\mathbf{v}_i = \lambda_i \mathbf{v}_i$$
+  </div>
+
+  <p>
+    Applying $\mathbf{M}$ to eigenvector $\mathbf{v}_i$ just <em>scales</em> it by $\lambda_i$ — it doesn't change direction. The eigenvalue $\lambda_i$ is the scaling factor.
+  </p>
+
+  <div class="def-box">
+    <div class="def-label">Recipe — Finding Eigenvalues and Eigenvectors</div>
+    <p><strong>Step 1.</strong> Find eigenvalues by solving the <em>characteristic equation</em>: $\det(\mathbf{M} - \lambda\mathbf{I}) = 0$. This is a degree-$n$ polynomial in $\lambda$; its roots are the eigenvalues.</p>
+    <p><strong>Step 2.</strong> For each eigenvalue $\lambda_i$, find eigenvectors by solving the homogeneous system $(\mathbf{M} - \lambda_i\mathbf{I})\mathbf{v} = \mathbf{0}$. The solution space (the <em>null space</em> or <em>kernel</em>) gives the eigenvectors.</p>
+    <p><strong>Step 3.</strong> Normalize: $\hat{\mathbf{v}}_i = \mathbf{v}_i / \|\mathbf{v}_i\|$. For a symmetric matrix, eigenvectors from distinct eigenvalues are automatically orthogonal. Within a repeated eigenvalue, use Gram-Schmidt.</p>
+  </div>
+
+  <h4>Step 1: The Characteristic Polynomial of Our $\mathbf{L}_0$</h4>
+
+  <p>We need $\det(\mathbf{L}_0 - \lambda\mathbf{I}) = 0$ for:</p>
+
+  <div class="math-block">
+    <div class="math-label">Characteristic matrix</div>
+    $$\mathbf{L}_0 - \lambda\mathbf{I} = \begin{pmatrix} 3-\lambda & -1 & -1 & -1 \\ -1 & 2-\lambda & -1 & 0 \\ -1 & -1 & 3-\lambda & -1 \\ -1 & 0 & -1 & 2-\lambda \end{pmatrix}$$
+  </div>
+
+  <p>
+    Before grinding through a $4 \times 4$ determinant, we can use two shortcuts:
+  </p>
+
+  <div class="insight">
+    <p><strong>Shortcut 1 — $\lambda = 0$ is always an eigenvalue.</strong> Since $\mathbf{L}_0 \mathbf{1} = \mathbf{0}$ (row sums are zero), the all-ones vector $\mathbf{1} = (1,1,1,1)^\top$ is an eigenvector with eigenvalue $0$. For a connected graph, $\lambda_0 = 0$ has multiplicity exactly 1.</p>
+    <p><strong>Shortcut 2 — The trace gives the sum.</strong> $\text{tr}(\mathbf{L}_0) = 3 + 2 + 3 + 2 = 10 = \sum_i \lambda_i$.</p>
+  </div>
+
+  <p>
+    For our graph, the characteristic polynomial factors as:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Characteristic polynomial</div>
+    $$\det(\mathbf{L}_0 - \lambda\mathbf{I}) = \lambda(\lambda - 2)(\lambda - 4)^2 = 0$$
+  </div>
+
+  <p>giving eigenvalues $\lambda_0 = 0$, $\lambda_1 = 2$, $\lambda_2 = \lambda_3 = 4$ (the last has <em>algebraic multiplicity</em> 2). Check: $0 + 2 + 4 + 4 = 10$ ✓.</p>
+
+  <h4>Step 2: Finding the Eigenvectors</h4>
+
+  <p>For each eigenvalue, we solve $(\mathbf{L}_0 - \lambda_i \mathbf{I})\mathbf{v} = \mathbf{0}$:</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 520" width="700" height="520">
+      <text x="350" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">Finding the Four Eigenvectors of L₀</text>
+
+      <!-- λ = 0 -->
+      <rect x="15" y="42" width="325" height="200" rx="8" fill="white" stroke="#b44a2f" stroke-width="1.5"/>
+      <rect x="15" y="42" width="325" height="28" rx="8" fill="#e8a88a" fill-opacity="0.3"/>
+      <text x="177" y="61" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#b44a2f" text-anchor="middle">λ₀ = 0 — The Constant Mode</text>
+
+      <text x="30" y="88" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Solve (L₀ − 0·I)v = L₀v = 0:</text>
+      <text x="30" y="108" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[ 3 -1 -1 -1] [v₀]   [0]</text>
+      <text x="30" y="123" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[-1  2 -1  0] [v₁] = [0]</text>
+      <text x="30" y="138" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[-1 -1  3 -1] [v₂]   [0]</text>
+      <text x="30" y="153" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[-1  0 -1  2] [v₃]   [0]</text>
+      <text x="30" y="178" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Row sums = 0, so v₀ = v₁ = v₂ = v₃ works.</text>
+      <text x="30" y="198" font-family="JetBrains Mono" font-size="12" fill="#b44a2f" font-weight="600">v₀ = (1, 1, 1, 1)ᵀ</text>
+      <text x="30" y="218" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Constant everywhere — no spatial variation</text>
+      <text x="30" y="232" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Physically: uniform temperature (equilibrium)</text>
+
+      <!-- λ = 2 -->
+      <rect x="360" y="42" width="325" height="200" rx="8" fill="white" stroke="#2a6b5a" stroke-width="1.5"/>
+      <rect x="360" y="42" width="325" height="28" rx="8" fill="#8ec5b6" fill-opacity="0.3"/>
+      <text x="522" y="61" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#2a6b5a" text-anchor="middle">λ₁ = 2 — The Fiedler Vector</text>
+
+      <text x="375" y="88" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Solve (L₀ − 2I)v = 0:</text>
+      <text x="375" y="108" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[ 1 -1 -1 -1] [v₀]   [0]</text>
+      <text x="375" y="123" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[-1  0 -1  0] [v₁] = [0]</text>
+      <text x="375" y="138" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[-1 -1  1 -1] [v₂]   [0]</text>
+      <text x="375" y="153" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[-1  0 -1  0] [v₃]   [0]</text>
+      <text x="375" y="178" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Row 2 gives v₀ = −v₂; Row 4 gives v₀ = −v₂.</text>
+      <text x="375" y="193" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Substituting: v₀ = v₂ = 0, v₁ = −v₃.</text>
+      <text x="375" y="213" font-family="JetBrains Mono" font-size="12" fill="#2a6b5a" font-weight="600">v₁ = (0, 1, 0, −1)ᵀ</text>
+      <text x="375" y="232" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Lowest-frequency oscillation</text>
+
+      <!-- λ = 4 (first) -->
+      <rect x="15" y="260" width="325" height="240" rx="8" fill="white" stroke="#3a5a8c" stroke-width="1.5"/>
+      <rect x="15" y="260" width="325" height="28" rx="8" fill="#a8c0e0" fill-opacity="0.3"/>
+      <text x="177" y="279" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#3a5a8c" text-anchor="middle">λ₂ = 4 — High-Frequency Mode (1 of 2)</text>
+
+      <text x="30" y="305" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Solve (L₀ − 4I)v = 0:</text>
+      <text x="30" y="325" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[-1 -1 -1 -1] [v₀]   [0]</text>
+      <text x="30" y="340" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[-1 -2 -1  0] [v₁] = [0]</text>
+      <text x="30" y="355" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[-1 -1 -1 -1] [v₂]   [0]</text>
+      <text x="30" y="370" font-family="JetBrains Mono" font-size="10" fill="#2a2520">[-1  0 -1 -2] [v₃]   [0]</text>
+
+      <text x="30" y="395" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Row 1: v₀+v₁+v₂+v₃ = 0 (sum to zero).</text>
+      <text x="30" y="412" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Row 2: v₀+2v₁+v₂ = 0.</text>
+      <text x="30" y="429" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Null space is 2-dimensional. One basis vector:</text>
+      <text x="30" y="449" font-family="JetBrains Mono" font-size="12" fill="#3a5a8c" font-weight="600">v₂ = (1, −1, 1, −1)ᵀ</text>
+      <text x="30" y="470" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Checkerboard: alternates + and −</text>
+      <text x="30" y="488" font-family="Source Sans 3" font-size="10.5" fill="#6b6560">Verify: L₀(1,−1,1,−1)ᵀ = (4,−4,4,−4)ᵀ ✓</text>
+
+      <!-- λ = 4 (second) -->
+      <rect x="360" y="260" width="325" height="240" rx="8" fill="white" stroke="#8b5a8c" stroke-width="1.5"/>
+      <rect x="360" y="260" width="325" height="28" rx="8" fill="#c8a8d0" fill-opacity="0.3"/>
+      <text x="522" y="279" font-family="Source Sans 3" font-size="12" font-weight="700" fill="#8b5a8c" text-anchor="middle">λ₃ = 4 — High-Frequency Mode (2 of 2)</text>
+
+      <text x="375" y="305" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Same system (L₀ − 4I)v = 0.</text>
+      <text x="375" y="325" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Second independent solution (orthogonal to v₂):</text>
+      <text x="375" y="355" font-family="JetBrains Mono" font-size="12" fill="#8b5a8c" font-weight="600">v₃ = (1, 0, −1, 0)ᵀ</text>
+
+      <text x="375" y="380" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Vertices 0 and 2 have opposite sign;</text>
+      <text x="375" y="398" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">vertices 1 and 3 are zero.</text>
+      <text x="375" y="418" font-family="Source Sans 3" font-size="10.5" fill="#6b6560">Verify: L₀(1,0,−1,0)ᵀ = (4,0,−4,0)ᵀ ✓</text>
+
+      <text x="375" y="448" font-family="Source Sans 3" font-size="10.5" fill="#2a2520" font-weight="600">Orthogonality check:</text>
+      <text x="375" y="468" font-family="JetBrains Mono" font-size="10" fill="#2a2520">v₂ · v₃ = (1)(1)+(−1)(0)+(1)(−1)+(−1)(0) = 0 ✓</text>
+
+      <text x="375" y="490" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Repeated eigenvalue → must manually</text>
+      <text x="375" y="505" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">choose orthogonal basis (here natural)</text>
+    </svg>
+    <div class="caption"><strong>Figure 2.5.</strong> The four eigenvectors of $\mathbf{L}_0$, computed by solving $(\mathbf{L}_0 - \lambda_i\mathbf{I})\mathbf{v} = \mathbf{0}$ for each eigenvalue. The constant mode ($\lambda_0 = 0$) represents equilibrium. The Fiedler vector ($\lambda_1 = 2$) gives the smoothest non-trivial partition. The two high-frequency modes ($\lambda_2 = \lambda_3 = 4$) oscillate rapidly across the graph.</div>
+  </div>
+
+  <h4>Step 3: The Diagonalization</h4>
+
+  <p>Assembling the (normalized) eigenvectors as columns of $\mathbf{P}$ and eigenvalues into $\boldsymbol{\Lambda}$:</p>
+
+  <div class="math-block">
+    <div class="math-label">Diagonalization: $\mathbf{L}_0 = \mathbf{P}\boldsymbol{\Lambda}\mathbf{P}^\top$</div>
+    $$\underbrace{\begin{pmatrix} 3 & -1 & -1 & -1 \\ -1 & 2 & -1 & 0 \\ -1 & -1 & 3 & -1 \\ -1 & 0 & -1 & 2 \end{pmatrix}}_{\mathbf{L}_0} = \underbrace{\begin{pmatrix} \tfrac{1}{2} & 0 & \tfrac{1}{2} & \tfrac{1}{\sqrt{2}} \\ \tfrac{1}{2} & \tfrac{1}{\sqrt{2}} & -\tfrac{1}{2} & 0 \\ \tfrac{1}{2} & 0 & \tfrac{1}{2} & -\tfrac{1}{\sqrt{2}} \\ \tfrac{1}{2} & -\tfrac{1}{\sqrt{2}} & -\tfrac{1}{2} & 0 \end{pmatrix}}_{\mathbf{P}} \underbrace{\begin{pmatrix} 0 & & & \\ & 2 & & \\ & & 4 & \\ & & & 4 \end{pmatrix}}_{\boldsymbol{\Lambda}} \underbrace{\mathbf{P}^\top}_{\mathbf{P}^{-1}}$$
+  </div>
+
+  <p>
+    Because $\mathbf{P}$ is orthogonal ($\mathbf{P}^\top = \mathbf{P}^{-1}$), this gives us two equivalent readings:
+  </p>
+
+  <p style="margin-left:1.5rem;">
+    <strong>Forward:</strong> $\mathbf{L}_0 = \sum_{i=0}^{3} \lambda_i \, \hat{\mathbf{v}}_i \hat{\mathbf{v}}_i^\top$ — the Laplacian is a weighted sum of projection matrices, one per eigenvector.<br>
+    <strong>Inverse:</strong> $\mathbf{P}^\top \mathbf{L}_0 \mathbf{P} = \boldsymbol{\Lambda}$ — in the eigenvector basis, $\mathbf{L}_0$ acts by pure scaling (no mixing).
+  </p>
+
+  <h4>Physical Interpretation: Vibration Modes of the Graph</h4>
+
+  <p>
+    The eigenvectors are the <strong>fundamental modes of oscillation</strong> on the graph — the exact analogue of Fourier modes on a continuous domain. Low eigenvalues correspond to slow, smooth variation; high eigenvalues correspond to rapid oscillation.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 370" width="700" height="370">
+      <text x="350" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">The Four "Fourier Modes" of Our Graph</text>
+      <text x="350" y="42" font-family="Source Sans 3" font-size="11" fill="#6b6560" text-anchor="middle">Eigenvector values shown at each vertex · Color: red = positive, blue = negative, gray = zero</text>
+
+      <!-- Mode 0: λ=0 -->
+      <rect x="15" y="60" width="155" height="280" rx="8" fill="white" stroke="#d5d0c8"/>
+      <text x="92" y="82" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#b44a2f" text-anchor="middle">λ₀ = 0 (DC)</text>
+      <!-- Graph -->
+      <line x1="55" y1="150" x2="130" y2="120" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="55" y1="150" x2="130" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="130" y1="120" x2="130" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="55" y1="150" x2="75" y2="220" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="75" y1="220" x2="130" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <circle cx="55" cy="150" r="18" fill="#e07050" stroke="#b44a2f" stroke-width="2"/>
+      <circle cx="130" cy="120" r="18" fill="#e07050" stroke="#b44a2f" stroke-width="2"/>
+      <circle cx="130" cy="190" r="18" fill="#e07050" stroke="#b44a2f" stroke-width="2"/>
+      <circle cx="75" cy="220" r="18" fill="#e07050" stroke="#b44a2f" stroke-width="2"/>
+      <text x="55" y="155" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">+1</text>
+      <text x="130" y="125" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">+1</text>
+      <text x="130" y="195" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">+1</text>
+      <text x="75" y="225" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">+1</text>
+      <text x="92" y="260" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle" font-style="italic">"All same sign"</text>
+      <text x="92" y="278" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">Uniform: no variation</text>
+      <text x="92" y="296" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">= thermal equilibrium</text>
+      <text x="92" y="320" font-family="Source Sans 3" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="600">frequency: 0</text>
+
+      <!-- Mode 1: λ=2 -->
+      <rect x="185" y="60" width="155" height="280" rx="8" fill="white" stroke="#d5d0c8"/>
+      <text x="262" y="82" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a6b5a" text-anchor="middle">λ₁ = 2 (Fiedler)</text>
+      <line x1="225" y1="150" x2="300" y2="120" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="225" y1="150" x2="300" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="300" y1="120" x2="300" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="225" y1="150" x2="245" y2="220" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="245" y1="220" x2="300" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <circle cx="225" cy="150" r="18" fill="#c0c0c0" stroke="#888" stroke-width="2"/>
+      <circle cx="300" cy="120" r="18" fill="#e07050" stroke="#b44a2f" stroke-width="2"/>
+      <circle cx="300" cy="190" r="18" fill="#c0c0c0" stroke="#888" stroke-width="2"/>
+      <circle cx="245" cy="220" r="18" fill="#5080c0" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="225" y="155" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">0</text>
+      <text x="300" y="125" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">+1</text>
+      <text x="300" y="195" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">0</text>
+      <text x="245" y="225" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">−1</text>
+      <text x="262" y="260" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle" font-style="italic">"One sign change"</text>
+      <text x="262" y="278" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">Smoothest partition</text>
+      <text x="262" y="296" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">= best 2-way graph cut</text>
+      <text x="262" y="320" font-family="Source Sans 3" font-size="10" fill="#2a6b5a" text-anchor="middle" font-weight="600">frequency: low</text>
+
+      <!-- Mode 2: λ=4 (checkerboard) -->
+      <rect x="355" y="60" width="155" height="280" rx="8" fill="white" stroke="#d5d0c8"/>
+      <text x="432" y="82" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#3a5a8c" text-anchor="middle">λ₂ = 4 (high)</text>
+      <line x1="395" y1="150" x2="470" y2="120" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="395" y1="150" x2="470" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="470" y1="120" x2="470" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="395" y1="150" x2="415" y2="220" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="415" y1="220" x2="470" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <circle cx="395" cy="150" r="18" fill="#e07050" stroke="#b44a2f" stroke-width="2"/>
+      <circle cx="470" cy="120" r="18" fill="#5080c0" stroke="#3a5a8c" stroke-width="2"/>
+      <circle cx="470" cy="190" r="18" fill="#e07050" stroke="#b44a2f" stroke-width="2"/>
+      <circle cx="415" cy="220" r="18" fill="#5080c0" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="395" y="155" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">+1</text>
+      <text x="470" y="125" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">−1</text>
+      <text x="470" y="195" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">+1</text>
+      <text x="415" y="225" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">−1</text>
+      <text x="432" y="260" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle" font-style="italic">"Alternating signs"</text>
+      <text x="432" y="278" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">Every neighbor differs</text>
+      <text x="432" y="296" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">= maximum oscillation</text>
+      <text x="432" y="320" font-family="Source Sans 3" font-size="10" fill="#3a5a8c" text-anchor="middle" font-weight="600">frequency: high</text>
+
+      <!-- Mode 3: λ=4 (second) -->
+      <rect x="525" y="60" width="155" height="280" rx="8" fill="white" stroke="#d5d0c8"/>
+      <text x="602" y="82" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#8b5a8c" text-anchor="middle">λ₃ = 4 (high)</text>
+      <line x1="565" y1="150" x2="640" y2="120" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="565" y1="150" x2="640" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="640" y1="120" x2="640" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="565" y1="150" x2="585" y2="220" stroke="#d5d0c8" stroke-width="1.5"/>
+      <line x1="585" y1="220" x2="640" y2="190" stroke="#d5d0c8" stroke-width="1.5"/>
+      <circle cx="565" cy="150" r="18" fill="#e07050" stroke="#b44a2f" stroke-width="2"/>
+      <circle cx="640" cy="120" r="18" fill="#c0c0c0" stroke="#888" stroke-width="2"/>
+      <circle cx="640" cy="190" r="18" fill="#5080c0" stroke="#3a5a8c" stroke-width="2"/>
+      <circle cx="585" cy="220" r="18" fill="#c0c0c0" stroke="#888" stroke-width="2"/>
+      <text x="565" y="155" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">+1</text>
+      <text x="640" y="125" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">0</text>
+      <text x="640" y="195" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">−1</text>
+      <text x="585" y="225" fill="white" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="500">0</text>
+      <text x="602" y="260" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle" font-style="italic">"Opposite pair"</text>
+      <text x="602" y="278" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">v₀ and v₂ anti-correlated</text>
+      <text x="602" y="296" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">= localized high-freq mode</text>
+      <text x="602" y="320" font-family="Source Sans 3" font-size="10" fill="#8b5a8c" text-anchor="middle" font-weight="600">frequency: high</text>
+    </svg>
+    <div class="caption"><strong>Figure 2.6.</strong> Eigenvector values visualized on the graph. Red = positive, blue = negative, gray = zero. The zero-eigenvalue mode (DC) is constant everywhere. The Fiedler vector ($\lambda_1$) gives the smoothest non-trivial variation. The two $\lambda = 4$ modes oscillate at the highest frequency the graph supports — every edge connects vertices of different sign (or zero).</div>
+  </div>
+
+  <h4>The Graph Fourier Transform</h4>
+
+  <p>
+    Just as the classical Fourier transform decomposes a signal into sinusoidal modes of increasing frequency, the <strong>graph Fourier transform</strong> (GFT) decomposes a graph signal into eigenvector modes of increasing eigenvalue:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Graph Fourier Transform</div>
+    $$\hat{\mathbf{f}} = \mathbf{P}^\top \mathbf{f} \qquad \text{(analysis: signal → spectral coefficients)}$$
+    $$\mathbf{f} = \mathbf{P}\hat{\mathbf{f}} = \sum_{i=0}^{n-1} \hat{f}_i \, \hat{\mathbf{v}}_i \qquad \text{(synthesis: spectral coefficients → signal)}$$
+  </div>
+
+  <p>
+    The spectral coefficient $\hat{f}_i = \hat{\mathbf{v}}_i^\top \mathbf{f}$ measures "how much of mode $i$ is present in the signal $\mathbf{f}$." Low-index coefficients capture smooth, global trends; high-index coefficients capture sharp, local variations.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 220" width="700" height="220">
+      <text x="350" y="22" font-family="Source Sans 3" font-size="13" font-weight="700" fill="#2a2520" text-anchor="middle">Example: Decomposing the Temperature Signal T = (50, 20, 30, 10)ᵀ</text>
+
+      <!-- Projection computation -->
+      <rect x="20" y="45" width="660" height="155" rx="8" fill="#f8f4ee" stroke="#d5d0c8"/>
+
+      <text x="40" y="72" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a2520">Compute spectral coefficients (projections onto each eigenvector):</text>
+
+      <text x="40" y="100" font-family="JetBrains Mono" font-size="11" fill="#b44a2f">f̂₀ = v₀·T / ‖v₀‖² = (50+20+30+10)/4 = <tspan font-weight="600">27.5</tspan></text>
+      <text x="480" y="100" font-family="Source Sans 3" font-size="10" fill="#6b6560">← average temperature (DC component)</text>
+
+      <text x="40" y="122" font-family="JetBrains Mono" font-size="11" fill="#2a6b5a">f̂₁ = v₁·T / ‖v₁‖² = (0·50+1·20+0·30+(−1)·10)/2 = <tspan font-weight="600">5</tspan></text>
+      <text x="480" y="122" font-family="Source Sans 3" font-size="10" fill="#6b6560">← gentle variation</text>
+
+      <text x="40" y="144" font-family="JetBrains Mono" font-size="11" fill="#3a5a8c">f̂₂ = v₂·T / ‖v₂‖² = (50−20+30−10)/4 = <tspan font-weight="600">12.5</tspan></text>
+      <text x="480" y="144" font-family="Source Sans 3" font-size="10" fill="#6b6560">← sharp checkerboard variation</text>
+
+      <text x="40" y="166" font-family="JetBrains Mono" font-size="11" fill="#8b5a8c">f̂₃ = v₃·T / ‖v₃‖² = (50+0−30+0)/2 = <tspan font-weight="600">10</tspan></text>
+      <text x="480" y="166" font-family="Source Sans 3" font-size="10" fill="#6b6560">← sharp v₀-vs-v₂ variation</text>
+
+      <text x="40" y="192" font-family="Source Sans 3" font-size="11" fill="#2a2520" font-weight="600">Reconstruction:  T = 27.5·(1,1,1,1) + 5·(0,1,0,−1) + 12.5·(1,−1,1,−1) + 10·(1,0,−1,0) = (50, 20, 30, 10) ✓</text>
+    </svg>
+    <div class="caption"><strong>Figure 2.7.</strong> The graph Fourier transform of our temperature signal from Figure 2.4. The DC component (27.5°) gives the mean temperature. The Fiedler coefficient (5) captures gentle variation. The high-frequency coefficients (12.5 and 10) capture sharp contrasts. Together they perfectly reconstruct the original signal.</div>
+  </div>
+
+  <h4>Why This Matters for Neural Networks</h4>
+
+  <p>
+    Spectral GNNs — ChebNet, GCN, and their descendants — define <strong>graph convolution as filtering in the spectral domain</strong>. A convolution filter $g_\theta$ applied to a signal $\mathbf{f}$ on the graph is:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Spectral Graph Convolution</div>
+    $$g_\theta \star \mathbf{f} = \mathbf{P} \, g_\theta(\boldsymbol{\Lambda}) \, \mathbf{P}^\top \mathbf{f} = \mathbf{P} \begin{pmatrix} g_\theta(\lambda_0) & & \\ & \ddots & \\ & & g_\theta(\lambda_{n-1}) \end{pmatrix} \mathbf{P}^\top \mathbf{f}$$
+  </div>
+
+  <p>
+    The function $g_\theta(\lambda)$ is a learnable filter that scales each frequency independently — just like a low-pass or band-pass filter in signal processing, but with <em>learned</em> frequency response. In GCN (Kipf & Welling, 2017), the filter is simply $g_\theta(\lambda) = 1 - \lambda/\lambda_{\max}$, which attenuates high frequencies — a smoothing operation.
+  </p>
+
+  <div class="insight key">
+    <p><strong>The spectral bridge to topology:</strong> The graph Laplacian $\mathbf{L}_0$ has eigenvalues and eigenvectors that define a spectral basis for vertex signals. The Hodge Laplacian $\mathbf{L}_k$ (Section 9) does exactly the same for rank-$k$ cochains — it provides eigenvalues (frequencies) and eigenvectors (modes) for signals on edges, faces, and volumes. Spectral topological neural networks use the Hodge eigenvectors as their Fourier basis at each rank, enabling spectral filtering of higher-order signals. This is the mathematical pipeline: Laplacian → eigendecomposition → Fourier basis → learnable spectral filters.</p>
+  </div>
+  <h4>The Discrete de Rham Complex</h4>
+  <p>
+    This sign structure extends to higher ranks. The boundary matrix $\mathbf{B}_{1,2}$ (edges → faces) encodes oriented boundaries of 2-cells and acts as a <strong>discrete curl</strong>. The full chain of boundary operators forms the <em>discrete de Rham complex</em>:
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 680 100" width="680" height="100">
+      <!-- Chain -->
+      <rect x="30" y="25" width="90" height="40" rx="6" fill="#e8a88a" fill-opacity="0.3" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="75" y="50" font-family="Source Sans 3" font-size="11" fill="#b44a2f" text-anchor="middle" font-weight="600">0-cochains</text>
+
+      <text x="145" y="50" font-family="JetBrains Mono" font-size="10" fill="#6b6560" text-anchor="middle">B₀₁ᵀ</text>
+      <line x1="120" y1="45" x2="160" y2="45" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+
+      <rect x="170" y="25" width="90" height="40" rx="6" fill="#8ec5b6" fill-opacity="0.3" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="215" y="50" font-family="Source Sans 3" font-size="11" fill="#2a6b5a" text-anchor="middle" font-weight="600">1-cochains</text>
+
+      <text x="285" y="50" font-family="JetBrains Mono" font-size="10" fill="#6b6560" text-anchor="middle">B₁₂ᵀ</text>
+      <line x1="260" y1="45" x2="300" y2="45" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+
+      <rect x="310" y="25" width="90" height="40" rx="6" fill="#a8c0e0" fill-opacity="0.3" stroke="#3a5a8c" stroke-width="1.5"/>
+      <text x="355" y="50" font-family="Source Sans 3" font-size="11" fill="#3a5a8c" text-anchor="middle" font-weight="600">2-cochains</text>
+
+      <text x="425" y="50" font-family="JetBrains Mono" font-size="10" fill="#6b6560" text-anchor="middle">B₂₃ᵀ</text>
+      <line x1="400" y1="45" x2="440" y2="45" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+
+      <rect x="450" y="25" width="90" height="40" rx="6" fill="#c8a8d0" fill-opacity="0.3" stroke="#8b5a8c" stroke-width="1.5"/>
+      <text x="495" y="50" font-family="Source Sans 3" font-size="11" fill="#8b5a8c" text-anchor="middle" font-weight="600">3-cochains</text>
+
+      <!-- Labels below -->
+      <text x="75" y="85" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">potentials</text>
+      <text x="145" y="85" font-family="Source Sans 3" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="600">grad</text>
+      <text x="215" y="85" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">flows</text>
+      <text x="285" y="85" font-family="Source Sans 3" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="600">curl</text>
+      <text x="355" y="85" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">fluxes</text>
+      <text x="425" y="85" font-family="Source Sans 3" font-size="10" fill="#b44a2f" text-anchor="middle" font-weight="600">div</text>
+      <text x="495" y="85" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">densities</text>
+    </svg>
+    <div class="caption"><strong>Figure 2.8.</strong> The discrete de Rham complex: coboundary operators $\mathbf{B}_{k,k+1}^\top$ act as discrete gradient, curl, and divergence. The fundamental identity $\mathbf{B}_{k,k+1}^\top \mathbf{B}_{k-1,k}^\top = 0$ (curl of grad = 0, div of curl = 0) holds by construction — it's a consequence of the signed incidence structure.</div>
+  </div>
+
+  <h3>Message Passing on Graphs</h3>
+  <p>
+    A GNN assigns a feature vector $\mathbf{h}_v \in \mathbb{R}^d$ to each vertex $v$ and updates features iteratively by <strong>aggregating messages from neighbors</strong>:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">GNN Message Passing (one layer)</div>
+    $$\mathbf{h}_v^{(\ell+1)} = \phi\!\left(\mathbf{h}_v^{(\ell)},\; \bigoplus_{w \in \mathcal{N}(v)} \psi\!\left(\mathbf{h}_v^{(\ell)}, \mathbf{h}_w^{(\ell)}\right)\right)$$
+  </div>
+
+  <p>
+    Here $\mathcal{N}(v) = \{w : \{v,w\} \in E\}$ is the 1-hop neighborhood, $\psi$ computes a message, $\bigoplus$ aggregates (sum, mean, max), and $\phi$ updates. The key limitation: <strong>messages flow only between adjacent vertices along edges</strong>. There is no mechanism to send a message from an edge to a face, or from a volume to a surface.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 3 -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="tdl-index.html"><span class="dir">← Previous</span><span class="title">Course Home</span></a><a class="next" href="tdl-02-edge-signals.html"><span class="dir">Next →</span><span class="title">Edge Signals & the Discrete Curl</span></a></div>
+</main>
+<footer><p><a href="tdl-index.html">← Course Home</a> · <a href="index.html">All Notes</a></p></footer>
+</body>
+</html>
