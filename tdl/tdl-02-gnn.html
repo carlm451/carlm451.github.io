@@ -253,6 +253,20 @@
     $$\hat{A}_{ij} = \frac{\tilde{A}_{ij}}{\sqrt{\tilde{d}_i}\sqrt{\tilde{d}_j}}$$
   </div>
 
+  <div class="insight">
+    <p><strong>What does $\mathbf{D}^{-1/2}$ actually mean?</strong> This notation looks intimidating, but for a <strong>diagonal</strong> matrix it's trivial. A diagonal matrix $\mathbf{D}$ only has nonzero entries on the diagonal: $D_{ii} = d_i$. Every matrix operation reduces to a scalar operation on each diagonal entry independently:</p>
+    <p style="margin-left:1.5rem;">
+      $\mathbf{D}^{1/2}$: take the square root → $D^{1/2}_{ii} = \sqrt{d_i}$<br>
+      $\mathbf{D}^{-1}$: take the reciprocal → $D^{-1}_{ii} = 1/d_i$<br>
+      $\mathbf{D}^{-1/2}$: combine both → $D^{-1/2}_{ii} = 1/\sqrt{d_i}$
+    </p>
+    <p>For our graph with $\tilde{d} = (4, 3, 4, 3)$:</p>
+    <p style="margin-left:1.5rem;">
+      $\tilde{\mathbf{D}}^{-1/2} = \text{diag}\!\left(\frac{1}{\sqrt{4}},\; \frac{1}{\sqrt{3}},\; \frac{1}{\sqrt{4}},\; \frac{1}{\sqrt{3}}\right) = \text{diag}(0.500,\; 0.577,\; 0.500,\; 0.577)$
+    </p>
+    <p>This only works because $\mathbf{D}$ is diagonal. For a general matrix, $\mathbf{M}^{-1/2}$ requires eigendecomposition — but degree matrices are always diagonal, so we never need that here.</p>
+  </div>
+
   <div class="figure">
     <svg viewBox="0 0 650 210" width="650" height="210">
       <text x="325" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">Building Â for Our Graph</text>
