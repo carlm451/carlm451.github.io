@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carl's Study Notes — Computational Physics &amp; Machine Learning</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #faf8f5;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #b44a2f;
+  --accent2: #2a6b5a;
+  --accent3: #3a5a8c;
+  --accent4: #8b5a8c;
+  --border: #d5d0c8;
+  --card: #ffffff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 17px; }
+body {
+  font-family: 'Crimson Pro', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.72;
+  -webkit-font-smoothing: antialiased;
+}
+
+header {
+  background: linear-gradient(175deg, #1a1512 0%, #2a2018 40%, #3a2a1f 100%);
+  color: #f0ece6;
+  padding: 4.5rem 2rem 3.5rem;
+  position: relative;
+}
+header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 500px 300px at 25% 75%, rgba(180,74,47,0.12), transparent),
+    radial-gradient(ellipse 400px 250px at 75% 25%, rgba(42,107,90,0.1), transparent);
+}
+header .container { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; }
+header h1 {
+  font-size: 2.6rem;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 0.8rem;
+}
+header h1 strong { font-weight: 700; color: #e8a88a; }
+header .subtitle {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 1.02rem;
+  color: #b0a89e;
+  max-width: 540px;
+  line-height: 1.6;
+}
+header .me {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.85rem;
+  color: #8a8078;
+  margin-top: 1.2rem;
+}
+header .me a { color: #c8a888; text-decoration: none; }
+header .me a:hover { color: #e8a88a; }
+
+main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 5rem;
+}
+
+.section-label {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  margin-top: 2.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.section-label:first-child { margin-top: 0; }
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem 1.8rem;
+  margin-bottom: 0.8rem;
+  box-shadow: 0 2px 8px rgba(42,37,32,0.06);
+  transition: box-shadow 0.25s, border-color 0.25s, transform 0.25s;
+  text-decoration: none;
+  display: block;
+  color: var(--text);
+}
+a.card:hover {
+  box-shadow: 0 6px 24px rgba(42,37,32,0.12);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.card.featured {
+  border-left: 4px solid var(--accent);
+  position: relative;
+}
+.card.featured .live-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--accent);
+  color: white;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+}
+.card.placeholder {
+  opacity: 0.5;
+  pointer-events: none;
+  border-style: dashed;
+}
+.card h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+  line-height: 1.3;
+}
+.card .tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.card .tag {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 4px;
+}
+.tag.topology { background: #e8a88a28; color: var(--accent); }
+.tag.ml { background: #8ec5b628; color: var(--accent2); }
+.tag.physics { background: #a8c0e028; color: var(--accent3); }
+.tag.compute { background: #c8a8d028; color: var(--accent4); }
+.tag.math { background: #d5c89828; color: #7a6a2a; }
+
+.card p {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+.card .meta {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.76rem;
+  color: #b0a89e;
+  margin-top: 0.5rem;
+}
+.card .meta .status {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 0.3rem;
+  position: relative;
+  top: -1px;
+}
+.status.live { background: var(--accent2); }
+.status.planned { background: #b0a89e; }
+
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+footer {
+  text-align: center;
+  padding: 2.5rem 2rem;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  max-width: 780px;
+  margin: 0 auto;
+}
+footer a { color: var(--accent); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  html { font-size: 15px; }
+  header h1 { font-size: 2rem; }
+  main { padding: 2rem 1.2rem; }
+  .card-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>Computational Physics<br><strong>Study Notes</strong></h1>
+    <p class="subtitle">
+      Self-study course materials on topics at the intersection of physics, mathematics, and machine learning. Built for my own learning; shared in case others find them useful.
+    </p>
+    <p class="me">
+      Carl — Data Scientist · Physics PhD ·
+      <a href="https://github.com/carlm451">github.com/carlm451</a>
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ====== ACTIVE COURSES ====== -->
+  <div class="section-label">Available Courses</div>
+
+  <a class="card featured" href="topological-deep-learning-intro.html">
+    <span class="live-badge">Live</span>
+    <div class="tags">
+      <span class="tag topology">Algebraic Topology</span>
+      <span class="tag ml">Deep Learning</span>
+      <span class="tag physics">Graph Theory</span>
+    </div>
+    <h3>A Guided Introduction to Topological Deep Learning</h3>
+    <p>
+      Background for reading Hajij et al., "Topological Deep Learning: Going Beyond Graph Data."
+      Builds from scratch: graphs → simplicial complexes → cell complexes → combinatorial complexes → higher-order message passing → Hodge theory → spectral methods. Includes worked examples, SVG diagrams, and connections to thermal physics throughout.
+    </p>
+    <div class="meta"><span class="status live"></span> 12 sections · Worked matrix examples · Spectral analysis · February 2026</div>
+  </a>
+
+  <!-- ====== NEURAL PDE SOLVERS ====== -->
+  <div class="section-label">Neural PDE Solvers</div>
+
+  <div class="card-grid">
+    <div class="card placeholder">
+      <div class="tags">
+        <span class="tag ml">Neural Networks</span>
+        <span class="tag physics">PDEs</span>
+      </div>
+      <h3>Physics-Informed Neural Networks (PINNs)</h3>
+      <p>Embedding PDE constraints into loss functions — theory, training dynamics, failure modes, and when they actually work.</p>
+      <div class="meta"><span class="status planned"></span> Planned</div>
+    </div>
+
+    <div class="card placeholder">
+      <div class="tags">
+        <span class="tag ml">Neural Operators</span>
+        <span class="tag physics">Spectral Methods</span>
+      </div>
+      <h3>Fourier Neural Operators (FNOs)</h3>
+      <p>From spectral methods to operator learning — how FNOs learn PDE solution maps in Fourier space and what they can't do.</p>
+      <div class="meta"><span class="status planned"></span> Planned</div>
+    </div>
+
+    <div class="card placeholder">
+      <div class="tags">
+        <span class="tag ml">Deep Learning</span>
+        <span class="tag math">Functional Analysis</span>
+      </div>
+      <h3>DeepONet &amp; Neural Operator Theory</h3>
+      <p>Universal approximation for operators, branch-trunk architectures, and the mathematical foundations connecting all neural PDE solvers.</p>
+      <div class="meta"><span class="status planned"></span> Planned</div>
+    </div>
+
+    <div class="card placeholder">
+      <div class="tags">
+        <span class="tag physics">Heat Transfer</span>
+        <span class="tag compute">FEA</span>
+      </div>
+      <h3>Finite Element Methods for Thermal Simulation</h3>
+      <p>Weak forms, Galerkin projection, mesh generation, and homogenization — the classical methods that neural solvers are accelerating.</p>
+      <div class="meta"><span class="status planned"></span> Planned</div>
+    </div>
+  </div>
+
+  <!-- ====== MATHEMATICAL FOUNDATIONS ====== -->
+  <div class="section-label">Mathematical Foundations</div>
+
+  <div class="card-grid">
+    <div class="card placeholder">
+      <div class="tags">
+        <span class="tag math">Analysis</span>
+        <span class="tag physics">Continuum Mechanics</span>
+      </div>
+      <h3>PDEs for Machine Learning</h3>
+      <p>The PDE theory neural solvers actually need: weak solutions, Sobolev spaces, variational formulations, and well-posedness.</p>
+      <div class="meta"><span class="status planned"></span> Planned</div>
+    </div>
+
+    <div class="card placeholder">
+      <div class="tags">
+        <span class="tag math">Optimization</span>
+        <span class="tag ml">Training Dynamics</span>
+      </div>
+      <h3>Optimization for Deep Learning</h3>
+      <p>SGD, Adam, Muon, loss landscapes, learning rate schedules, and why neural networks train at all.</p>
+      <div class="meta"><span class="status planned"></span> Planned</div>
+    </div>
+  </div>
+
+  <!-- ====== COMPUTATIONAL PHYSICS ====== -->
+  <div class="section-label">Computational Physics</div>
+
+  <div class="card-grid">
+    <div class="card placeholder">
+      <div class="tags">
+        <span class="tag physics">Statistical Mechanics</span>
+        <span class="tag compute">HPC</span>
+      </div>
+      <h3>Molecular Dynamics Simulations</h3>
+      <p>Force fields, integration schemes, thermostats, ensembles, and the bridge to machine-learned interatomic potentials.</p>
+      <div class="meta"><span class="status planned"></span> Planned</div>
+    </div>
+
+    <div class="card placeholder">
+      <div class="tags">
+        <span class="tag ml">Generative Models</span>
+        <span class="tag physics">Sampling</span>
+      </div>
+      <h3>Diffusion Models from a Physics Perspective</h3>
+      <p>Langevin dynamics, score matching, stochastic differential equations — the statistical physics view of generative AI.</p>
+      <div class="meta"><span class="status planned"></span> Planned</div>
+    </div>
+
+    <div class="card placeholder">
+      <div class="tags">
+        <span class="tag physics">Electrodynamics</span>
+        <span class="tag compute">Simulation</span>
+      </div>
+      <h3>Computational Electromagnetics</h3>
+      <p>FDTD, method of moments, and how Maxwell's equations connect to the de Rham complex in topological deep learning.</p>
+      <div class="meta"><span class="status planned"></span> Planned</div>
+    </div>
+
+    <div class="card placeholder">
+      <div class="tags">
+        <span class="tag physics">Quantum Mechanics</span>
+        <span class="tag ml">Variational Methods</span>
+      </div>
+      <h3>ML for Quantum Chemistry</h3>
+      <p>From DFT to neural wave functions — how machine learning is transforming electronic structure calculations.</p>
+      <div class="meta"><span class="status planned"></span> Planned</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>
+    Open-source self-study materials ·
+    <a href="https://github.com/carlm451/carlm451.github.io">View source on GitHub</a>
+  </p>
+</footer>
+
+</body>
+</html>
