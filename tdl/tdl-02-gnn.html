@@ -159,30 +159,30 @@
   </div>
 
   <p>
-    Let's unpack what each piece does. Reading the equation <strong>right to left</strong>:
+    Let's unpack what each piece does. Reading the equation <strong>left to right</strong>:
   </p>
 
   <div class="figure">
     <svg viewBox="0 0 680 180" width="680" height="180">
       <text x="340" y="22" font-family="Source Sans 3" font-size="14" font-weight="700" fill="#2a2520" text-anchor="middle">Reading the GCN Equation: σ( Â · H · W )</text>
 
-      <!-- Step 1: HW -->
-      <rect x="20" y="45" width="195" height="120" rx="8" fill="white" stroke="#b44a2f" stroke-width="1.5"/>
-      <text x="117" y="68" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#b44a2f" text-anchor="middle">① H · W</text>
-      <text x="35" y="90" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Transform each vertex's</text>
-      <text x="35" y="106" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">features independently</text>
-      <text x="35" y="126" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Same as feedforward:</text>
-      <text x="35" y="142" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">linear map per vertex</text>
-      <text x="35" y="158" font-family="JetBrains Mono" font-size="9" fill="#b44a2f">d_in → d_out features</text>
+      <!-- Step 1: ÂH -->
+      <rect x="20" y="45" width="195" height="120" rx="8" fill="white" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="117" y="68" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a6b5a" text-anchor="middle">① Â · H</text>
+      <text x="35" y="90" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Mix each vertex with its</text>
+      <text x="35" y="106" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">neighbors via normalized</text>
+      <text x="35" y="122" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">weighted average</text>
+      <text x="35" y="146" font-family="Source Sans 3" font-size="10.5" fill="#2a6b5a" font-weight="600" font-style="italic">This is the graph part!</text>
+      <text x="35" y="158" font-family="JetBrains Mono" font-size="9" fill="#2a6b5a">structure-aware aggregation</text>
 
-      <!-- Step 2: Â · (HW) -->
-      <rect x="240" y="45" width="195" height="120" rx="8" fill="white" stroke="#2a6b5a" stroke-width="1.5"/>
-      <text x="337" y="68" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#2a6b5a" text-anchor="middle">② Â · (result)</text>
-      <text x="255" y="90" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Mix each vertex with its</text>
-      <text x="255" y="106" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">neighbors via normalized</text>
-      <text x="255" y="122" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">weighted average</text>
-      <text x="255" y="146" font-family="Source Sans 3" font-size="10.5" fill="#2a6b5a" font-weight="600" font-style="italic">This is the graph part!</text>
-      <text x="255" y="158" font-family="JetBrains Mono" font-size="9" fill="#2a6b5a">structure-aware aggregation</text>
+      <!-- Step 2: (ÂH) · W -->
+      <rect x="240" y="45" width="195" height="120" rx="8" fill="white" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="337" y="68" font-family="Source Sans 3" font-size="11" font-weight="700" fill="#b44a2f" text-anchor="middle">② (result) · W</text>
+      <text x="255" y="90" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">Transform each vertex's</text>
+      <text x="255" y="106" font-family="Source Sans 3" font-size="10.5" fill="#2a2520">aggregated features</text>
+      <text x="255" y="126" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Same as feedforward:</text>
+      <text x="255" y="142" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">linear map per vertex</text>
+      <text x="255" y="158" font-family="JetBrains Mono" font-size="9" fill="#b44a2f">d_in → d_out features</text>
 
       <!-- Step 3: σ -->
       <rect x="460" y="45" width="195" height="120" rx="8" fill="white" stroke="#3a5a8c" stroke-width="1.5"/>
@@ -193,7 +193,7 @@
       <text x="475" y="146" font-family="Source Sans 3" font-size="10.5" fill="#6b6560" font-style="italic">Same as feedforward:</text>
       <text x="475" y="158" font-family="JetBrains Mono" font-size="9" fill="#3a5a8c">element-wise activation</text>
     </svg>
-    <div class="caption"><strong>Figure 4.1.</strong> The three steps of a GCN layer. Step ① is a standard feedforward transform (same weights for every vertex). Step ② is the <em>only</em> step that uses the graph structure — it mixes each vertex with its neighbors. Step ③ is a standard nonlinearity. The graph topology enters through $\hat{\mathbf{A}}$ alone.</div>
+    <div class="caption"><strong>Figure 4.1.</strong> The three steps of a GCN layer. Step ① is the <em>only</em> step that uses the graph structure — it mixes each vertex's features with its neighbors'. Step ② is a standard feedforward transform (same weights for every vertex). Step ③ is a standard nonlinearity. Note: because matrix multiplication is associative, $\hat{\mathbf{A}}(\mathbf{H}\mathbf{W}) = (\hat{\mathbf{A}}\mathbf{H})\mathbf{W}$ — you could equally transform first and aggregate second with the same result. The aggregate-first order shown here is the standard convention.</div>
   </div>
 </section>
 
