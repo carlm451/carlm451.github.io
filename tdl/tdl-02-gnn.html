@@ -158,6 +158,24 @@
     </p>
   </div>
 
+  <div class="insight key">
+    <p><strong>Connecting to feedforward intuition:</strong> Think of the feature matrix $\mathbf{H}$ as a batch of $n$ samples, one per vertex. Without any graph structure ($\mathbf{A} = 0$, so $\hat{\mathbf{A}} = \mathbf{I}$), the GCN equation reduces to $\sigma(\mathbf{I} \cdot \mathbf{H} \cdot \mathbf{W}) = \sigma(\mathbf{H}\mathbf{W})$ — each row of $\mathbf{H}$ gets multiplied by $\mathbf{W}$ independently. That's just a standard feedforward layer applied to each vertex as if it were a separate sample in a batch. No vertex knows any other vertex exists.</p>
+    <p>Now add edges. The matrix $\hat{\mathbf{A}}$ is no longer the identity — it has off-diagonal entries wherever edges exist. Multiplying $\hat{\mathbf{A}}\mathbf{H}$ <em>mixes the rows</em> of $\mathbf{H}$ together before the linear transform. It's as if the samples in your batch started talking to each other: "Hey, I'm at 50°C, what about you?" The graph structure determines <em>who talks to whom</em>, and the normalization determines <em>how much each neighbor's voice counts</em>.</p>
+    <p>In short: <strong>a GCN is a feedforward network where the batch samples are allowed to exchange information along edges before each layer.</strong></p>
+  </div>
+
+  <div class="insight physics">
+    <p><strong>The other extreme — a fully connected graph:</strong> What if <em>every</em> node is connected to every other? All degrees equal $n$, so the symmetric normalization gives $\hat{A}_{ij} = 1/n$ for every entry. Now $\hat{\mathbf{A}}\mathbf{H}$ replaces each vertex's features with the <strong>uniform average</strong> over all vertices. Every vertex gets the same aggregated representation — all local structure is erased.</p>
+    <p>Physicists will recognize this as the <strong>mean field approximation</strong>. In the Ising model, each spin interacts with specific neighbors through the lattice. Mean field theory replaces those local interactions with a single effective field: the average over all spins. This is mathematically equivalent to putting the system on a fully connected graph — every spin talks to every other spin equally. The approximation becomes exact in the limit of infinite neighbors (infinite dimensions), precisely because the true local field converges to the global average.</p>
+    <p>This gives us three regimes to reason about what $\hat{\mathbf{A}}$ does:</p>
+    <p style="margin-left:1.5rem;">
+      <strong>No edges</strong> ($\hat{\mathbf{A}} = \mathbf{I}$): independent particles — each vertex ignores all others<br>
+      <strong>Sparse graph</strong> ($\hat{\mathbf{A}}$ has structure): real interactions — local neighborhood determines each vertex's update<br>
+      <strong>Fully connected</strong> ($\hat{\mathbf{A}} = \tfrac{1}{n}\mathbf{1}\mathbf{1}^\top$): mean field — every vertex sees the same global average, local structure is lost
+    </p>
+    <p>The power of GNNs lies in the middle regime: the graph encodes <em>which</em> interactions matter, preserving local structure that mean field theory deliberately throws away.</p>
+  </div>
+
   <p>
     Let's unpack what each piece does. Reading the equation <strong>left to right</strong>:
   </p>
