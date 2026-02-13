@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHAPTER_TITLE — COURSE_NAME Course</title>
+<!-- MathJax — remove if chapter has no math -->
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-chapter">
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / <a href="COURSE_INDEX">COURSE_NAME</a> / Chapter CHAPTER_NUM</div>
+    <span class="ch-num">Chapter CHAPTER_NUM</span>
+    <h1>Title with <strong>Emphasis</strong></h1>
+    <p class="subtitle">One-sentence description of this chapter's content and scope.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="PREV_FILE">← PREV_TITLE</a><span class="ch-title">Chapter CHAPTER_NUM</span><a href="NEXT_FILE">NEXT_TITLE →</a></div></nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<!-- Table of Contents -->
+<div class="toc">
+  <div class="toc-label">In this chapter</div>
+  <ol>
+    <li><a href="#secNN"><span class="toc-num">NN</span>Section Title</a></li>
+    <li><a href="#secMM"><span class="toc-num">MM</span>Section Title</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION NN — Title                                           -->
+<!-- ============================================================ -->
+<section id="secNN">
+  <h2><span class="sec-num">NN</span>Section Title</h2>
+
+  <p>
+    Body text goes here. Use <strong>bold</strong> for key terms on first use
+    and <em>italics</em> for emphasis.
+  </p>
+
+  <!-- Definition box (red border by default; add .green, .blue, or .purple) -->
+  <div class="def-box green">
+    <div class="def-label">Definition Name</div>
+    <p>Formal definition text. Math: $\mathbf{x} \in \mathbb{R}^d$.</p>
+  </div>
+
+  <!-- Insight callout (default lightbulb; add .physics, .warning, or .key) -->
+  <div class="insight key">
+    <p><strong>Key idea:</strong> Explanation of why this matters.</p>
+  </div>
+
+  <!-- Math block -->
+  <div class="math-block">
+    <div class="math-label">Equation name</div>
+    $$\mathbf{y} = \sigma(\mathbf{W}\mathbf{x} + \mathbf{b})$$
+  </div>
+
+  <!-- Figure with inline SVG -->
+  <div class="figure">
+    <svg viewBox="0 0 400 200" width="400" height="200">
+      <!-- SVG content here. Use classes: .node-v, .node-e, .node-f, .edge-line, .label-text, .label-sm -->
+      <circle cx="100" cy="100" r="14" class="node-v" stroke-width="2"/>
+      <text x="100" y="105" class="label-text">v₀</text>
+    </svg>
+    <div class="caption"><strong>Figure N.M.</strong> Caption describing the diagram.</div>
+  </div>
+
+  <!-- Comparison table -->
+  <table class="comp-table">
+    <thead>
+      <tr><th>Property</th><th>Option A</th><th>Option B</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Row 1</td><td>Value</td><td>Value</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Numbered steps -->
+  <ol class="steps">
+    <li>First step explanation.</li>
+    <li>Second step explanation.</li>
+    <li>Third step explanation.</li>
+  </ol>
+
+  <!-- Code block (if needed for future courses) -->
+  <pre><code><span class="cmt"># Example Python</span>
+<span class="kw">import</span> torch
+x = torch.<span class="fn">randn</span>(<span class="num">4</span>, <span class="num">2</span>)
+</code></pre>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- FOOTER NAV                                                   -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="PREV_FILE"><span class="dir">← Previous</span><span class="title">PREV_TITLE</span></a><a class="next" href="NEXT_FILE"><span class="dir">Next →</span><span class="title">NEXT_TITLE</span></a></div>
+</main>
+<footer><p><a href="COURSE_INDEX">← Course Home</a> · <a href="../index.html">All Notes</a></p></footer>
+<a href="#" class="back-to-top" aria-label="Back to top">&#8593;</a>
+<script>
+const fill = document.querySelector('.progress-fill');
+const main = document.querySelector('main');
+function updateProgress() {
+  const top = main.getBoundingClientRect().top;
+  const height = main.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (-top / height) * 100));
+  fill.style.width = pct + '%';
+}
+const btn = document.querySelector('.back-to-top');
+function updateBtn() {
+  btn.classList.toggle('visible', window.scrollY > 600);
+}
+window.addEventListener('scroll', function() { updateProgress(); updateBtn(); }, { passive: true });
+updateProgress();
+</script>
+</body>
+</html>

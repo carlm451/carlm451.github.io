@@ -11,34 +11,75 @@ carlm451.github.io/
 ├── .nojekyll              # Prevents Jekyll processing (critical, do not remove)
 ├── CLAUDE.md              # This file
 ├── README.md              # Repo description
-├── index.html             # Landing page — links to all courses
+├── index.html             # Landing page — links to all courses (body.page-landing)
+├── _template-chapter.html # Template for new chapter pages — not served
 │
-│   Topological Deep Learning Course (live)
-├── tdl-index.html         # Course table of contents
-├── tdl-01-graphs.html     # Ch 1: Graphs, Laplacian, eigendecomposition, spectral theory
-├── tdl-02-gnn.html        # Ch 2: Feedforward NN review, GCN layer, full numerical walkthrough
-├── tdl-03-edge-signals.html  # Ch 3: B₁₂, discrete curl, Hodge Laplacian L₁
-├── tdl-04-face-signals.html  # Ch 4: L₂, Betti numbers, complete de Rham complex
-├── tdl-05-complexes.html     # Ch 5: Simplicial → Cell → Combinatorial complexes
-├── tdl-06-message-passing.html # Ch 6: Cochains, adjacency types, HOMP framework
-├── tdl-07-architectures.html   # Ch 7: Hodge theory, architecture zoo (SNN, CWN, CAN, etc.)
-├── tdl-08-applications.html    # Ch 8: Thermal physics connection, reading roadmap
+├── assets/
+│   └── style.css          # Shared stylesheet for all pages
 │
-│   Future courses (placeholders on landing page)
-├── [pinns-*.html]         # Physics-Informed Neural Networks (planned)
-├── [fno-*.html]           # Fourier Neural Operators (planned)
-└── [pde-*.html]           # PDEs for ML (planned)
+├── tdl/                   # Topological Deep Learning course (live)
+│   ├── tdl-index.html         # Course table of contents (body.page-index)
+│   ├── tdl-01-graphs.html     # Ch 1: Graphs, Laplacian, eigendecomposition, spectral theory
+│   ├── tdl-02-gnn.html        # Ch 2: Feedforward NN review, GCN layer, full numerical walkthrough
+│   ├── tdl-03-edge-signals.html  # Ch 3: B₁₂, discrete curl, Hodge Laplacian L₁
+│   ├── tdl-04-face-signals.html  # Ch 4: L₂, Betti numbers, complete de Rham complex
+│   ├── tdl-05-complexes.html     # Ch 5: Simplicial → Cell → Combinatorial complexes
+│   ├── tdl-06-message-passing.html # Ch 6: Cochains, adjacency types, HOMP framework
+│   ├── tdl-07-architectures.html   # Ch 7: Hodge theory, architecture zoo (SNN, CWN, CAN, etc.)
+│   └── tdl-08-applications.html    # Ch 8: Thermal physics connection, reading roadmap
+│
+├── [pinns/]               # Physics-Informed Neural Networks (planned)
+├── [fno/]                 # Fourier Neural Operators (planned)
+└── [pde/]                 # PDEs for ML (planned)
 ```
 
 ## Design System
 
-All pages share inline CSS (no external stylesheet). Key design tokens:
+All pages share a single external stylesheet at `assets/style.css`. Three page types are distinguished by body class:
+
+- **`body.page-landing`** — Landing page (`index.html`): wider header, card grid
+- **`body.page-index`** — Course index pages (`tdl/tdl-index.html`, etc.): chapter card list
+- **`body.page-chapter`** — Chapter pages: sticky nav, progress bar, TOC, back-to-top
+
+### Design Tokens
 
 - **Fonts:** Crimson Pro (body), Source Sans 3 (UI/labels), JetBrains Mono (code/math)
 - **Colors:** `--accent: #b44a2f` (red), `--accent2: #2a6b5a` (green), `--accent3: #3a5a8c` (blue), `--accent4: #8b5a8c` (purple), `--bg: #faf8f5`
 - **Math:** MathJax 3.2.2 (tex-svg-full), loaded per page via CDN
 - **Diagrams:** Inline SVG throughout — no external images
-- **Component classes:** `.def-box` (definitions, with `.green`/`.blue`/`.purple` variants), `.insight` (callout boxes with emoji), `.figure` (SVG diagrams with captions), `.math-block` (equations), `.comp-table` (comparison tables), `.steps` (numbered lists)
+
+### Component Classes
+
+| Class | Purpose | Variants |
+|-------|---------|----------|
+| `.def-box` | Definition/theorem boxes | `.green`, `.blue`, `.purple` (border color) |
+| `.insight` | Callout boxes with emoji | `.physics` (atom), `.warning`, `.key` |
+| `.figure` | SVG diagrams with captions | — |
+| `.math-block` | Display equations | `.math-label` for titles |
+| `.comp-table` | Comparison tables | — |
+| `.steps` | Numbered step lists | — |
+| `.toc` | In-page table of contents | — |
+| `pre > code` | Code blocks (dark theme) | `.kw`, `.fn`, `.str`, `.num`, `.cmt` for syntax tokens |
+
+### SVG Diagram Classes
+
+| Class | Element | Colors |
+|-------|---------|--------|
+| `.node-v` | Vertices (rank 0) | fill: #e8a88a, stroke: #b44a2f |
+| `.node-e` | Edges (rank 1) | fill: #8ec5b6, stroke: #2a6b5a |
+| `.node-f` | Faces (rank 2) | fill: #a8c0e0, stroke: #3a5a8c |
+| `.edge-line` | Connecting lines | stroke: #6b6560, width: 1.5 |
+| `.label-text` | Primary labels | 11px, fill: #2a2520 |
+| `.label-sm` | Secondary labels | 10px, fill: #6b6560 |
+
+### Chapter Page Features
+
+Each chapter page includes:
+- **Sticky nav** with prev/next links and chapter indicator
+- **Progress bar** (gradient fill, updates on scroll via JS)
+- **In-page TOC** linking to section anchors
+- **Back-to-top button** (appears after 600px scroll)
+- **Print stylesheet** (hides nav, expands content, shows URLs)
 
 ## The Running Example
 
@@ -65,41 +106,47 @@ All matrices (B₁, B₁₂, L₀, L₁, L₂, eigenvalues, Â) have been comput
 Each chapter page has:
 - Header with breadcrumb: Home / TDL / Chapter N
 - Sticky top nav: ← Previous | Chapter N | Next →
+- Progress bar: gradient fill showing scroll position
+- In-page TOC: links to section anchors within the chapter
 - Footer nav: large prev/next cards
 - Footer: links back to course home and landing page
-
-The `make_page()` function in the original build script (not in repo) generated these. When adding new chapters, maintain the nav chain by updating prev/next links in adjacent chapters.
+- Back-to-top button: fixed bottom-right, appears on scroll
 
 ## Adding a New TDL Chapter
 
-1. Copy an existing chapter file as template
-2. Update: chapter number in header, breadcrumb, nav links
-3. Update prev chapter's `next` links to point to new file
-4. Update next chapter's `prev` links to point to new file
-5. Add entry to `tdl-index.html`
-6. Section numbering is globally sequential (Ch 1 = §1–2, Ch 2 = §3–8, Ch 3 = §9–14, etc.)
+1. Copy `_template-chapter.html` into the `tdl/` directory as starting point
+2. Replace all `PLACEHOLDER` values: CHAPTER_NUM, CHAPTER_TITLE, COURSE_NAME, etc.
+3. Ensure paths use `../` prefix: `../assets/style.css`, `../index.html`
+4. Add section IDs matching the TOC links (e.g., `id="secNN"`)
+5. Update prev chapter's `next` links to point to new file
+6. Update next chapter's `prev` links to point to new file
+7. Add entry to `tdl/tdl-index.html`
+8. Section numbering is globally sequential (Ch 1 = §1–2, Ch 2 = §3–8, etc.)
 
 ## Adding a New Course
 
-1. Create `[topic]-index.html` (copy `tdl-index.html` as template)
-2. Create chapter files: `[topic]-01-*.html`, `[topic]-02-*.html`, etc.
-3. Add a card to `index.html` landing page (change placeholder from `.planned` to `.featured`)
-4. Follow same design system — inline CSS, same fonts/colors, SVG diagrams, MathJax
+1. Create a subdirectory for the course: `[topic]/`
+2. Create `[topic]/[topic]-index.html` (copy `tdl/tdl-index.html` as template, use `body.page-index`)
+3. Create chapter files from `_template-chapter.html`: `[topic]/[topic]-01-*.html`, `[topic]/[topic]-02-*.html`, etc.
+4. All course files use `../` prefix for shared assets: `../assets/style.css`, `../index.html`
+5. Inter-chapter links within a course use relative paths (no prefix needed, same directory)
+6. Add a card to `index.html` landing page pointing to `[topic]/[topic]-index.html` (change `.planned` to `.featured`)
+7. Follow same design system — shared `assets/style.css`, same fonts/colors, SVG diagrams, MathJax
 
 ## Planned Courses
 
 From `index.html` placeholders (in rough priority order):
 
-| Course | Prefix | Status |
-|--------|--------|--------|
-| Physics-Informed Neural Networks | `pinns-` | Planned |
-| Fourier Neural Operators | `fno-` | Planned |
-| DeepONet & Neural Operator Theory | `deeponet-` | Planned |
-| PDEs for Machine Learning | `pde-` | Planned |
-| Optimization for Deep Learning | `optim-` | Planned |
-| Autodiff & Backprop from Scratch | `autodiff-` | Planned |
-| Molecular Dynamics | `md-` | Planned |
-| Computational Electromagnetics | `cem-` | Planned |
+| Course | Directory | File prefix | Status |
+|--------|-----------|-------------|--------|
+| Physics-Informed Neural Networks | `pinns/` | `pinns-` | Planned |
+| Fourier Neural Operators | `fno/` | `fno-` | Planned |
+| DeepONet & Neural Operator Theory | `deeponet/` | `deeponet-` | Planned |
+| PDEs for Machine Learning | `pde/` | `pde-` | Planned |
+| Optimization for Deep Learning | `optim/` | `optim-` | Planned |
+| Autodiff & Backprop from Scratch | `autodiff/` | `autodiff-` | Planned |
+| Molecular Dynamics | `md/` | `md-` | Planned |
+| Computational Electromagnetics | `cem/` | `cem-` | Planned |
 
 ## Context
 
