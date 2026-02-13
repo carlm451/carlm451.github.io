@@ -27,9 +27,7 @@ Background for reading Hajij et al. (2022). Seven chapters in three parts:
 - Fourier Neural Operators (FNOs)
 - DeepONet & Neural Operator Theory
 - PDEs for Machine Learning
-- Molecular Dynamics Simulations
-- Finite Element Methods for Thermal Simulation
-- Diffusion Models from a Physics Perspective
-- Computational Electromagnetics
-- ML for Quantum Chemistry
 - Optimization for Deep Learning
+- Autodiff & Backpropagation from Scratch
+- Molecular Dynamics Simulations
+- Computational Electromagnetics
