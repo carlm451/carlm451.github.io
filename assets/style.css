@@ -28,7 +28,7 @@
 
 /* === RESET & BASE === */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; font-size: 17px; }
+html { scroll-behavior: smooth; font-size: 19px; }
 body {
   font-family: 'Crimson Pro', Georgia, serif;
   background: var(--bg);
@@ -83,12 +83,33 @@ header .subtitle {
    ---------------------------------------------------------------- */
 .page-landing header { padding: 4.5rem 2rem 3.5rem; }
 .page-landing header .container { max-width: 780px; }
-.page-landing header h1 { font-size: 2.6rem; line-height: 1.15; margin-bottom: 0.8rem; }
+.page-landing header h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 1rem;
+  letter-spacing: -0.03em;
+  color: #f0ece6;
+}
 .page-landing header .me {
   font-family: 'Source Sans 3', sans-serif;
   font-size: 0.85rem;
   color: #8a8078;
-  margin-top: 1.2rem;
+  margin-top: 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.page-landing header .me-highlight {
+  background: linear-gradient(135deg, #b44a2f, #d05a3f);
+  color: #1a1512;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 .page-landing header .me a { color: #c8a888; text-decoration: none; }
 .page-landing header .me a:hover { color: #e8a88a; }
@@ -103,17 +124,17 @@ header .subtitle {
 /* Section labels (landing + course index) */
 .section-label {
   font-family: 'Crimson Pro', Georgia, serif;
-  font-size: 3.5rem;
-  font-weight: 300;
+  font-size: 1.75rem;
+  font-weight: 600;
   text-transform: none;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   color: var(--text);
-  margin-bottom: 1.5rem;
-  margin-top: 4rem;
+  margin-bottom: 1.2rem;
+  margin-top: 3.5rem;
   display: block;
-  line-height: 1.15;
-  border-bottom: 3px solid var(--border);
-  padding-bottom: 0.6rem;
+  line-height: 1.2;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.5rem;
 }
 .section-label:first-child { margin-top: 0; }
 .section-label::after {
@@ -752,15 +773,15 @@ pre .cmt  { color: #6b6560; font-style: italic; } /* comments */
    RESPONSIVE
    ---------------------------------------------------------------- */
 @media (max-width: 700px) {
-  html { font-size: 15px; }
+  html { font-size: 17px; }
   header h1 { font-size: 1.8rem; }
-  .page-landing header h1 { font-size: 2rem; }
+  .page-landing header h1 { font-size: 2.4rem; }
   .container { padding: 0 1.2rem; }
   .page-landing main,
   .page-index main { padding: 2rem 1.2rem; }
   .footer-nav { flex-direction: column; }
   .card-grid { grid-template-columns: 1fr; }
-  .section-label { font-size: 2.2rem; }
+  .section-label { font-size: 1.4rem; }
   .toc { margin: 1rem 0 1.5rem; }
 }
 
