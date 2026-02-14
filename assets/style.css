@@ -12,8 +12,8 @@
 
 /* === DESIGN TOKENS === */
 :root {
-  --bg: #faf8f5;
-  --bg-alt: #f0ede8;
+  --bg: #f0f7ff;
+  --bg-alt: #e4f0fc;
   --text: #2a2520;
   --text-muted: #6b6560;
   --accent: #b44a2f;
@@ -63,14 +63,14 @@ header::before {
 }
 header .container { position: relative; z-index: 1; }
 header h1 {
-  font-size: 2.2rem;
-  font-weight: 300;
+  font-size: 42px;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.15;
   margin-bottom: 0.6rem;
-  color: #1a2a10;
+  color: #0a1a3a;
 }
-header h1 strong { font-weight: 700; color: #2a6b3a; }
+header h1 strong { font-weight: 700; color: #0a1a3a; }
 header .subtitle {
   font-family: 'Source Sans 3', sans-serif;
   font-size: 0.95rem;
@@ -90,7 +90,7 @@ body.page-landing header h1 {
   line-height: 1.15;
   margin-bottom: 1.2rem;
   letter-spacing: -0.02em;
-  color: #1a2a10;
+  color: #0a1a3a;
 }
 body.page-landing header .me {
   font-family: 'Source Sans 3', sans-serif;
@@ -248,7 +248,7 @@ body.page-index header h1 {
   font-size: 42px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: #1a2a10;
+  color: #0a1a3a;
 }
 .page-index header .back {
   font-family: 'Source Sans 3', sans-serif;
