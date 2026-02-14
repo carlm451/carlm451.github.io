@@ -103,23 +103,23 @@ header .subtitle {
 /* Section labels (landing + course index) */
 .section-label {
   font-family: 'Source Sans 3', sans-serif;
-  font-size: 0.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.13em;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-  margin-top: 2.8rem;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  margin-bottom: 1.2rem;
+  margin-top: 3.2rem;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 1rem;
 }
 .section-label:first-child { margin-top: 0; }
 .section-label::after {
   content: '';
   flex: 1;
-  height: 1px;
-  background: var(--border);
+  height: 2px;
+  background: linear-gradient(90deg, var(--border), transparent);
 }
 
 /* Landing page cards */
@@ -762,6 +762,7 @@ pre .cmt  { color: #6b6560; font-style: italic; } /* comments */
   .page-index main { padding: 2rem 1.2rem; }
   .footer-nav { flex-direction: column; }
   .card-grid { grid-template-columns: 1fr; }
+  .section-label { font-size: 1.15rem; }
   .toc { margin: 1rem 0 1.5rem; }
 }
 
