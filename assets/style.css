@@ -282,9 +282,9 @@ a.ch-card:hover {
   transform: translateY(-1px);
 }
 .ch-card .ch-num {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Crimson Pro', Georgia, serif;
   font-size: 1.4rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--border);
   min-width: 2.2rem;
   text-align: center;
@@ -342,13 +342,13 @@ header .breadcrumb a:hover { color: #c8e0d0; }
 
 /* Chapter number in header */
 header .ch-num {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 0.9rem;
   color: #e8a878;
   display: block;
   margin-bottom: 0.3rem;
-  font-weight: 500;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 /* Sticky chapter navigation */
@@ -407,12 +407,12 @@ section h2 {
   letter-spacing: -0.01em;
 }
 section h2 .sec-num {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 0.9rem;
   color: var(--accent2);
   display: block;
   margin-bottom: 0.3rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 section h3 { font-size: 1.3rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.5rem; }
 section h4 {
@@ -565,9 +565,9 @@ section h4 {
   background: var(--accent2);
   color: white;
   border-radius: 50%;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 0.8rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -649,8 +649,8 @@ pre .cmt  { color: #5a7060; font-style: italic; } /* comments */
 }
 .toc ol li a:hover { color: var(--accent2); }
 .toc ol li a .toc-num {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78rem;
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 0.82rem;
   color: var(--accent2);
   margin-right: 0.5rem;
 }
