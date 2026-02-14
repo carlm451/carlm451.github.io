@@ -47,8 +47,8 @@ em { font-style: italic; }
    HEADER — shared dark gradient
    ---------------------------------------------------------------- */
 header {
-  background: linear-gradient(175deg, #1a1512 0%, #2a2018 40%, #3a2a1f 100%);
-  color: #f0ece6;
+  background: linear-gradient(175deg, #d4f5a0 0%, #b8ec78 40%, #a3e560 100%);
+  color: #1a2a10;
   padding: 3.5rem 2rem 2.5rem;
   position: relative;
   overflow: hidden;
@@ -58,8 +58,8 @@ header::before {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 600px 400px at 20% 80%, rgba(180,74,47,0.15), transparent),
-    radial-gradient(ellipse 500px 300px at 80% 20%, rgba(42,107,90,0.12), transparent);
+    radial-gradient(ellipse 600px 400px at 20% 80%, rgba(100,180,50,0.15), transparent),
+    radial-gradient(ellipse 500px 300px at 80% 20%, rgba(50,160,100,0.12), transparent);
 }
 header .container { position: relative; z-index: 1; }
 header h1 {
@@ -68,12 +68,13 @@ header h1 {
   letter-spacing: -0.02em;
   line-height: 1.2;
   margin-bottom: 0.6rem;
+  color: #1a2a10;
 }
-header h1 strong { font-weight: 700; color: #e8a88a; }
+header h1 strong { font-weight: 700; color: #2a6b3a; }
 header .subtitle {
   font-family: 'Source Sans 3', sans-serif;
   font-size: 0.95rem;
-  color: #b0a89e;
+  color: #3a5030;
   max-width: 560px;
   line-height: 1.6;
 }
@@ -89,12 +90,12 @@ body.page-landing header h1 {
   line-height: 1.15;
   margin-bottom: 1.2rem;
   letter-spacing: -0.02em;
-  color: #f0ece6;
+  color: #1a2a10;
 }
 body.page-landing header .me {
   font-family: 'Source Sans 3', sans-serif;
   font-size: 16px;
-  color: #8a8078;
+  color: #3a5030;
   margin-top: 1.6rem;
   display: flex;
   flex-wrap: wrap;
@@ -113,8 +114,8 @@ body.page-landing header .me .me-highlight {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
-body.page-landing header .me a { color: #c8a888; text-decoration: none; }
-body.page-landing header .me a:hover { color: #e8a88a; }
+body.page-landing header .me a { color: #2a5a20; text-decoration: none; }
+body.page-landing header .me a:hover { color: #1a3a10; }
 
 .page-landing main,
 .page-index main {
@@ -243,16 +244,21 @@ a.card:hover {
    ---------------------------------------------------------------- */
 .page-index header { padding: 4rem 2rem 3rem; }
 .page-index header .container { max-width: 780px; }
-.page-index header h1 { font-size: 2.3rem; }
+body.page-index header h1 {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #1a2a10;
+}
 .page-index header .back {
   font-family: 'Source Sans 3', sans-serif;
   font-size: 0.82rem;
-  color: #8a8078;
+  color: #3a6030;
   text-decoration: none;
   display: inline-block;
   margin-bottom: 1rem;
 }
-.page-index header .back:hover { color: #e8a88a; }
+.page-index header .back:hover { color: #1a3a10; }
 .page-index .section-label { margin-top: 2.5rem; }
 
 /* Chapter cards (course index) */
@@ -328,11 +334,11 @@ a.ch-card:hover .ch-num { color: var(--accent); }
 header .breadcrumb {
   font-family: 'Source Sans 3', sans-serif;
   font-size: 0.82rem;
-  color: #8a8078;
+  color: #3a6030;
   margin-bottom: 0.8rem;
 }
-header .breadcrumb a { color: #c8a888; text-decoration: none; }
-header .breadcrumb a:hover { color: #e8a88a; }
+header .breadcrumb a { color: #2a5a20; text-decoration: none; }
+header .breadcrumb a:hover { color: #1a3a10; }
 
 /* Chapter number in header */
 header .ch-num {
