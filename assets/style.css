@@ -84,11 +84,11 @@ header .subtitle {
 .page-landing header { padding: 4.5rem 2rem 3.5rem; }
 .page-landing header .container { max-width: 780px; }
 body.page-landing header h1 {
-  font-size: 80px;
+  font-size: 32px;
   font-weight: 700;
-  line-height: 1.0;
+  line-height: 1.15;
   margin-bottom: 1.2rem;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   color: #f0ece6;
 }
 body.page-landing header .me {
@@ -103,16 +103,14 @@ body.page-landing header .me {
 }
 body.page-landing header .me .me-highlight {
   display: inline-block;
-  background: linear-gradient(135deg, #e8a88a, #d4785a);
-  color: #1a1210;
-  font-weight: 800;
-  padding: 6px 14px;
+  background: var(--accent3);
+  color: #e8a88a;
+  font-weight: 700;
+  padding: 5px 12px;
   border-radius: 6px;
-  font-size: 15px;
+  font-size: 14px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  box-shadow: 0 3px 12px rgba(228,140,90,0.45);
-  border: 1px solid rgba(255,255,255,0.15);
 }
 body.page-landing header .me a { color: #c8a888; text-decoration: none; }
 body.page-landing header .me a:hover { color: #e8a88a; }
@@ -778,7 +776,7 @@ pre .cmt  { color: #6b6560; font-style: italic; } /* comments */
 @media (max-width: 700px) {
   html { font-size: 17px; }
   header h1 { font-size: 1.8rem; }
-  body.page-landing header h1 { font-size: 44px; }
+  body.page-landing header h1 { font-size: 26px; }
   .container { padding: 0 1.2rem; }
   .page-landing main,
   .page-index main { padding: 2rem 1.2rem; }
