@@ -84,7 +84,7 @@ header .subtitle {
 .page-landing header { padding: 4.5rem 2rem 3.5rem; }
 .page-landing header .container { max-width: 780px; }
 body.page-landing header h1 {
-  font-size: 32px;
+  font-size: 42px;
   font-weight: 700;
   line-height: 1.15;
   margin-bottom: 1.2rem;
@@ -103,7 +103,8 @@ body.page-landing header .me {
 }
 body.page-landing header .me .me-highlight {
   display: inline-block;
-  background: var(--accent3);
+  background: rgba(135, 195, 235, 0.15);
+  border: 1px solid #3a5a8c;
   color: #e8a88a;
   font-weight: 700;
   padding: 5px 12px;
@@ -776,7 +777,7 @@ pre .cmt  { color: #6b6560; font-style: italic; } /* comments */
 @media (max-width: 700px) {
   html { font-size: 17px; }
   header h1 { font-size: 1.8rem; }
-  body.page-landing header h1 { font-size: 26px; }
+  body.page-landing header h1 { font-size: 32px; }
   .container { padding: 0 1.2rem; }
   .page-landing main,
   .page-index main { padding: 2rem 1.2rem; }
