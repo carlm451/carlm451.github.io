@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Mean Field Theory to Variational Autoregressive Networks — Course Home</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-index">
+
+<header>
+  <div class="container">
+    <a class="back" href="../index.html">&larr; All Courses</a>
+    <h1>From Mean Field Theory to Variational Autoregressive Networks</h1>
+    <p class="subtitle">
+      Background for reading Wu, Wang &amp; Zhang, "Solving Statistical Mechanics Using Variational Autoregressive Networks" (arXiv:1809.10606).
+      Builds from the variational principle through na&iuml;ve mean field theory to the one-layer VAN architecture, with worked examples throughout.
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <div class="prereq">
+    <strong>Prerequisites:</strong> Multivariable calculus, basic probability (Bayes' rule, conditional distributions), some familiarity with statistical mechanics (partition function, Boltzmann distribution). No machine learning background assumed &mdash; the neural network connection is built from scratch.
+  </div>
+
+  <!-- PART I -->
+  <div class="section-label">Part I &mdash; Variational Free Energy &amp; Mean Field Theory</div>
+
+  <a class="ch-card" href="van-01-mean-field.html">
+    <div class="ch-num">01</div>
+    <div class="ch-body">
+      <h3>Variational Free Energy &amp; Na&iuml;ve Mean Field for the Ising Model</h3>
+      <p>The variational principle, KL divergence, the factorized ansatz, NMF self-consistency equations. Applications to the 1D Ising ring (spurious transition) and the 2D square lattice (comparison with Onsager's exact solution).</p>
+      <div class="topics">Sections 1&ndash;4 &middot; 6 figures &middot; Landau expansion &middot; Critical exponents</div>
+    </div>
+  </a>
+
+  <!-- PART II -->
+  <div class="section-label">Part II &mdash; From NMF to Autoregressive Networks</div>
+
+  <a class="ch-card" href="van-02-from-nmf-to-van.html">
+    <div class="ch-num">02</div>
+    <div class="ch-body">
+      <h3>From NMF to Variational Autoregressive Networks</h3>
+      <p>The autoregressive decomposition, Bernoulli conditionals with lower-triangular weights, the bias question (paper vs. notes conventions), why one layer captures pairwise correlations, worked N=3 example, and the VAN training loop.</p>
+      <div class="topics">Sections 5&ndash;10 &middot; Bias discussion &middot; Small-W expansion &middot; REINFORCE gradient</div>
+    </div>
+  </a>
+
+</main>
+
+<footer>
+  <p><a href="../index.html">&larr; All Courses</a> &middot; <a href="https://github.com/carlm451/carlm451.github.io">Source on GitHub</a></p>
+</footer>
+
+</body>
+</html>

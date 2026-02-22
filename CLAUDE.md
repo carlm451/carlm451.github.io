@@ -28,6 +28,11 @@ carlm451.github.io/
 │   ├── tdl-07-architectures.html   # Ch 7: Hodge theory, architecture zoo (SNN, CWN, CAN, etc.)
 │   └── tdl-08-applications.html    # Ch 8: Thermal physics connection, reading roadmap
 │
+├── van/                   # Variational Autoregressive Networks course (live)
+│   ├── van-index.html         # Course table of contents (body.page-index)
+│   ├── van-01-mean-field.html # Ch 1: Variational free energy, NMF ansatz, 1D & 2D Ising
+│   └── van-02-from-nmf-to-van.html # Ch 2: Autoregressive decomposition, one-layer VAN, training
+│
 ├── [pinns/]               # Physics-Informed Neural Networks (planned)
 ├── [fno/]                 # Fourier Neural Operators (planned)
 └── [pde/]                 # PDEs for ML (planned)
@@ -93,13 +98,30 @@ The entire TDL course uses **one consistent example** across all chapters:
 
 All matrices (B₁, B₁₂, L₀, L₁, L₂, eigenvalues, Â) have been computed and verified numerically. Maintain consistency if editing.
 
+## VAN Course — Key Facts
+
+The VAN course covers variational mean field theory and its generalization to autoregressive networks. Section numbering is globally sequential within the VAN course (independent from TDL):
+- **Chapter 1 (§1–§4):** Variational free energy, NMF ansatz, 1D Ising (spurious transition at kT_c=2J), 2D Ising (NMF kT_c=4J vs Onsager exact kT_c≈2.269J)
+- **Chapter 2 (§5–§10):** Autoregressive decomposition, Bernoulli conditionals, lower-triangular weight matrix, small-W expansion (pairwise correlations), N=3 worked example, VAN training loop
+
+### The Bias Question
+The VAN paper (Eq. 8) uses **no biases**: σ(∑W_ij s_j), N(N-1)/2 params. The notes (Eq. 32) include biases: tanh(b_i + ∑W_ij s_j), N(N+1)/2 params. Setting W=0: with biases → general NMF; without biases → uniform distribution. The paper omits biases because for the symmetric Ising model (h=0), optimal NMF has m_i=0 above T_c.
+
+### Equation Numbering
+Equations are numbered sequentially across both chapters: Ch 1 uses \tag{1}–\tag{31}, Ch 2 uses \tag{32}–\tag{33}+.
+
 ## Key Reference Papers
 
+### TDL Course
 1. **Hajij et al. (2022)** — "Topological Deep Learning: Going Beyond Graph Data" — the primary paper this course provides background for
 2. **Kipf & Welling (2017)** — "Semi-Supervised Classification with Graph Convolutional Networks" — GCN, covered in Ch 2
 3. **Ebli, Defferrard & Spreemann (2020)** — Simplicial Neural Networks
 4. **Bodnar et al. (2021)** — Weisfeiler and Leman Go Topological (CW Networks)
 5. **Papillon et al. (2023)** — TopoX software suite / TopoModelX
+
+### VAN Course
+1. **Wu, Wang & Zhang (2019)** — "Solving Statistical Mechanics Using Variational Autoregressive Networks," Phys. Rev. Lett. 122, 080602 (arXiv:1809.10606) — the primary paper this course provides background for
+2. **Onsager (1944)** — Exact solution of the 2D Ising model — comparison target for NMF
 
 ## Navigation Pattern
 

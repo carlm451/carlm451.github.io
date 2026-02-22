@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From NMF to Variational Autoregressive Networks — VAN Course</title>
+<script>
+window.MathJax={
+  tex:{
+    inlineMath:[['$','$'],['\\(','\\)']],
+    displayMath:[['$$','$$'],['\\[','\\]']],
+    macros:{
+      avg:['\\langle #1 \\rangle',1],
+      KL:'\\mathrm{D_{KL}}',
+      Fq:'F_q'
+    }
+  },
+  svg:{fontCache:'global'}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-chapter">
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / <a href="van-index.html">VAN</a> / Chapter 2</div>
+    <span class="ch-num">Chapter 2</span>
+    <h1>From NMF to Variational <strong>Autoregressive Networks</strong></h1>
+    <p class="subtitle">Building the one-layer VAN from the NMF foundation &mdash; architecture, bias question, pairwise correlations, and training</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="van-01-mean-field.html">&larr; Variational Free Energy &amp; NMF</a><span class="ch-title">Chapter 2</span><a href="van-index.html">Course Home &rarr;</a></div></nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<!-- Table of Contents -->
+<div class="toc">
+  <div class="toc-label">In this chapter</div>
+  <ol>
+    <li><a href="#sec5"><span class="toc-num">05</span>The Autoregressive Decomposition</a></li>
+    <li><a href="#sec6"><span class="toc-num">06</span>Bernoulli Conditionals and the One-Layer Architecture</a></li>
+    <li><a href="#sec7"><span class="toc-num">07</span>The Lower-Triangular Weight Matrix</a></li>
+    <li><a href="#sec8"><span class="toc-num">08</span>Why One Layer Captures Pairwise Correlations</a></li>
+    <li><a href="#sec9"><span class="toc-num">09</span>Worked Numerical Example: N=3 Ising Chain</a></li>
+    <li><a href="#sec10"><span class="toc-num">10</span>The VAN Training Loop</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 5 — The Autoregressive Decomposition                  -->
+<!-- ============================================================ -->
+<section id="sec5">
+  <h2><span class="sec-num">05</span>The Autoregressive Decomposition</h2>
+
+  <p>
+    In Chapter 1 we built the NMF ansatz by assuming that the variational distribution factorizes into independent single-site distributions: $q(s) = \prod_i q_i(s_i)$. This was convenient&mdash;it made every expectation tractable&mdash;but it killed all correlations between spins. Now we ask: can we write $q(s)$ in a form that is still tractable but <em>allows</em> correlations?
+  </p>
+
+  <p>
+    The answer comes from a basic identity in probability theory. By the <strong>chain rule of probability</strong>, any joint distribution over $N$ variables can be decomposed as a product of conditionals:
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">Autoregressive Factorization</div>
+    <p>
+      Any joint distribution over $N$ binary variables can be written exactly as
+      $$q(s_1, \ldots, s_N) = \prod_{i=1}^{N} q(s_i \mid s_1, \ldots, s_{i-1})$$
+      where $s_{&lt;i} = (s_1, \ldots, s_{i-1})$ and $s_{&lt;1} = \emptyset$.
+    </p>
+  </div>
+
+  <p>
+    This is not an approximation. It is an exact identity, valid for <em>any</em> probability distribution whatsoever. The product of conditionals reconstructs the full joint distribution by construction. So where does the approximation enter?
+  </p>
+
+  <div class="insight key">
+    <p><strong>Where the approximation lives.</strong> All approximation enters through the <em>parameterization</em> of the conditionals $q_\theta(s_i \mid s_{&lt;i})$, not through the factorization itself. If we could represent each conditional exactly, the autoregressive form would reproduce any target distribution. In practice, we parameterize the conditionals with a finite neural network, and that parameterization limits the family of distributions we can express.</p>
+  </div>
+
+  <p>
+    The contrast with NMF is now clear. NMF makes each conditional independent of its predecessors:
+  </p>
+
+  <div class="math-block">
+    $$\underbrace{q(s_i \mid s_{&lt;i}) = q_i(s_i)}_{\text{NMF: ignore all predecessors}} \qquad \text{vs.} \qquad \underbrace{q_\theta(s_i \mid s_{&lt;i}) = f_\theta(s_1, \ldots, s_{i-1})}_{\text{VAN: keep the dependence}}$$
+  </div>
+
+  <p>
+    NMF corresponds to the special case where the conditioning is discarded. VAN keeps the conditioning and parameterizes it with learnable weights. The autoregressive structure&mdash;each variable conditioned on all predecessors&mdash;is depicted in the causal dependency graph below.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 520 160" width="520" height="160">
+      <!-- Arrowhead marker -->
+      <defs>
+        <marker id="arrow-causal" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#5a7060"/>
+        </marker>
+      </defs>
+
+      <!-- Nodes -->
+      <circle cx="80" cy="80" r="22" fill="#e8a88a" stroke="#c25a30" stroke-width="2"/>
+      <text x="80" y="86" font-family="JetBrains Mono" font-size="13" fill="#2a2520" text-anchor="middle">s&#x2081;</text>
+
+      <circle cx="210" cy="80" r="22" fill="#e8a88a" stroke="#c25a30" stroke-width="2"/>
+      <text x="210" y="86" font-family="JetBrains Mono" font-size="13" fill="#2a2520" text-anchor="middle">s&#x2082;</text>
+
+      <circle cx="340" cy="80" r="22" fill="#e8a88a" stroke="#c25a30" stroke-width="2"/>
+      <text x="340" y="86" font-family="JetBrains Mono" font-size="13" fill="#2a2520" text-anchor="middle">s&#x2083;</text>
+
+      <circle cx="470" cy="80" r="22" fill="#e8a88a" stroke="#c25a30" stroke-width="2"/>
+      <text x="470" y="86" font-family="JetBrains Mono" font-size="13" fill="#2a2520" text-anchor="middle">s&#x2084;</text>
+
+      <!-- Direct edges: s1->s2 -->
+      <line x1="102" y1="75" x2="186" y2="75" stroke="#5a7060" stroke-width="1.5" marker-end="url(#arrow-causal)"/>
+      <!-- s1->s3 (arc above) -->
+      <path d="M 100,62 Q 210,15 318,62" fill="none" stroke="#5a7060" stroke-width="1.5" marker-end="url(#arrow-causal)"/>
+      <!-- s2->s3 -->
+      <line x1="232" y1="75" x2="316" y2="75" stroke="#5a7060" stroke-width="1.5" marker-end="url(#arrow-causal)"/>
+      <!-- s1->s4 (arc high above) -->
+      <path d="M 98,58 Q 275,-10 448,58" fill="none" stroke="#5a7060" stroke-width="1.5" marker-end="url(#arrow-causal)"/>
+      <!-- s2->s4 (arc above) -->
+      <path d="M 230,62 Q 340,20 448,62" fill="none" stroke="#5a7060" stroke-width="1.5" marker-end="url(#arrow-causal)"/>
+      <!-- s3->s4 -->
+      <line x1="362" y1="75" x2="446" y2="75" stroke="#5a7060" stroke-width="1.5" marker-end="url(#arrow-causal)"/>
+
+      <!-- Labels below -->
+      <text x="80" y="120" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">no inputs</text>
+      <text x="210" y="120" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">sees s&#x2081;</text>
+      <text x="340" y="120" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">sees s&#x2081;, s&#x2082;</text>
+      <text x="470" y="120" font-family="Source Sans 3" font-size="10" fill="#6b6560" text-anchor="middle">sees s&#x2081;, s&#x2082;, s&#x2083;</text>
+    </svg>
+    <div class="caption"><strong>Figure 2.1.</strong> Causal dependency structure for $N = 4$. Each variable can depend on all predecessors. The number of incoming arrows grows as $0, 1, 2, \ldots, N{-}1$, giving $N(N{-}1)/2$ directed edges in total.</div>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 6 — Bernoulli Conditionals and the One-Layer Arch.    -->
+<!-- ============================================================ -->
+<section id="sec6">
+  <h2><span class="sec-num">06</span>Bernoulli Conditionals and the One-Layer Architecture</h2>
+
+  <p>
+    Since each spin takes values $s_i \in \{+1, -1\}$, the conditional distribution $q_\theta(s_i \mid s_{&lt;i})$ is a <strong>Bernoulli distribution</strong> characterized by a single number&mdash;the <em>conditional magnetization</em>:
+  </p>
+
+  <p>
+    $$\mu_i \equiv \avg{s_i}_{q(\cdot \mid s_{&lt;i})} = \sum_{s_i = \pm 1} s_i\, q_\theta(s_i \mid s_{&lt;i}).$$
+  </p>
+
+  <p>
+    The simplest nontrivial parameterization applies a sigmoid (hyperbolic tangent) activation to a linear function of the conditioning variables:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">One-Layer Parameterization</div>
+    $$\mu_i = \tanh\!\left(b_i + \sum_{j=1}^{i-1} W_{ij}\, s_j\right) \tag{32}$$
+  </div>
+
+  <p>
+    with $q_\theta(s_i \mid s_{&lt;i}) = (1 + \mu_i\, s_i) / 2$. Here $b_i$ is a bias and $W_{ij}$ (for $j &lt; i$) is the weight connecting the input $s_j$ to the output $\mu_i$. The autoregressive constraint is enforced structurally: $W_{ij} = 0$ for $j \geq i$ (site $i$ cannot see itself or future sites).
+  </p>
+
+  <div class="insight warning">
+    <p><strong>The bias question: paper vs. notes conventions.</strong> This is a subtle but important point. The VAN paper (Eq.&nbsp;8) and our notes (Eq.&nbsp;32) use different conventions that are related but not identical:</p>
+    <p>The VAN paper uses: $\hat{s}_i = \sigma\!\left(\sum_{j&lt;i} W_{ij}\, s_j\right)$ with <strong>no biases</strong>, sigmoid activation $\sigma(x) = 1/(1+e^{-x})$, and spin encoding $s \in \{0, 1\}$.</p>
+    <p>Our notes use: $\mu_i = \tanh\!\left(b_i + \sum_{j&lt;i} W_{ij}\, s_j\right)$ with <strong>biases</strong>, tanh activation, and spin encoding $s \in \{+1, -1\}$.</p>
+    <p>These are related by $s_i = 2\hat{s}_i - 1$ and $\tanh(x) = 2\sigma(2x) - 1$. The key behavioral difference is what happens when we set $W = 0$:</p>
+    <ul>
+      <li>Setting $W = 0$ <strong>with biases</strong> gives $\mu_i = \tanh(b_i)$, which is a general NMF ansatz with arbitrary magnetizations $m_i = \tanh(b_i)$.</li>
+      <li>Setting $W = 0$ <strong>without biases</strong> (the paper) gives $\hat{s}_i = \sigma(0) = 0.5$, i.e., a uniform distribution ($m_i = 0$) for every spin.</li>
+    </ul>
+    <p><strong>Why the paper omits biases:</strong> For the symmetric Ising model ($h = 0$), the optimal NMF solution above $T_c$ has $m_i = 0$ anyway. Below $T_c$, the symmetry-broken solutions have $m_i = \pm m_0$, but the choice of sign is arbitrary. During gradient-based optimization, the network discovers the right baseline through the weights themselves. For models with external fields ($h \neq 0$), biases would matter and should be included.</p>
+    <p>The paper uses $N(N{-}1)/2$ parameters (weights only); with biases the count is $N(N{+}1)/2$.</p>
+  </div>
+
+  <table class="comp-table">
+    <thead>
+      <tr><th>Property</th><th>Paper (Eq.&nbsp;8)</th><th>Notes (Eq.&nbsp;32)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Spin encoding</td><td>$s_i \in \{0, 1\}$</td><td>$s_i \in \{+1, -1\}$</td></tr>
+      <tr><td>Activation</td><td>Sigmoid $\sigma(x)$</td><td>Tanh</td></tr>
+      <tr><td>Biases</td><td>No</td><td>Yes ($b_i$)</td></tr>
+      <tr><td>$W = 0$ limit</td><td>Uniform ($p = 0.5$)</td><td>General NMF</td></tr>
+      <tr><td>Parameters</td><td>$N(N{-}1)/2$</td><td>$N(N{+}1)/2$</td></tr>
+      <tr><td>Output</td><td>$\hat{s}_i = \sigma(\cdot) \in (0,1)$</td><td>$\mu_i = \tanh(\cdot) \in (-1,1)$</td></tr>
+    </tbody>
+  </table>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 7 — The Lower-Triangular Weight Matrix                -->
+<!-- ============================================================ -->
+<section id="sec7">
+  <h2><span class="sec-num">07</span>The Lower-Triangular Weight Matrix</h2>
+
+  <p>
+    The autoregressive constraint&mdash;site $i$ sees only sites $1, \ldots, i{-}1$&mdash;is enforced by requiring the weight matrix $W$ to be <strong>strictly lower-triangular</strong>. Explicitly:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Strictly Lower-Triangular Weight Matrix</div>
+    $$W = \begin{pmatrix} 0 & 0 & 0 & \cdots & 0 \\ W_{21} & 0 & 0 & \cdots & 0 \\ W_{31} & W_{32} & 0 & \cdots & 0 \\ \vdots & & \ddots & & \vdots \\ W_{N1} & W_{N2} & \cdots & W_{N,N-1} & 0 \end{pmatrix}$$
+  </div>
+
+  <p>
+    Every entry on or above the diagonal is zero. The number of free entries below the diagonal is:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Parameter Count</div>
+    $$\underbrace{N}_{\text{biases}} + \underbrace{\frac{N(N-1)}{2}}_{\text{weights}} = \frac{N(N+1)}{2} \quad \text{total parameters} \tag{33}$$
+  </div>
+
+  <div class="figure">
+    <svg viewBox="0 0 360 320" width="360" height="320">
+      <!-- Column labels -->
+      <text x="180" y="15" font-family="Source Sans 3" font-size="11" fill="#2a2520" text-anchor="middle" font-weight="600">input: s&#x2081; &hellip; s&#x2085;</text>
+      <!-- Row labels -->
+      <text x="15" y="170" font-family="Source Sans 3" font-size="11" fill="#2a2520" text-anchor="middle" font-weight="600" transform="rotate(-90 15 170)">output: &#x03BC;&#x2081; &hellip; &#x03BC;&#x2085;</text>
+
+      <!-- Grid: 5x5, each cell 50x50, starting at (40, 30) -->
+      <!-- Row 1: all masked -->
+      <rect x="40" y="30" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="65" y="60" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+      <rect x="90" y="30" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="115" y="60" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+      <rect x="140" y="30" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="165" y="60" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+      <rect x="190" y="30" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="215" y="60" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+      <rect x="240" y="30" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="265" y="60" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+
+      <!-- Row 2: W21, then masked -->
+      <rect x="40" y="80" width="50" height="50" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="65" y="109" font-family="JetBrains Mono" font-size="9" fill="#2a2520" text-anchor="middle">W&#x2082;&#x2081;</text>
+      <rect x="90" y="80" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="115" y="110" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+      <rect x="140" y="80" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="165" y="110" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+      <rect x="190" y="80" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="215" y="110" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+      <rect x="240" y="80" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="265" y="110" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+
+      <!-- Row 3: W31, W32, then masked -->
+      <rect x="40" y="130" width="50" height="50" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="65" y="159" font-family="JetBrains Mono" font-size="9" fill="#2a2520" text-anchor="middle">W&#x2083;&#x2081;</text>
+      <rect x="90" y="130" width="50" height="50" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="115" y="159" font-family="JetBrains Mono" font-size="9" fill="#2a2520" text-anchor="middle">W&#x2083;&#x2082;</text>
+      <rect x="140" y="130" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="165" y="160" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+      <rect x="190" y="130" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="215" y="160" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+      <rect x="240" y="130" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="265" y="160" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+
+      <!-- Row 4: W41, W42, W43, then masked -->
+      <rect x="40" y="180" width="50" height="50" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="65" y="209" font-family="JetBrains Mono" font-size="9" fill="#2a2520" text-anchor="middle">W&#x2084;&#x2081;</text>
+      <rect x="90" y="180" width="50" height="50" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="115" y="209" font-family="JetBrains Mono" font-size="9" fill="#2a2520" text-anchor="middle">W&#x2084;&#x2082;</text>
+      <rect x="140" y="180" width="50" height="50" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="165" y="209" font-family="JetBrains Mono" font-size="9" fill="#2a2520" text-anchor="middle">W&#x2084;&#x2083;</text>
+      <rect x="190" y="180" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="215" y="210" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+      <rect x="240" y="180" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="265" y="210" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+
+      <!-- Row 5: W51, W52, W53, W54, then masked -->
+      <rect x="40" y="230" width="50" height="50" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="65" y="259" font-family="JetBrains Mono" font-size="9" fill="#2a2520" text-anchor="middle">W&#x2085;&#x2081;</text>
+      <rect x="90" y="230" width="50" height="50" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="115" y="259" font-family="JetBrains Mono" font-size="9" fill="#2a2520" text-anchor="middle">W&#x2085;&#x2082;</text>
+      <rect x="140" y="230" width="50" height="50" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="165" y="259" font-family="JetBrains Mono" font-size="9" fill="#2a2520" text-anchor="middle">W&#x2085;&#x2083;</text>
+      <rect x="190" y="230" width="50" height="50" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="215" y="259" font-family="JetBrains Mono" font-size="9" fill="#2a2520" text-anchor="middle">W&#x2085;&#x2084;</text>
+      <rect x="240" y="230" width="50" height="50" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="265" y="260" font-family="JetBrains Mono" font-size="11" fill="#999" text-anchor="middle">0</text>
+
+      <!-- Legend -->
+      <rect x="40" y="295" width="14" height="14" fill="#e8a88a" fill-opacity="0.4" stroke="#c25a30" stroke-width="1"/>
+      <text x="60" y="307" font-family="Source Sans 3" font-size="10" fill="#2a2520">learnable weight</text>
+      <rect x="160" y="295" width="14" height="14" fill="#e8eeea" stroke="#d5d0c8" stroke-width="1"/>
+      <text x="180" y="307" font-family="Source Sans 3" font-size="10" fill="#999">masked (zero)</text>
+    </svg>
+    <div class="caption"><strong>Figure 2.2.</strong> The strictly lower-triangular weight matrix for $N = 5$. Upper triangle and diagonal cells are masked to zero, enforcing the autoregressive constraint: $\mu_i$ depends only on $s_1, \ldots, s_{i-1}$.</div>
+  </div>
+
+  <p>
+    To build concrete intuition, here is what the parameterization looks like for $N = 4$:
+  </p>
+
+  <div class="math-block">
+    $$\begin{aligned}
+    \mu_1 &= \tanh(b_1) &&\text{depends on nothing (independent Bernoulli)} \\[4pt]
+    \mu_2 &= \tanh(b_2 + W_{21}\, s_1) &&\text{depends on } s_1 \\[4pt]
+    \mu_3 &= \tanh(b_3 + W_{31}\, s_1 + W_{32}\, s_2) &&\text{depends on } s_1, s_2 \\[4pt]
+    \mu_4 &= \tanh(b_4 + W_{41}\, s_1 + W_{42}\, s_2 + W_{43}\, s_3) &&\text{depends on } s_1, s_2, s_3
+    \end{aligned}$$
+  </div>
+
+  <p>
+    The first spin is always sampled independently. Each subsequent spin gets one more input than the last. The total number of weights is $0 + 1 + 2 + 3 = 6 = N(N{-}1)/2$ for $N = 4$, plus 4 biases, giving $4(5)/2 = 10$ parameters total.
+  </p>
+
+  <div class="insight key">
+    <p><strong>NMF as the origin of VAN parameter space.</strong> Setting all $W_{ij} = 0$ gives $\mu_i = \tanh(b_i)$, independent of $s_{&lt;i}$. Then $q_\theta(s) = \prod_i q_i(s_i)$ with $m_i = \tanh(b_i)$, recovering exactly the NMF ansatz of Chapter 1. The biases are related to the NMF magnetizations by $b_i = \tanh^{-1}(m_i)$. NMF sits at the origin of the VAN parameter space: the simplest, cheapest, but least expressive member of the family.</p>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 8 — Why One Layer Captures Pairwise Correlations       -->
+<!-- ============================================================ -->
+<section id="sec8">
+  <h2><span class="sec-num">08</span>Why One Layer Captures Pairwise Correlations</h2>
+
+  <p>
+    With the parameterization of Eq.&nbsp;(32), the log-probability of a configuration is:
+  </p>
+
+  <p>
+    $$\ln q_\theta(s) = \sum_{i=1}^{N} \ln q_\theta(s_i \mid s_{&lt;i}) = \sum_{i=1}^{N} \ln \frac{1 + \mu_i\, s_i}{2}.$$
+  </p>
+
+  <p>
+    What kind of distribution does this represent? To find out, expand the tanh inside $\mu_i$ to leading order in the weights $W_{ij}$. This is exact when $W$ is small and gives the right qualitative picture even for moderate $W$.
+  </p>
+
+  <ol class="steps">
+    <li>
+      <strong>Expand tanh to first order in $W$.</strong> For small $W$,
+      $$\mu_i \approx \tanh(b_i) + \bigl(1 - \tanh^2(b_i)\bigr) \sum_{j &lt; i} W_{ij}\, s_j.$$
+      Define $m_i^{(0)} = \tanh(b_i)$ as the NMF magnetization. The correction is proportional to $(1 - (m_i^{(0)})^2)$, which is largest when $m_i^{(0)} \approx 0$ (maximum uncertainty) and vanishes as $|m_i^{(0)}| \to 1$ (fully polarized spin).
+    </li>
+    <li>
+      <strong>Substitute into $\ln q_\theta(s_i \mid s_{&lt;i})$.</strong> Using $q_\theta(s_i \mid s_{&lt;i}) = (1 + \mu_i\, s_i) / 2$ and expanding the logarithm for small perturbations around the NMF baseline:
+      $$\ln q_\theta(s_i \mid s_{&lt;i}) \approx \text{const}(b_i) + \alpha_i\, s_i + \sum_{j &lt; i} \tilde{W}_{ij}\, s_i\, s_j + \cdots$$
+      where $\alpha_i$ depends on $b_i$ and $\tilde{W}_{ij}$ is proportional to $W_{ij}$.
+    </li>
+    <li>
+      <strong>Sum over $i$ to get $\ln q_\theta(s)$.</strong>
+      $$\ln q_\theta(s) = \sum_i \ln q_\theta(s_i \mid s_{&lt;i}) \approx \text{const} + \sum_i \alpha_i\, s_i + \sum_{i &gt; j} \tilde{W}_{ij}\, s_i\, s_j + \cdots$$
+    </li>
+    <li>
+      <strong>Identify the structure.</strong> The result has three types of terms: a constant (normalization), linear terms $\alpha_i\, s_i$ (effective local fields), and pairwise terms $\tilde{W}_{ij}\, s_i\, s_j$ (effective couplings). This is exactly the form of a general pairwise Ising model.
+    </li>
+  </ol>
+
+  <div class="def-box blue">
+    <div class="def-label">One-Layer VAN as Pairwise Model</div>
+    <p>
+      To leading order in $W$, the one-layer VAN log-probability is a general pairwise Ising model:
+      $$\ln q_\theta(s) \approx \text{const} + \sum_i \alpha_i\, s_i + \sum_{i &gt; j} \tilde{W}_{ij}\, s_i\, s_j. \tag{34}$$
+      The $N(N{-}1)/2$ weights map onto $N(N{-}1)/2$ independent pairwise couplings&mdash;one for each spin pair.
+    </p>
+  </div>
+
+  <div class="insight physics">
+    <p><strong>Connections to other models.</strong> This connects to two important ideas:</p>
+    <p>(1) <strong>Boltzmann machines</strong>&mdash;an undirected graphical model with the same pairwise structure $\ln p(s) \propto \sum_{ij} J_{ij}\, s_i\, s_j + \sum_i h_i\, s_i$, but with an intractable normalization constant (the partition function $Z$ requires summing over all $2^N$ configurations). VAN achieves a similar expressiveness with tractable $\ln q_\theta(s)$&mdash;the autoregressive structure gives us the normalization for free.</p>
+    <p>(2) <strong>The inverse Ising problem</strong>&mdash;given observed correlations $\avg{s_i\, s_j}$, find the couplings $J_{ij}$ that reproduce them. The one-layer VAN solves a variational version of this problem: it finds the pairwise couplings that minimize $\KL(q_\theta \| p)$.</p>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 9 — Worked Numerical Example: N=3 Ising Chain         -->
+<!-- ============================================================ -->
+<section id="sec9">
+  <h2><span class="sec-num">09</span>Worked Numerical Example: $N = 3$ Ising Chain</h2>
+
+  <p>
+    To make all of this concrete, we work through a complete example: a 3-spin Ising chain with periodic boundary conditions (a ring), coupling $J &gt; 0$, no external field ($h = 0$), at inverse temperature $\beta J = 0.5$.
+  </p>
+
+  <h3>Step 1 &mdash; Hamiltonian and Configurations</h3>
+
+  <p>
+    The Hamiltonian for the 3-site ring is:
+  </p>
+
+  <div class="math-block">
+    $$E(s) = -J(s_1\, s_2 + s_2\, s_3 + s_3\, s_1). \tag{35}$$
+  </div>
+
+  <p>
+    All three pairs are nearest neighbors on the ring. There are $2^3 = 8$ configurations:
+  </p>
+
+  <table class="comp-table">
+    <thead>
+      <tr><th>$s_1$</th><th>$s_2$</th><th>$s_3$</th><th>$s_1 s_2 + s_2 s_3 + s_3 s_1$</th><th>$E/J$</th><th>$e^{-\beta E}$ ($\beta J = 0.5$)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>$+1$</td><td>$+1$</td><td>$+1$</td><td>$+3$</td><td>$-3$</td><td>$e^{1.5} \approx 4.482$</td></tr>
+      <tr><td>$+1$</td><td>$+1$</td><td>$-1$</td><td>$-1$</td><td>$+1$</td><td>$e^{-0.5} \approx 0.607$</td></tr>
+      <tr><td>$+1$</td><td>$-1$</td><td>$+1$</td><td>$-1$</td><td>$+1$</td><td>$e^{-0.5} \approx 0.607$</td></tr>
+      <tr><td>$-1$</td><td>$+1$</td><td>$+1$</td><td>$-1$</td><td>$+1$</td><td>$e^{-0.5} \approx 0.607$</td></tr>
+      <tr><td>$+1$</td><td>$-1$</td><td>$-1$</td><td>$-1$</td><td>$+1$</td><td>$e^{-0.5} \approx 0.607$</td></tr>
+      <tr><td>$-1$</td><td>$+1$</td><td>$-1$</td><td>$-1$</td><td>$+1$</td><td>$e^{-0.5} \approx 0.607$</td></tr>
+      <tr><td>$-1$</td><td>$-1$</td><td>$+1$</td><td>$-1$</td><td>$+1$</td><td>$e^{-0.5} \approx 0.607$</td></tr>
+      <tr><td>$-1$</td><td>$-1$</td><td>$-1$</td><td>$+3$</td><td>$-3$</td><td>$e^{1.5} \approx 4.482$</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    There are two all-aligned configurations (energy $-3J$) and six partially disordered configurations (energy $+J$).
+  </p>
+
+  <h3>Step 2 &mdash; Exact Quantities</h3>
+
+  <p>
+    <strong>Partition function:</strong>
+  </p>
+
+  <div class="math-block">
+    $$Z = 2\, e^{1.5} + 6\, e^{-0.5} = 2(4.482) + 6(0.607) = 8.964 + 3.642 = 12.606. \tag{36}$$
+  </div>
+
+  <p>
+    <strong>Free energy:</strong>
+    $$F_{\text{exact}} = -\frac{1}{\beta} \ln Z = -2J \ln 12.606 \approx -5.069J, \qquad f_{\text{exact}} = F_{\text{exact}} / 3 \approx -1.690J.$$
+  </p>
+
+  <p>
+    <strong>Magnetization:</strong> By the $s \to -s$ symmetry of the Hamiltonian (no external field), $\avg{s_i} = 0$ for all $i$.
+  </p>
+
+  <p>
+    <strong>Nearest-neighbor correlation:</strong> We compute $\avg{s_1\, s_2}$ by summing $s_1\, s_2 \times e^{-\beta E}$ over all configurations. Of the 8 configurations, 4 have $s_1 = s_2$ (giving $s_1 s_2 = +1$) and 4 have $s_1 \neq s_2$ (giving $s_1 s_2 = -1$):
+  </p>
+
+  <div class="math-block">
+    $$\begin{aligned}
+    \sum_{s:\, s_1 s_2 = +1} e^{-\beta E} &= 2\, e^{1.5} + 2\, e^{-0.5} = 8.964 + 1.214 = 10.178 \\[4pt]
+    \sum_{s:\, s_1 s_2 = -1} e^{-\beta E} &= 4\, e^{-0.5} = 2.428
+    \end{aligned}$$
+  </div>
+
+  <p>
+    Therefore:
+    $$\avg{s_1\, s_2}_{\text{exact}} = \frac{10.178 - 2.428}{12.606} = \frac{7.750}{12.606} \approx 0.615. \tag{37}$$
+  </p>
+
+  <p>
+    By the translational symmetry of the ring, $\avg{s_2\, s_3}_{\text{exact}} = \avg{s_3\, s_1}_{\text{exact}} = 0.615$ as well.
+  </p>
+
+  <h3>Step 3 &mdash; NMF Limit ($W = 0$, Biases Only)</h3>
+
+  <p>
+    With $h = 0$ and the NMF ansatz, the self-consistency equation from Chapter 1 gives $m = \tanh(z\,\beta J\, m)$ where $z = 2$ is the coordination number. At $\beta J = 0.5$:
+  </p>
+
+  <p>
+    $$m = \tanh(2 \times 0.5 \times m) = \tanh(m).$$
+  </p>
+
+  <p>
+    The slope of $\tanh(m)$ at $m = 0$ is exactly 1, so we are precisely at the NMF critical point ($k_B T_c^{\text{NMF}} = zJ = 2J$, i.e., $\beta_c J = 0.5$). The only solution is $m = 0$&mdash;a uniform distribution.
+  </p>
+
+  <p>
+    <strong>NMF free energy per site:</strong> With $m = 0$ (equal probability for $\pm 1$), the energy contribution is $\avg{E}_q / N = -J\, m^2 = 0$ and the entropy is $S / N = k_B \ln 2$. So:
+  </p>
+
+  <p>
+    $$f_q^{\text{NMF}} = 0 - k_B T \ln 2 = -2J \ln 2 \approx -1.386J.$$
+  </p>
+
+  <p>
+    <strong>NMF correlation:</strong> Since the NMF ansatz factorizes, $\avg{s_1\, s_2}_{\text{NMF}} = \avg{s_1}\avg{s_2} = m^2 = 0$.
+  </p>
+
+  <h3>Step 4 &mdash; One-Layer VAN Improvement</h3>
+
+  <p>
+    With $W \neq 0$, the VAN can introduce correlations. The parameters are $b_1, b_2, b_3, W_{21}, W_{31}, W_{32}$&mdash;six parameters in total.
+  </p>
+
+  <p>
+    For the symmetric $h = 0$ Ising model, the $s \to -s$ symmetry implies the optimal biases are $b_i = 0$. By the translational symmetry of the 3-site ring (all pairs are nearest neighbors), all weights should be equal: $W_{21} = W_{31} = W_{32} \equiv w$. This reduces the problem to a single parameter $w$.
+  </p>
+
+  <p>
+    Any positive $w$ introduces positive correlations between spins. To leading order in $w$, the energy expectation $\avg{E}_q$ decreases (spins become more aligned, lowering energy), while the entropy penalty $-T\avg{\ln q_\theta}_q$ grows only as $w^2$. The optimal $w^*$ balances these effects, giving a free energy that is strictly better (lower) than the NMF value.
+  </p>
+
+  <table class="comp-table">
+    <thead>
+      <tr><th>Quantity</th><th>NMF ($W = 0$)</th><th>1-Layer VAN</th><th>Exact</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>$f / J$</td><td>$-1.386$</td><td>improves toward exact</td><td>$-1.690$</td></tr>
+      <tr><td>$\avg{s_i}$</td><td>$0$</td><td>$0$</td><td>$0$</td></tr>
+      <tr><td>$\avg{s_i\, s_{i+1}}$</td><td>$0$</td><td>$&gt; 0$</td><td>$0.615$</td></tr>
+      <tr><td>Parameters</td><td>3 (biases)</td><td>6 ($b_i + W_{ij}$)</td><td>&mdash;</td></tr>
+    </tbody>
+  </table>
+
+  <div class="insight key">
+    <p><strong>Three parameters make all the difference.</strong> Even with just 3 additional parameters (the weights $W_{21}, W_{31}, W_{32}$), the one-layer VAN can capture nearest-neighbor correlations that NMF entirely misses. The improvement in free energy directly measures the reduction in $\KL(q_\theta \| p)$.</p>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 10 — The VAN Training Loop                            -->
+<!-- ============================================================ -->
+<section id="sec10">
+  <h2><span class="sec-num">10</span>The VAN Training Loop</h2>
+
+  <p>
+    We have built the VAN ansatz. Now: how do we train it? The loss function is the variational free energy itself:
+  </p>
+
+  <div class="math-block">
+    $$\Fq = \avg{E(s) + \frac{1}{\beta}\ln q_\theta(s)}_{q_\theta}. \tag{38}$$
+  </div>
+
+  <p>
+    This is the same functional we minimized analytically for NMF in Chapter 1, but now we optimize it by gradient descent over the VAN parameters $\theta = \{b_i, W_{ij}\}$.
+  </p>
+
+  <p>
+    The gradient of $\Fq$ with respect to $\theta$ is computed using the <strong>REINFORCE</strong> (score function) estimator. Since the expectation is over $q_\theta$ which itself depends on $\theta$, we use the log-derivative trick $\nabla_\theta q_\theta = q_\theta \nabla_\theta \ln q_\theta$ to move the gradient inside the expectation:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">REINFORCE Gradient (VAN Paper Eq.&nbsp;5)</div>
+    $$\nabla_\theta \Fq = \left\langle \left(\beta E(s) + \ln q_\theta(s)\right) \nabla_\theta \ln q_\theta(s) \right\rangle_{q_\theta} \tag{39}$$
+  </div>
+
+  <p>
+    In practice, this expectation is estimated by Monte Carlo: draw $K$ samples $s^{(1)}, \ldots, s^{(K)}$ from $q_\theta$, compute the quantity in brackets for each, and average.
+  </p>
+
+  <p>
+    The autoregressive structure is what makes this entire procedure practical. It gives us two properties that most variational ansatzes lack:
+  </p>
+
+  <p>
+    <strong>1. Tractable log-likelihood.</strong> The log-probability of any configuration is:
+    $$\ln q_\theta(s) = \sum_{i=1}^{N} \ln q_\theta(s_i \mid s_{&lt;i}) = \sum_{i=1}^{N} \ln \frac{1 + \mu_i\, s_i}{2}.$$
+    This is a sum of $N$ terms, each computable in $O(i)$ time. No intractable partition function appears.
+  </p>
+
+  <p>
+    <strong>2. Trivial sequential sampling.</strong> To draw a sample from $q_\theta$, simply sample $s_1$ from $q_\theta(s_1)$, then $s_2$ from $q_\theta(s_2 \mid s_1)$, then $s_3$ from $q_\theta(s_3 \mid s_1, s_2)$, and so on. Each step is a single Bernoulli draw with parameter $(1 + \mu_i) / 2$. No MCMC, no Markov chains, no burn-in, no autocorrelation.
+  </p>
+
+  <div class="insight key">
+    <p><strong>The three-property comparison.</strong> NMF has tractable likelihood and sampling but no correlations. Boltzmann machines have correlations but intractable likelihood (the partition function is unknown) and require MCMC for sampling. VAN has all three: tractable likelihood, trivial sampling, and tunable correlations through the autoregressive parameterization. This combination is what makes VAN a practical tool for variational statistical mechanics.</p>
+  </div>
+
+  <h3>Variance Reduction</h3>
+
+  <p>
+    The REINFORCE gradient (Eq.&nbsp;39) is an unbiased estimator, but it can have high variance&mdash;a well-known problem in reinforcement learning. The VAN paper (Eqs.&nbsp;14&ndash;15) uses <strong>baseline subtraction</strong> to reduce variance: replace $\beta E(s) + \ln q_\theta(s)$ with $\beta E(s) + \ln q_\theta(s) - c$ where $c = \avg{\beta E + \ln q_\theta}_{q_\theta}$ is the running mean. Since $c$ does not depend on the sample $s$, the gradient $\avg{c \,\nabla_\theta \ln q_\theta}_{q_\theta} = c \,\nabla_\theta \sum_s q_\theta(s) = c \,\nabla_\theta 1 = 0$, so the baseline does not bias the gradient. In practice, $c$ is estimated as an exponential moving average over training batches.
+  </p>
+
+  <h3>Beyond One Layer: Deep VAN</h3>
+
+  <p>
+    Throughout this chapter we have focused on the one-layer parameterization (Eq.&nbsp;32), where $\mu_i$ is a <em>linear</em> function of $s_{&lt;i}$ passed through tanh. Adding hidden layers to the network parameterizing $\mu_i$ allows it to be a <em>nonlinear</em> function of $s_{&lt;i}$. In the small-weight expansion of &sect;8, this generates effective multi-spin interactions&mdash;three-body ($s_i\, s_j\, s_k$), four-body, and higher&mdash;in $\ln q_\theta$. This is how deep VAN captures the higher-order correlations needed near critical points, and why the VAN paper reports dramatic improvements over both NMF and one-layer VAN for the 2D Ising model near $T_c$.
+  </p>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- REFERENCES                                                    -->
+<!-- ============================================================ -->
+<section id="references">
+  <h2>References</h2>
+
+  <p class="ref"><strong>[VAN]</strong> D. Wu, L. Wang, and P. Zhang, &ldquo;Solving Statistical Mechanics Using Variational Autoregressive Networks,&rdquo; <em>Phys. Rev. Lett.</em> <strong>122</strong>, 080602 (2019). <a href="https://arxiv.org/abs/1809.10606">arXiv:1809.10606</a>.</p>
+
+  <p class="ref"><strong>[Pandey&ndash;Xu]</strong> M. Pandey and M. Xu, &ldquo;Mean Field Theory and its application to deep learning&rdquo; (2019). <a href="https://mimee.xyz/meanfield.pdf">mimee.xyz/meanfield.pdf</a>.</p>
+
+  <p class="ref"><strong>[Arovas]</strong> D. Arovas, &ldquo;Lecture Notes on Thermodynamics and Statistical Mechanics,&rdquo; Ch. 7, UCSD Physics 210a.</p>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- FOOTER NAV                                                    -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="van-01-mean-field.html"><span class="dir">&larr; Previous</span><span class="title">Variational Free Energy &amp; NMF</span></a><a class="next" href="van-index.html"><span class="dir">Next &rarr;</span><span class="title">Course Home</span></a></div>
+</main>
+<footer><p><a href="van-index.html">&larr; Course Home</a> &middot; <a href="../index.html">All Notes</a></p></footer>
+<a href="#" class="back-to-top" aria-label="Back to top">&#8593;</a>
+<script>
+/* Progress bar */
+const fill = document.querySelector('.progress-fill');
+const main = document.querySelector('main');
+function updateProgress() {
+  const top = main.getBoundingClientRect().top;
+  const height = main.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (-top / height) * 100));
+  fill.style.width = pct + '%';
+}
+/* Back to top */
+const btn = document.querySelector('.back-to-top');
+function updateBtn() {
+  btn.classList.toggle('visible', window.scrollY > 600);
+}
+window.addEventListener('scroll', function() { updateProgress(); updateBtn(); }, { passive: true });
+updateProgress();
+</script>
+</body>
+</html>

@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variational Free Energy &amp; Naive Mean Field — VAN Course</title>
+<script>
+window.MathJax={
+  tex:{
+    inlineMath:[['$','$'],['\\(','\\)']],
+    displayMath:[['$$','$$'],['\\[','\\]']],
+    tags:'ams',
+    macros:{
+      avg:['\\langle #1 \\rangle',1],
+      KL:'\\mathrm{D_{KL}}',
+      Fq:'F_q'
+    }
+  },
+  svg:{fontCache:'global'}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-chapter">
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / <a href="van-index.html">VAN</a> / Chapter 1</div>
+    <span class="ch-num">Chapter 1</span>
+    <h1>Variational Free Energy &amp; Naive Mean Field for the <strong>Ising Model</strong></h1>
+    <p class="subtitle">The Boltzmann distribution, KL divergence, the factorized ansatz, self-consistency equations, and application to the 1D and 2D Ising models.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="van-index.html">&larr; Course Home</a><span class="ch-title">Chapter 1</span><a href="van-02-from-nmf-to-van.html">From NMF to VAN &rarr;</a></div></nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<!-- Table of Contents -->
+<div class="toc">
+  <div class="toc-label">In this chapter</div>
+  <ol>
+    <li><a href="#sec1"><span class="toc-num">1</span>Variational Free Energy</a></li>
+    <li><a href="#sec2"><span class="toc-num">2</span>The NMF Ansatz</a></li>
+    <li><a href="#sec3"><span class="toc-num">3</span>1D Ising Application</a></li>
+    <li><a href="#sec4"><span class="toc-num">4</span>2D Ising Application</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 1 — Variational Free Energy                          -->
+<!-- ============================================================ -->
+<section id="sec1">
+  <h2><span class="sec-num">1</span>Variational Free Energy</h2>
+
+  <p>
+    We follow the notation of Wu, Wang &amp; Zhang (arXiv:1809.10606), referred to throughout as the <em>VAN paper</em>. The key idea is: we cannot compute the partition function $Z$ exactly for interesting models, so we introduce a <em>tractable</em> approximate distribution $q_\theta(s)$ and minimize a variational upper bound on the true free energy.
+  </p>
+
+  <h3>The Boltzmann distribution and the partition function</h3>
+
+  <p>Consider a system of $N$ binary spins $s = (s_1, s_2, \ldots, s_N)$ where each $s_i \in \{+1, -1\}$. The joint probability follows the <strong>Boltzmann distribution</strong>:</p>
+
+  <div class="def-box blue">
+    <div class="def-label">Boltzmann Distribution</div>
+    $$
+    p(s) \;=\; \frac{e^{-\beta E(s)}}{Z}\,,
+    \qquad
+    Z \;=\; \sum_{s} e^{-\beta E(s)}\,,
+    \tag{1}
+    $$
+  </div>
+
+  <p>
+    where $\beta = 1/(k_B T)$ is the inverse temperature, $E(s)$ is the energy of configuration $s$, and $Z$ is the partition function. The sum $\sum_s$ runs over all $2^N$ configurations.
+  </p>
+
+  <p>The <strong>free energy</strong> is:</p>
+
+  <div class="def-box blue">
+    <div class="def-label">Free Energy</div>
+    $$
+    F = -\frac{1}{\beta} \ln Z = -k_B T \ln Z\,.
+    \tag{2}
+    $$
+  </div>
+
+  <p>Computing $F$ exactly requires summing over exponentially many configurations &mdash; a $\#$P-hard problem in general.</p>
+
+  <h3>The variational ansatz $q_\theta(s)$</h3>
+
+  <p>
+    We introduce a <em>variational distribution</em> $q_\theta(s)$, parameterized by some set of variational parameters $\theta$. The idea: we will choose $q_\theta$ from a <em>tractable</em> family of distributions, and adjust $\theta$ so that $q_\theta$ is as close as possible to the true Boltzmann distribution $p$.
+  </p>
+
+  <p>The closeness is measured by the <strong>Kullback&ndash;Leibler (KL) divergence</strong>:</p>
+
+  <div class="def-box blue">
+    <div class="def-label">KL Divergence</div>
+    $$
+    \KL(q_\theta \,\|\, p)
+    \;=\;
+    \sum_s q_\theta(s)\, \ln \frac{q_\theta(s)}{p(s)}
+    \;\geq\; 0\,.
+    \tag{3}
+    $$
+  </div>
+
+  <p>$\KL = 0$ if and only if $q_\theta(s) = p(s)$ for all $s$.</p>
+
+  <h3>KL divergence and the variational free energy $\Fq$</h3>
+
+  <p>Substituting $p(s) = e^{-\beta E(s)}/Z$ into (3):</p>
+
+  <ol class="steps">
+    <li>
+      $$
+      \KL(q_\theta \| p)
+      = \sum_s q_\theta(s) \left[\ln q_\theta(s) - \ln p(s)\right]
+      = \sum_s q_\theta(s) \left[\ln q_\theta(s) + \beta E(s) + \ln Z\right].
+      $$
+    </li>
+    <li>
+      Since $\sum_s q_\theta(s) = 1$:
+      $$
+      \KL(q_\theta \| p)
+      = \sum_s q_\theta(s)\left[\beta E(s) + \ln q_\theta(s)\right] + \ln Z
+      = \beta\!\left(\underbrace{\frac{1}{\beta}\sum_s q_\theta(s)\left[\beta E(s) + \ln q_\theta(s)\right]}_{\displaystyle \Fq}\right) - \beta F\,.
+      $$
+    </li>
+  </ol>
+
+  <p>This gives us the <strong>fundamental variational relation</strong> (VAN paper, Eq. 2):</p>
+
+  <div class="def-box green">
+    <div class="def-label">Fundamental Variational Relation</div>
+    $$
+    \boxed{
+    \KL(q_\theta \| p) \;=\; \beta\bigl(\Fq - F\bigr) \;\geq\; 0
+    }
+    \tag{4}
+    $$
+  </div>
+
+  <p>where the <strong>variational free energy</strong> is (VAN paper, Eq. 3):</p>
+
+  <div class="def-box blue">
+    <div class="def-label">Variational Free Energy</div>
+    $$
+    \Fq
+    \;=\;
+    \frac{1}{\beta}\sum_s q_\theta(s)\bigl[\beta E(s) + \ln q_\theta(s)\bigr]
+    \;=\;
+    \avg{E}_q + k_B T\avg{\ln q_\theta}_q\,.
+    \tag{5}
+    $$
+  </div>
+
+  <p>We can write this more transparently as:</p>
+
+  <div class="math-block">
+    $$
+    \Fq
+    \;=\;
+    \underbrace{\sum_s q_\theta(s)\, E(s)}_{\text{average energy } \avg{E}_q}
+    \;-\;
+    T\,\underbrace{k_B\!\Bigl(-\sum_s q_\theta(s) \ln q_\theta(s)\Bigr)}_{\text{thermodynamic entropy } S_q}\,.
+    \tag{6}
+    $$
+  </div>
+
+  <p>That is,</p>
+
+  <div class="def-box green">
+    <div class="def-label">Free Energy Decomposition</div>
+    $$
+    \Fq = \avg{E}_q - T\, S_q\,,
+    \qquad S_q = k_B\, \mathcal{H}_q\,,
+    \tag{7}
+    $$
+  </div>
+
+  <p>where we have introduced the <strong>Shannon entropy</strong> (dimensionless, measured in nats):</p>
+
+  <div class="def-box blue">
+    <div class="def-label">Shannon Entropy</div>
+    $$
+    \mathcal{H}_q \;\equiv\; -\sum_s q_\theta(s)\,\ln q_\theta(s)\,,
+    \tag{7a}
+    $$
+  </div>
+
+  <p>and the <strong>thermodynamic (Gibbs) entropy</strong> $S_q = k_B \,\mathcal{H}_q$, which carries the dimensions of $k_B$ (energy/temperature).</p>
+
+  <div class="insight physics">
+    <p><strong>Shannon entropy vs. physics entropy.</strong>
+    Throughout these notes we use $\mathcal{H}$ for the dimensionless Shannon entropy and $S = k_B \mathcal{H}$ for the physical entropy. The relation is simply:</p>
+    $$
+    S_{\text{physics}} = k_B \times \mathcal{H}_{\text{Shannon}}\,.
+    $$
+    <p>Many machine-learning references (including the VAN paper) set $k_B = 1$, so that $S$ and $\mathcal{H}$ coincide and $\beta = 1/T$. Most physics textbooks keep $k_B$ explicit. We carry it here so you can compare directly with both conventions. When you see a physics reference writing $S = -k_B \sum p \ln p$, or an ML reference writing $H = -\sum p \ln p$ with $\beta = 1/T$, they are saying the same thing.</p>
+  </div>
+
+  <div class="insight key">
+    <p><strong>Key point:</strong>
+    Since $\KL \geq 0$, we have $\Fq \geq F$. The variational free energy is an <strong>upper bound</strong> on the true free energy. Minimizing $\Fq$ over $\theta$ tightens this bound, making $q_\theta$ approximate $p$ as closely as possible within the chosen family.</p>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 2 — The NMF Ansatz                                   -->
+<!-- ============================================================ -->
+<section id="sec2">
+  <h2><span class="sec-num">2</span>The NMF Ansatz</h2>
+
+  <h3>The naive mean field (NMF) ansatz</h3>
+
+  <p>The simplest variational family is a <strong>fully factorized distribution</strong>:</p>
+
+  <div class="def-box blue">
+    <div class="def-label">NMF Factorized Ansatz</div>
+    $$
+    q_\theta(s) \;=\; \prod_{i=1}^{N} q_i(s_i)\,,
+    \tag{8}
+    $$
+  </div>
+
+  <p>where each $q_i(s_i)$ is a Bernoulli distribution over $s_i \in \{+1, -1\}$. Since each $q_i$ must be normalized, it is characterized by a single parameter. Let us parameterize it via the <strong>local magnetization</strong>:</p>
+
+  <div class="math-block">
+    $$
+    m_i \;\equiv\; \avg{s_i}_q \;=\; \sum_{s_i = \pm 1} s_i\, q_i(s_i)
+    \;=\; q_i(+1) - q_i(-1)\,.
+    \tag{9}
+    $$
+  </div>
+
+  <p>Combined with normalization $q_i(+1) + q_i(-1) = 1$, we get:</p>
+
+  <div class="def-box green">
+    <div class="def-label">NMF Marginal Distribution</div>
+    $$
+    q_i(s_i) \;=\; \frac{1 + m_i\, s_i}{2}\,,
+    \qquad m_i \in [-1,\, +1]\,.
+    \tag{10}
+    $$
+  </div>
+
+  <p>So the variational parameters are $\theta = (m_1, m_2, \ldots, m_N)$.</p>
+
+  <div class="insight physics">
+    <p><strong>Physical meaning.</strong>
+    The factorized ansatz says: the spins are <em>statistically independent</em>. Each spin $s_i$ has its own probability of being up or down, but there are <em>no correlations</em> between different spins. This is the defining approximation of naive mean field theory. The VAN paper generalizes this by replacing the product of independent marginals with a product of <em>conditional</em> probabilities &mdash; the autoregressive decomposition &mdash; which can capture correlations.</p>
+  </div>
+
+  <h3>Evaluating $\Fq$ under the NMF ansatz</h3>
+
+  <p>We need to compute the two pieces of $\Fq$: the average energy and the entropy.</p>
+
+  <h4>Entropy</h4>
+
+  <p>Since $q_\theta(s) = \prod_i q_i(s_i)$ and the spins are independent under $q$, the Shannon entropy factorizes:</p>
+
+  <ol class="steps">
+    <li>
+      $$
+      \mathcal{H}_q = -\sum_s q_\theta(s) \ln q_\theta(s)
+      = -\sum_s \prod_j q_j(s_j) \sum_i \ln q_i(s_i)\,.
+      $$
+    </li>
+    <li>
+      In the sum over all configurations, the product factorizes. For each term $i$, the sums over all $s_j$ with $j \neq i$ just give 1 (normalization), leaving only the sum over $s_i$:
+      $$
+      \mathcal{H}_q = -\sum_{i=1}^{N} \sum_{s_i=\pm 1} q_i(s_i) \ln q_i(s_i)
+      \;\equiv\; \sum_{i=1}^{N} \mathcal{H}(q_i)\,,
+      $$
+    </li>
+    <li>
+      where $\mathcal{H}(q_i)$ is the binary Shannon entropy of the $i$-th marginal. Substituting $q_i(s_i) = (1+m_i s_i)/2$:
+    </li>
+  </ol>
+
+  <div class="def-box green">
+    <div class="def-label">NMF Entropy</div>
+    $$
+    \mathcal{H}_q = \sum_{i=1}^{N} \mathcal{H}(m_i)\,,
+    \qquad
+    \mathcal{H}(m) \equiv -\frac{1+m}{2}\ln\frac{1+m}{2} - \frac{1-m}{2}\ln\frac{1-m}{2}\,,
+    \tag{11}
+    $$
+  </div>
+
+  <p>and the thermodynamic entropy is $S_q = k_B\,\mathcal{H}_q = k_B \sum_i \mathcal{H}(m_i)$.</p>
+
+  <p>Note that $\mathcal{H}(0) = \ln 2$ (maximum uncertainty, $\sim 0.693$ nats) and $\mathcal{H}(\pm 1) = 0$ (fully determined spin).</p>
+
+  <div class="figure">
+    <svg width="420" height="270" viewBox="0 0 420 270" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .ax-label { font-family: 'Source Sans 3', sans-serif; font-size: 13px; fill: #2a2520; }
+          .ax-title { font-family: 'Crimson Pro', Georgia, serif; font-size: 15px; fill: #2a2520; font-style: italic; }
+          .tick-label { font-family: 'Source Sans 3', sans-serif; font-size: 11px; fill: #5c5549; }
+          .grid { stroke: #e0dbd2; stroke-width: 0.7; }
+          .annot { font-family: 'Source Sans 3', sans-serif; font-size: 11px; fill: #5c5549; }
+        </style>
+      </defs>
+      <!-- Plot area: x from 60 to 390, y from 25 to 230 -->
+      <!-- Axes -->
+      <line x1="60" y1="230" x2="390" y2="230" stroke="#2a2520" stroke-width="1.5"/>
+      <line x1="60" y1="230" x2="60" y2="25" stroke="#2a2520" stroke-width="1.5"/>
+      <!-- Grid lines horizontal -->
+      <line x1="60" y1="181" x2="390" y2="181" class="grid"/>
+      <line x1="60" y1="132" x2="390" y2="132" class="grid"/>
+      <line x1="60" y1="83" x2="390" y2="83" class="grid"/>
+      <!-- Grid lines vertical -->
+      <line x1="142" y1="230" x2="142" y2="25" class="grid"/>
+      <line x1="225" y1="230" x2="225" y2="25" class="grid"/>
+      <line x1="307" y1="230" x2="307" y2="25" class="grid"/>
+      <!-- x ticks and labels: m from -1 to 1 -->
+      <text x="60" y="248" text-anchor="middle" class="tick-label">&#x2212;1</text>
+      <line x1="60" y1="230" x2="60" y2="234" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="142" y="248" text-anchor="middle" class="tick-label">&#x2212;0.5</text>
+      <line x1="142" y1="230" x2="142" y2="234" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="225" y="248" text-anchor="middle" class="tick-label">0</text>
+      <line x1="225" y1="230" x2="225" y2="234" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="307" y="248" text-anchor="middle" class="tick-label">0.5</text>
+      <line x1="307" y1="230" x2="307" y2="234" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="390" y="248" text-anchor="middle" class="tick-label">1</text>
+      <line x1="390" y1="230" x2="390" y2="234" stroke="#2a2520" stroke-width="1.2"/>
+      <!-- y ticks and labels -->
+      <text x="52" y="234" text-anchor="end" class="tick-label">0</text>
+      <text x="52" y="135" text-anchor="end" class="tick-label">0.35</text>
+      <line x1="57" y1="132" x2="60" y2="132" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="52" y="30" text-anchor="end" class="tick-label">ln 2</text>
+      <line x1="57" y1="25" x2="60" y2="25" stroke="#2a2520" stroke-width="1.2"/>
+      <!-- Axis titles -->
+      <text x="225" y="267" text-anchor="middle" class="ax-label">magnetization <tspan font-style="italic">m</tspan></text>
+      <text x="18" y="128" text-anchor="middle" class="ax-title" transform="rotate(-90,18,128)">&#x1D4D7;(m)</text>
+      <!-- Plot H(m) -->
+      <polyline fill="none" stroke="#8b3a3a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"
+        points="
+          60,230
+          68,195
+          76,171
+          85,151
+          93,134
+          101,119
+          110,105
+          118,93
+          126,82
+          134,72
+          142,64
+          151,56
+          159,49
+          167,43
+          176,38
+          184,34
+          192,31
+          200,28
+          208,26
+          217,25
+          225,25
+          233,25
+          242,26
+          250,28
+          258,31
+          266,34
+          274,38
+          283,43
+          291,49
+          299,56
+          308,64
+          316,72
+          324,82
+          332,93
+          340,105
+          349,119
+          357,134
+          365,151
+          374,171
+          382,195
+          390,230
+        "/>
+      <!-- Dashed line at H = ln2 -->
+      <line x1="60" y1="25" x2="390" y2="25" stroke="#2d5a4a" stroke-width="1" stroke-dasharray="5,4" opacity="0.7"/>
+      <text x="395" y="29" class="annot" fill="#2d5a4a">ln 2 &#x2248; 0.693</text>
+      <!-- Dots at key points -->
+      <circle cx="60" cy="230" r="4" fill="#8b3a3a"/>
+      <circle cx="225" cy="25" r="4" fill="#8b3a3a"/>
+      <circle cx="390" cy="230" r="4" fill="#8b3a3a"/>
+      <!-- Annotations -->
+      <text x="72" y="224" class="annot">&#x1D4D7;(&#x2212;1) = 0</text>
+      <text x="236" y="42" class="annot">&#x1D4D7;(0) = ln 2</text>
+      <text x="330" y="224" class="annot">&#x1D4D7;(+1) = 0</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.1.</strong> The binary Shannon entropy $\mathcal{H}(m)$. Maximum at $m = 0$ (complete uncertainty about spin direction); zero at $m = \pm 1$ (spin fully determined). This is the entropy <em>per spin</em> in nats; multiply by $k_B$ for the thermodynamic entropy per spin.</div>
+  </div>
+
+  <h4>Average energy</h4>
+
+  <p>The average energy depends on the specific model. We keep things general here and specialize in Sections 3&ndash;4. For any energy that is a sum of pairwise interactions and local fields,</p>
+
+  $$
+  E(s) = -\sum_{\langle i,j\rangle} J_{ij}\, s_i s_j - \sum_i h_i\, s_i\,,
+  $$
+
+  <p>the factorized ansatz gives (since $\avg{s_i s_j}_q = \avg{s_i}_q \avg{s_j}_q = m_i m_j$ for $i \neq j$):</p>
+
+  <div class="def-box green">
+    <div class="def-label">NMF Average Energy</div>
+    $$
+    \avg{E}_q = -\sum_{\langle i,j\rangle} J_{ij}\, m_i\, m_j - \sum_i h_i\, m_i\,.
+    \tag{12}
+    $$
+  </div>
+
+  <div class="insight key">
+    <p><strong>This is the key simplification.</strong>
+    Under the factorized ansatz, the two-point correlation $\avg{s_i s_j}_q$ factorizes into $m_i m_j$. This is the mathematical content of "replacing interactions by an effective mean field." It is <em>exact</em> within the variational distribution $q$ (the spins really are independent under $q$), but it makes $q$ a poor approximation to $p$ whenever the true correlations matter.</p>
+  </div>
+
+  <h4>Putting it together</h4>
+
+  <p>The variational free energy for the general pairwise model is:</p>
+
+  <div class="def-box green">
+    <div class="def-label">NMF Variational Free Energy</div>
+    $$
+    \Fq = -\sum_{\langle i,j\rangle} J_{ij}\, m_i m_j - \sum_i h_i m_i - k_B T \sum_{i=1}^N \mathcal{H}(m_i)\,.
+    \tag{13}
+    $$
+  </div>
+
+  <h3>Minimizing $\Fq$: the NMF self-consistency equations</h3>
+
+  <p>We minimize $\Fq$ with respect to each $m_i$. Setting $\partial \Fq / \partial m_k = 0$:</p>
+
+  <ol class="steps">
+    <li>
+      <strong>Energy derivative:</strong>
+      $$
+      \frac{\partial}{\partial m_k}\left(-\sum_{\langle i,j\rangle} J_{ij} m_i m_j - \sum_i h_i m_i\right)
+      = -\sum_{j \in \partial k} J_{kj}\, m_j - h_k\,,
+      $$
+      where $\partial k$ denotes the neighbors of site $k$.
+    </li>
+    <li>
+      <strong>Entropy derivative:</strong>
+      $$
+      \frac{\partial}{\partial m_k}\bigl(-k_B T\, \mathcal{H}(m_k)\bigr)
+      = -k_B T \cdot \frac{\partial \mathcal{H}}{\partial m_k}
+      = -k_B T \cdot \left(-\frac{1}{2}\ln\frac{1+m_k}{2} + \frac{1}{2}\ln\frac{1-m_k}{2}\right)\,.
+      $$
+      This simplifies using $\tanh^{-1}$:
+      $$
+      \frac{\partial \mathcal{H}}{\partial m_k} = -\frac{1}{2}\ln\frac{1+m_k}{1-m_k} = -\tanh^{-1}(m_k)\,.
+      $$
+      So the entropy contribution is $+k_B T\,\tanh^{-1}(m_k)$.
+    </li>
+    <li>
+      <strong>Setting to zero:</strong>
+      $$
+      -\sum_{j\in\partial k} J_{kj}\, m_j - h_k + k_B T\,\tanh^{-1}(m_k) = 0\,.
+      $$
+    </li>
+  </ol>
+
+  <div class="figure">
+    <svg width="420" height="280" viewBox="0 0 420 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .ax-label2 { font-family: 'Source Sans 3', sans-serif; font-size: 13px; fill: #2a2520; }
+          .ax-title2 { font-family: 'Crimson Pro', Georgia, serif; font-size: 15px; fill: #2a2520; font-style: italic; }
+          .tick-label2 { font-family: 'Source Sans 3', sans-serif; font-size: 11px; fill: #5c5549; }
+          .grid2 { stroke: #e0dbd2; stroke-width: 0.7; }
+          .annot2 { font-family: 'Source Sans 3', sans-serif; font-size: 11px; fill: #5c5549; }
+        </style>
+      </defs>
+      <!-- Plot area: x from 60 to 390, y from 25 to 235 -->
+      <!-- Grid lines horizontal -->
+      <line x1="60" y1="25" x2="390" y2="25" class="grid2"/>
+      <line x1="60" y1="78" x2="390" y2="78" class="grid2"/>
+      <line x1="60" y1="130" x2="390" y2="130" class="grid2"/>
+      <line x1="60" y1="182" x2="390" y2="182" class="grid2"/>
+      <line x1="60" y1="235" x2="390" y2="235" class="grid2"/>
+      <!-- Grid lines vertical -->
+      <line x1="142" y1="25" x2="142" y2="235" class="grid2"/>
+      <line x1="225" y1="25" x2="225" y2="235" class="grid2"/>
+      <line x1="307" y1="25" x2="307" y2="235" class="grid2"/>
+      <!-- Axes -->
+      <line x1="60" y1="130" x2="390" y2="130" stroke="#2a2520" stroke-width="1.2"/>
+      <line x1="225" y1="25" x2="225" y2="235" stroke="#2a2520" stroke-width="1.2"/>
+      <!-- x ticks and labels -->
+      <text x="60" y="253" text-anchor="middle" class="tick-label2">&#x2212;1</text>
+      <line x1="60" y1="128" x2="60" y2="132" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="142" y="253" text-anchor="middle" class="tick-label2">&#x2212;0.5</text>
+      <line x1="142" y1="128" x2="142" y2="132" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="225" y="253" text-anchor="middle" class="tick-label2">0</text>
+      <text x="307" y="253" text-anchor="middle" class="tick-label2">0.5</text>
+      <line x1="307" y1="128" x2="307" y2="132" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="390" y="253" text-anchor="middle" class="tick-label2">1</text>
+      <line x1="390" y1="128" x2="390" y2="132" stroke="#2a2520" stroke-width="1.2"/>
+      <!-- y ticks and labels -->
+      <text x="218" y="29" text-anchor="end" class="tick-label2">+2</text>
+      <line x1="223" y1="25" x2="227" y2="25" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="218" y="82" text-anchor="end" class="tick-label2">+1</text>
+      <line x1="223" y1="78" x2="227" y2="78" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="218" y="186" text-anchor="end" class="tick-label2">&#x2212;1</text>
+      <line x1="223" y1="182" x2="227" y2="182" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="218" y="239" text-anchor="end" class="tick-label2">&#x2212;2</text>
+      <line x1="223" y1="235" x2="227" y2="235" stroke="#2a2520" stroke-width="1.2"/>
+      <!-- Axis titles -->
+      <text x="225" y="272" text-anchor="middle" class="ax-label2">magnetization <tspan font-style="italic">m</tspan></text>
+      <text x="15" y="130" text-anchor="middle" class="ax-title2" transform="rotate(-90,15,130)">&#x2212;tanh&#x207B;&#xB9;(m)</text>
+      <!-- Dashed vertical asymptotes at m = +/-1 -->
+      <line x1="60" y1="25" x2="60" y2="235" stroke="#5c5549" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.6"/>
+      <line x1="390" y1="25" x2="390" y2="235" stroke="#5c5549" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.6"/>
+      <!-- Curve: -arctanh(m) from m=-0.95 to m=+0.95 -->
+      <polyline fill="none" stroke="#2d5a4a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"
+        points="
+          68,34
+          73,47
+          79,56
+          84,63
+          89,69
+          94,74
+          100,78
+          105,81
+          110,85
+          115,88
+          120,91
+          126,93
+          131,96
+          136,98
+          141,101
+          147,103
+          152,105
+          157,107
+          162,109
+          168,111
+          173,113
+          178,115
+          183,116
+          188,118
+          194,120
+          199,122
+          204,123
+          209,125
+          215,127
+          220,128
+          225,130
+          230,132
+          235,133
+          241,135
+          246,137
+          251,138
+          256,140
+          262,142
+          267,144
+          272,145
+          277,147
+          282,149
+          288,151
+          293,153
+          298,155
+          303,157
+          309,159
+          314,162
+          319,164
+          324,167
+          330,169
+          335,172
+          340,175
+          345,179
+          350,182
+          356,186
+          361,191
+          366,197
+          371,204
+          377,213
+          382,226
+        "/>
+      <!-- Slope = -1 reference line through origin -->
+      <line x1="60" y1="78" x2="390" y2="182" stroke="#8b3a3a" stroke-width="1.2" stroke-dasharray="6,4" opacity="0.5"/>
+      <text x="68" y="70" class="annot2" fill="#8b3a3a" opacity="0.8">slope = &#x2212;1</text>
+      <!-- Annotations -->
+      <text x="50" y="29" text-anchor="end" class="annot2">&#x2192; +&#x221E;</text>
+      <text x="395" y="242" text-anchor="start" class="annot2">&#x2192; &#x2212;&#x221E;</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.2.</strong> The entropy derivative $\partial\mathcal{H}/\partial m = -\tanh^{-1}(m)$, which acts as the entropic "restoring force" in the NMF self-consistency equation. It diverges logarithmically as $m \to \pm 1$ (resisting full polarization) and has slope $-1$ at the origin (dashed red line). The NMF fixed point occurs where this entropic term balances the energetic driving term $\beta\sum_j J_{kj} m_j$.</div>
+  </div>
+
+  <p>Solving for $m_k$:</p>
+
+  <div class="def-box green">
+    <div class="def-label">NMF Self-Consistency Equations</div>
+    $$
+    \boxed{
+    m_k = \tanh\!\left(\beta\Bigl[\sum_{j\in\partial k} J_{kj}\, m_j + h_k\Bigr]\right)
+    }
+    \tag{14}
+    $$
+  </div>
+
+  <p>These are the <strong>naive mean field (NMF) self-consistency equations</strong>. There is one equation for each site $k$. The term in brackets is the <em>effective field</em> experienced by spin $k$:</p>
+
+  <div class="math-block">
+    $$
+    h_k^{\mathrm{eff}} = \sum_{j\in\partial k} J_{kj}\, m_j + h_k\,.
+    \tag{15}
+    $$
+  </div>
+
+  <p>Each spin sees its neighbors only through their <em>mean</em> magnetization $m_j$ &mdash; hence the name "mean field."</p>
+
+  <div class="insight key">
+    <p><strong>Comparison with the VAN framework.</strong>
+    In the VAN paper, the NMF ansatz $q_\theta(s) = \prod_i q_i(s_i)$ is the simplest special case of the autoregressive ansatz $q_\theta(s) = \prod_i q_\theta(s_i | s_1,\ldots,s_{i-1})$. In NMF, each conditional $q_\theta(s_i | s_{&lt;i})$ is independent of $s_{&lt;i}$; it collapses to $q_i(s_i)$. The VAN paper's contribution is to parameterize the conditionals with neural networks, allowing correlations while retaining a tractable, normalized $q_\theta$.</p>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 3 — 1D Ising Application                             -->
+<!-- ============================================================ -->
+<section id="sec3">
+  <h2><span class="sec-num">3</span>1D Ising Application</h2>
+
+  <h3>Setup and energy function</h3>
+
+  <p>
+    Consider a ring of $N$ spins with nearest-neighbor ferromagnetic coupling $J > 0$ and no external field ($h = 0$). The energy is:
+  </p>
+
+  <div class="def-box blue">
+    <div class="def-label">1D Ising Energy</div>
+    $$
+    E(s) = -J \sum_{i=1}^{N} s_i\, s_{i+1}\,,
+    \qquad s_{N+1} \equiv s_1 \quad \text{(periodic BCs)}\,.
+    \tag{16}
+    $$
+  </div>
+
+  <div class="figure">
+    <svg width="340" height="300" viewBox="0 0 340 300">
+      <!-- Circular 1D Ising chain, N=8, periodic BCs -->
+      <!-- Bond lines (drawn first, behind nodes) -->
+      <line x1="170.0" y1="35.0" x2="244.2" y2="65.8" stroke="#d4cec4" stroke-width="2.5"/>
+      <line x1="244.2" y1="65.8" x2="275.0" y2="140.0" stroke="#d4cec4" stroke-width="2.5"/>
+      <line x1="275.0" y1="140.0" x2="244.2" y2="214.2" stroke="#d4cec4" stroke-width="2.5"/>
+      <line x1="244.2" y1="214.2" x2="170.0" y2="245.0" stroke="#d4cec4" stroke-width="2.5"/>
+      <line x1="170.0" y1="245.0" x2="95.8" y2="214.2" stroke="#d4cec4" stroke-width="2.5"/>
+      <line x1="95.8" y1="214.2" x2="65.0" y2="140.0" stroke="#d4cec4" stroke-width="2.5"/>
+      <line x1="65.0" y1="140.0" x2="95.8" y2="65.8" stroke="#d4cec4" stroke-width="2.5"/>
+      <line x1="95.8" y1="65.8" x2="170.0" y2="35.0" stroke="#d4cec4" stroke-width="2.5"/>
+      <!-- Site nodes and labels -->
+      <circle cx="170.0" cy="35.0" r="14" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="170.0" y="40" text-anchor="middle" font-size="13" font-family="Source Sans 3" fill="#2a2520">1</text>
+      <circle cx="244.2" cy="65.8" r="14" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="244.2" y="70.8" text-anchor="middle" font-size="13" font-family="Source Sans 3" fill="#2a2520">2</text>
+      <circle cx="275.0" cy="140.0" r="14" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="275.0" y="145" text-anchor="middle" font-size="13" font-family="Source Sans 3" fill="#2a2520">3</text>
+      <circle cx="244.2" cy="214.2" r="14" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="244.2" y="219.2" text-anchor="middle" font-size="13" font-family="Source Sans 3" fill="#2a2520">4</text>
+      <circle cx="170.0" cy="245.0" r="14" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="170.0" y="250" text-anchor="middle" font-size="13" font-family="Source Sans 3" fill="#2a2520">5</text>
+      <circle cx="95.8" cy="214.2" r="14" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="95.8" y="219.2" text-anchor="middle" font-size="13" font-family="Source Sans 3" fill="#2a2520">6</text>
+      <circle cx="65.0" cy="140.0" r="14" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="65.0" y="145" text-anchor="middle" font-size="13" font-family="Source Sans 3" fill="#2a2520">7</text>
+      <circle cx="95.8" cy="65.8" r="14" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="95.8" y="70.8" text-anchor="middle" font-size="13" font-family="Source Sans 3" fill="#2a2520">8</text>
+      <!-- J labels on bonds -->
+      <text x="214" y="38" text-anchor="middle" font-size="12" font-family="Source Sans 3" font-style="italic" fill="#8b3a3a">J</text>
+      <text x="272" y="96" text-anchor="middle" font-size="12" font-family="Source Sans 3" font-style="italic" fill="#8b3a3a">J</text>
+      <text x="272" y="188" text-anchor="middle" font-size="12" font-family="Source Sans 3" font-style="italic" fill="#8b3a3a">J</text>
+      <text x="214" y="250" text-anchor="middle" font-size="12" font-family="Source Sans 3" font-style="italic" fill="#8b3a3a">J</text>
+      <text x="126" y="250" text-anchor="middle" font-size="12" font-family="Source Sans 3" font-style="italic" fill="#8b3a3a">J</text>
+      <text x="68" y="188" text-anchor="middle" font-size="12" font-family="Source Sans 3" font-style="italic" fill="#8b3a3a">J</text>
+      <text x="68" y="96" text-anchor="middle" font-size="12" font-family="Source Sans 3" font-style="italic" fill="#8b3a3a">J</text>
+      <text x="126" y="38" text-anchor="middle" font-size="12" font-family="Source Sans 3" font-style="italic" fill="#8b3a3a">J</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.3.</strong> 1D Ising chain ($N = 8$) with periodic boundary conditions: $s_9 \equiv s_1$.</div>
+  </div>
+
+  <p>
+    Each site has exactly $z = 2$ neighbors (left and right). There are $N$ bonds in total (the periodic bond $s_N s_1$ gives the $N$-th bond).
+  </p>
+
+  <h3>NMF variational free energy for the 1D chain</h3>
+
+  <p>
+    We assume a <strong>uniform</strong> (translation-invariant) solution: $m_i = m$ for all $i$. This is natural given the periodic boundary conditions and the translation symmetry of the Hamiltonian. Then:
+  </p>
+
+  <h4>Average energy</h4>
+
+  <p>From Eq. (12) with $J_{ij} = J$ for neighboring pairs and $h_i = 0$:</p>
+
+  <div class="math-block">
+    $$
+    \avg{E}_q = -J \sum_{i=1}^{N} m_i\, m_{i+1} = -J \cdot N \cdot m^2\,.
+    \tag{17}
+    $$
+  </div>
+
+  <p>(There are $N$ bonds, each contributing $-J\, m^2$.)</p>
+
+  <h4>Entropy</h4>
+
+  <p>From Eq. (11), the Shannon entropy is $\mathcal{H}_q = N\,\mathcal{H}(m)$, so the thermodynamic entropy is:</p>
+
+  <div class="math-block">
+    $$
+    S_q = k_B\, N\, \mathcal{H}(m) = -k_B N\left[\frac{1+m}{2}\ln\frac{1+m}{2} + \frac{1-m}{2}\ln\frac{1-m}{2}\right].
+    \tag{18}
+    $$
+  </div>
+
+  <h4>Variational free energy</h4>
+
+  <p>Combining via $\Fq = \avg{E}_q - T S_q$, and dividing by $N$ to get the free energy per site $f_q \equiv \Fq / N$:</p>
+
+  <div class="def-box green">
+    <div class="def-label">1D NMF Free Energy per Site</div>
+    $$
+    f_q(m) = -J m^2 + k_B T\left[\frac{1+m}{2}\ln\frac{1+m}{2} + \frac{1-m}{2}\ln\frac{1-m}{2}\right].
+    \tag{19}
+    $$
+  </div>
+
+  <div class="insight key">
+    <p><strong>Structure of $f_q(m)$.</strong>
+    The first term ($-Jm^2$) favors large $|m|$ &mdash; it is the energy gain from alignment. The second term (the entropy cost, with coefficient $+k_BT$) favors $m = 0$ &mdash; it is maximized when the spin is equally likely up and down. The competition between energy and entropy is the essence of the phase transition physics.</p>
+  </div>
+
+  <h3>Deriving the NMF equations</h3>
+
+  <p>We minimize $f_q(m)$ by setting $df_q/dm = 0$:</p>
+
+  <ol class="steps">
+    <li>
+      <strong>Differentiate:</strong>
+      $$
+      \frac{df_q}{dm} = -2Jm + k_B T \cdot \frac{1}{2}\ln\frac{1+m}{1-m} = -2Jm + k_B T\,\tanh^{-1}(m)\,.
+      $$
+    </li>
+    <li>
+      <strong>Set to zero and solve:</strong>
+      $$
+      k_B T\,\tanh^{-1}(m) = 2Jm \qquad\Longrightarrow\qquad m = \tanh\!\left(\frac{2J}{k_B T}\, m\right) = \tanh(2\beta J\, m)\,.
+      $$
+    </li>
+  </ol>
+
+  <p>This is the special case of the general NMF equation (14) for a uniform solution on the 1D chain. Each spin has $z = 2$ neighbors, each with magnetization $m$, so the effective field is $h^{\mathrm{eff}} = 2Jm$:</p>
+
+  <div class="def-box green">
+    <div class="def-label">1D NMF Equation</div>
+    $$
+    \boxed{m = \tanh(2\beta J\, m)}
+    \tag{20}
+    $$
+  </div>
+
+  <div class="insight physics">
+    <p><strong>Note on the coordination number.</strong>
+    The factor of 2 in $2\beta J m$ comes from the coordination number $z = 2$ (each spin has 2 neighbors on the periodic chain). In general dimension $d$ on a hypercubic lattice, $z = 2d$, and the NMF equation becomes $m = \tanh(z \beta J m)$ in the uniform case.</p>
+  </div>
+
+  <h3>Solving for the phase transition</h3>
+
+  <p>Equation (20) is a transcendental equation for $m$. We solve it graphically/analytically.</p>
+
+  <div class="figure">
+    <svg width="440" height="310" viewBox="0 0 440 310">
+      <!-- Graphical solution of m = tanh(2betaJm) -->
+      <!-- Grid -->
+      <line x1="60" y1="140" x2="390" y2="140" stroke="#e0dbd2" stroke-width="0.7"/>
+      <line x1="225" y1="25" x2="225" y2="255" stroke="#e0dbd2" stroke-width="0.7"/>
+      <!-- +/-1 grid lines -->
+      <line x1="60" y1="52" x2="390" y2="52" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="60" y1="229" x2="390" y2="229" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="98" y1="25" x2="98" y2="255" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="352" y1="25" x2="352" y2="255" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <!-- Axes -->
+      <line x1="55" y1="140" x2="395" y2="140" stroke="#2a2520" stroke-width="1.2"/>
+      <line x1="225" y1="20" x2="225" y2="260" stroke="#2a2520" stroke-width="1.2"/>
+      <!-- Tick labels -->
+      <text x="98" y="270" text-anchor="middle" font-size="11" font-family="Source Sans 3" fill="#5c5549">&#x2212;1</text>
+      <text x="225" y="270" text-anchor="middle" font-size="11" font-family="Source Sans 3" fill="#5c5549">0</text>
+      <text x="352" y="270" text-anchor="middle" font-size="11" font-family="Source Sans 3" fill="#5c5549">1</text>
+      <text x="48" y="55" text-anchor="end" font-size="11" font-family="Source Sans 3" fill="#5c5549">1</text>
+      <text x="48" y="144" text-anchor="end" font-size="11" font-family="Source Sans 3" fill="#5c5549">0</text>
+      <text x="44" y="233" text-anchor="end" font-size="11" font-family="Source Sans 3" fill="#5c5549">&#x2212;1</text>
+      <!-- Axis title -->
+      <text x="395" y="155" text-anchor="start" font-size="13" font-family="Source Sans 3" fill="#2a2520" font-style="italic">m</text>
+      <!-- y = m line (grey) -->
+      <polyline fill="none" stroke="#999" stroke-width="1.8"
+        points="73,246 78,243 83,239 88,236 93,232 98,228 103,225 108,221 113,218 118,214 123,211 129,207 134,204 139,200 144,197 149,193 154,190 159,186 164,182 169,179 174,175 179,172 184,168 189,165 195,161 200,158 205,154 210,151 215,147 220,144 225,140 230,136 235,133 240,129 245,126 250,122 255,119 261,115 266,112 271,108 276,105 281,101 286,98 291,94 296,90 301,87 306,83 311,80 316,76 321,73 327,69 332,66 337,62 342,59 347,55 352,51 357,48 362,44 367,41 372,37 377,34"/>
+      <text x="378" y="30" font-size="11" font-family="Source Sans 3" fill="#999" font-style="italic">y = m</text>
+      <!-- T = J (well below Tc): slope = 2 at origin, 3 intersection points -->
+      <polyline fill="none" stroke="#8b3a3a" stroke-width="2.2"
+        points="73,227 78,227 83,227 88,226 93,226 98,225 103,225 108,224 113,223 118,223 123,222 129,220 134,219 139,218 144,216 149,214 154,211 159,209 164,206 169,203 174,199 179,195 184,190 189,185 195,179 200,174 205,167 210,161 215,154 220,147 225,140 230,133 235,126 240,119 245,113 250,106 255,101 261,95 266,90 271,85 276,81 281,77 286,74 291,71 296,69 301,66 306,64 311,62 316,61 321,60 327,58 332,57 337,57 342,56 347,55 352,55 357,54 362,54 367,53 372,53 377,53"/>
+      <!-- T = 2J = Tc: slope = 1 at origin, tangent to y=m -->
+      <polyline fill="none" stroke="#2d5a4a" stroke-width="2.2"
+        points="73,214 78,213 83,211 88,210 93,209 98,207 103,206 108,204 113,203 118,201 123,199 129,197 134,195 139,192 144,190 149,188 154,185 159,182 164,179 169,177 174,174 179,171 184,167 189,164 195,161 200,157 205,154 210,151 215,147 220,144 225,140 230,136 235,133 240,129 245,126 250,123 255,119 261,116 266,113 271,109 276,106 281,103 286,101 291,98 296,95 301,92 306,90 311,88 316,85 321,83 327,81 332,79 337,77 342,76 347,74 352,73 357,71 362,70 367,69 372,67 377,66"/>
+      <!-- T = 3.5J (above Tc): slope < 1 at origin, only m=0 solution -->
+      <polyline fill="none" stroke="#4a5a8b" stroke-width="2.2"
+        points="73,193 78,191 83,190 88,189 93,187 98,186 103,184 108,183 113,181 118,179 123,178 129,176 134,174 139,173 144,171 149,169 154,167 159,166 164,164 169,162 174,160 179,158 184,156 189,154 195,152 200,150 205,148 210,146 215,144 220,142 225,140 230,138 235,136 240,134 245,132 250,130 255,128 261,126 266,124 271,122 276,120 281,118 286,116 291,114 296,113 301,111 306,109 311,107 316,106 321,104 327,102 332,101 337,99 342,97 347,96 352,94 357,93 362,91 367,90 372,89 377,87"/>
+      <!-- Intersection dots for T=J -->
+      <circle cx="225" cy="140" r="4" fill="#2a2520"/>
+      <circle cx="347" cy="55" r="4" fill="#8b3a3a"/>
+      <circle cx="103" cy="225" r="4" fill="#8b3a3a"/>
+      <!-- Legend -->
+      <line x1="250" y1="25" x2="270" y2="25" stroke="#8b3a3a" stroke-width="2.2"/>
+      <text x="274" y="29" font-size="11" font-family="Source Sans 3" fill="#8b3a3a">T = J  (&lt; T&#x2081;)</text>
+      <line x1="250" y1="39" x2="270" y2="39" stroke="#2d5a4a" stroke-width="2.2"/>
+      <text x="274" y="43" font-size="11" font-family="Source Sans 3" fill="#2d5a4a">T = 2J = T&#x2081;</text>
+      <line x1="250" y1="53" x2="270" y2="53" stroke="#4a5a8b" stroke-width="2.2"/>
+      <text x="274" y="57" font-size="11" font-family="Source Sans 3" fill="#4a5a8b">T = 3.5J  (&gt; T&#x2081;)</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.4.</strong> Graphical solution of $m = \tanh(2\beta Jm)$: intersections of $y = m$ with $y = \tanh(2\beta Jm)$.</div>
+  </div>
+
+  <p>The graphical construction makes the bifurcation structure clear: below $T_c$, the sigmoid $\tanh(2\beta J m)$ is steeper than the diagonal at the origin, producing two additional fixed points at $\pm m_0(T)$. At $T = T_c$ the sigmoid is tangent to $y = m$ at the origin (slope $= 1$). Above $T_c$ only $m = 0$ survives.</p>
+
+  <p><strong>$m = 0$ is always a solution</strong> (paramagnetic state).</p>
+
+  <p><strong>Non-zero solutions</strong> exist when the slope of the RHS at $m = 0$ exceeds 1. Since $\frac{d}{dm}\tanh(2\beta J m)\big|_{m=0} = 2\beta J$, a bifurcation occurs when:</p>
+
+  <div class="def-box green">
+    <div class="def-label">1D NMF Critical Temperature</div>
+    $$
+    2\beta_c J = 1 \qquad\Longrightarrow\qquad k_B T_c^{\text{NMF}} = 2J\,.
+    \tag{21}
+    $$
+  </div>
+
+  <p>For $T < T_c^{\text{NMF}}$, there are two additional solutions $m = \pm m_0(T)$ with $m_0 > 0$, corresponding to a ferromagnetically ordered state. This is a continuous (second-order) phase transition within NMF.</p>
+
+  <h4>Critical behavior near $T_c$</h4>
+
+  <p>Expanding $\tanh(x) \approx x - x^3/3$ for small $m$ near $T_c$:</p>
+
+  <ol class="steps">
+    <li>
+      $$
+      m \approx 2\beta J\, m - \tfrac{1}{3}(2\beta J)^3 m^3
+      \qquad\Longrightarrow\qquad
+      m^2 \approx \frac{3(2\beta J - 1)}{(2\beta J)^3}\,.
+      $$
+    </li>
+    <li>
+      Near $T_c$, with $t \equiv (T_c - T)/T_c$ the reduced temperature:
+      $$
+      m \sim |t|^{1/2}\,,
+      $$
+      which gives the mean-field critical exponent $\beta_{\text{MF}} = 1/2$.
+    </li>
+  </ol>
+
+  <h3>Comparison with the exact solution</h3>
+
+  <div class="insight warning">
+    <p><strong>NMF is qualitatively wrong in 1D!</strong>
+    The 1D Ising model with short-range interactions has <strong>no phase transition at any finite temperature</strong>. This was shown by Ising himself (1925) and can be proved exactly using the transfer matrix method. The exact free energy per site is:</p>
+    $$
+    f_{\text{exact}} = -k_B T \ln\!\left(2\cosh\beta J\right) + \text{(boundary corrections that vanish as } N\to\infty\text{)}\,.
+    $$
+    <p>The magnetization is $m = 0$ for all $T > 0$ (in the absence of an external field). The correlation length is $\xi = -1/\ln(\tanh \beta J)$, which is finite for all $T > 0$.</p>
+    <p><strong>NMF predicts a spurious phase transition at $k_B T_c = 2J$.</strong> This is because the factorized ansatz completely ignores fluctuations, which in 1D are strong enough to destroy long-range order at any nonzero temperature.</p>
+  </div>
+
+  <p>Why does NMF fail in 1D? The factorized ansatz $q(s) = \prod_i q_i(s_i)$ sets all correlations to zero: $\avg{s_i s_j}_q - m^2 = 0$. But in 1D, thermal fluctuations create domain walls (boundaries between up and down regions) at a free-energy cost of only $2J$ per wall, offset by an entropy gain of $\sim T \ln N$ from placing the wall anywhere on the chain. Since the entropy always wins for $T > 0$, the chain disorders. NMF misses this because it does not see domain walls &mdash; those are inherently <em>correlated</em> structures.</p>
+
+  <p>This is a well-known limitation discussed in many textbooks. The VAN paper demonstrates that more expressive ansatze (autoregressive networks) can correctly capture such correlations and avoid the spurious transition.</p>
+
+  <div class="figure">
+    <svg width="440" height="310" viewBox="0 0 440 310">
+      <!-- Free energy comparison: NMF vs exact, 1D Ising -->
+      <!-- Grid -->
+      <line x1="70" y1="25" x2="70" y2="235" stroke="#2a2520" stroke-width="1.2"/>
+      <line x1="70" y1="25" x2="390" y2="25" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="70" y1="78" x2="390" y2="78" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="70" y1="130" x2="390" y2="130" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="70" y1="183" x2="390" y2="183" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="70" y1="235" x2="390" y2="235" stroke="#2a2520" stroke-width="1.2"/>
+      <!-- Vertical grid at T/J = 1,2,3,4,5 -->
+      <line x1="128" y1="25" x2="128" y2="235" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="186" y1="25" x2="186" y2="235" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="245" y1="25" x2="245" y2="235" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="303" y1="25" x2="303" y2="235" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <line x1="361" y1="25" x2="361" y2="235" stroke="#e0dbd2" stroke-width="0.5" stroke-dasharray="3,4"/>
+      <!-- x axis (bottom) -->
+      <line x1="70" y1="235" x2="395" y2="235" stroke="#2a2520" stroke-width="1.2"/>
+      <text x="128" y="250" text-anchor="middle" font-size="11" font-family="Source Sans 3" fill="#5c5549">1</text>
+      <text x="186" y="250" text-anchor="middle" font-size="11" font-family="Source Sans 3" fill="#5c5549">2</text>
+      <text x="245" y="250" text-anchor="middle" font-size="11" font-family="Source Sans 3" fill="#5c5549">3</text>
+      <text x="303" y="250" text-anchor="middle" font-size="11" font-family="Source Sans 3" fill="#5c5549">4</text>
+      <text x="361" y="250" text-anchor="middle" font-size="11" font-family="Source Sans 3" fill="#5c5549">5</text>
+      <text x="230" y="268" text-anchor="middle" font-size="13" font-family="Source Sans 3" fill="#2a2520"><tspan font-style="italic">k</tspan><tspan font-size="9" dy="2">B</tspan><tspan dy="-2" font-style="italic">T / J</tspan></text>
+      <!-- y axis labels -->
+      <text x="63" y="239" text-anchor="end" font-size="11" font-family="Source Sans 3" fill="#5c5549">0</text>
+      <text x="63" y="186" text-anchor="end" font-size="11" font-family="Source Sans 3" fill="#5c5549">&#x2212;1</text>
+      <text x="63" y="134" text-anchor="end" font-size="11" font-family="Source Sans 3" fill="#5c5549">&#x2212;2</text>
+      <text x="63" y="82" text-anchor="end" font-size="11" font-family="Source Sans 3" fill="#5c5549">&#x2212;3</text>
+      <text x="63" y="29" text-anchor="end" font-size="11" font-family="Source Sans 3" fill="#5c5549">&#x2212;4</text>
+      <text x="22" y="130" text-anchor="middle" font-size="13" font-family="Crimson Pro, serif" fill="#2a2520" font-style="italic" transform="rotate(-90,22,130)">f / J</text>
+      <!-- Tc marker -->
+      <line x1="186" y1="235" x2="186" y2="25" stroke="#8b3a3a" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+      <text x="186" y="18" text-anchor="middle" font-size="10" font-family="Source Sans 3" fill="#8b3a3a">T&#x2081;&#x1D3A;&#x1D39;&#x1D3D; = 2J</text>
+      <!-- Exact free energy: f = -T ln(2 cosh(1/T)) -->
+      <polyline fill="none" stroke="#2d5a4a" stroke-width="2.5"
+        points="82,78 84,78 86,78 89,78 91,78 93,78 96,78 98,78 100,78 103,78 105,79 107,79 110,79 112,80 114,80 117,81 119,81 122,82 124,83 126,84 129,84 131,85 133,86 136,87 138,88 140,89 143,90 145,91 147,92 150,93 152,94 154,95 157,96 159,97 161,98 164,99 166,100 168,101 171,102 173,104 176,105 178,106 180,107 183,108 185,110 187,111 190,112 192,113 194,115 197,116 199,117 201,118 204,120 206,121 208,122 211,124 213,125 215,126 218,127 220,129 222,130 225,131 227,133 229,134 232,135 234,137 237,138 239,139 241,141 244,142 246,144 248,145 251,146 253,148 255,149 258,150 260,152 262,153 265,155 267,156 269,157 272,159 274,160 276,161 279,163 281,164 283,166 286,167 288,168 290,170 293,171 295,173 298,174 300,175 302,177 305,178 307,180 309,181 312,182 314,184 316,185 319,187 321,188 323,189 326,191 328,192 330,194 333,195 335,197 337,198 340,199 342,201 344,202 347,204 349,205 352,206 354,208 356,209 359,211 361,212"/>
+      <!-- NMF free energy: above exact (less negative) -->
+      <polyline fill="none" stroke="#8b3a3a" stroke-width="2.5" stroke-dasharray="8,4"
+        points="82,77 84,77 86,77 89,77 91,77 93,77 96,78 98,78 100,78 103,78 105,78 107,78 110,78 112,78 114,78 117,78 119,78 122,78 124,78 126,78 129,79 131,79 133,79 136,79 138,80 140,80 143,81 145,81 147,82 150,82 152,83 154,83 157,84 159,85 161,86 164,86 166,87 168,88 171,89 173,91 176,92 178,93 180,94 183,95 185,97 187,98 190,100 192,101 194,103 197,104 199,106 201,107 204,109 206,110 208,112 211,113 213,114 215,116 218,117 220,119 222,120 225,122 227,123 229,125 232,126 234,128 237,129 239,131 241,132 244,134 246,135 248,136 251,138 253,139 255,141 258,142 260,144 262,145 265,147 267,148 269,150 272,151 274,153 276,154 279,156 281,157 283,159 286,160 288,161 290,163 293,164 295,166 298,167 300,169 302,170 305,172 307,173 309,175 312,176 314,178 316,179 319,181 321,182 323,183 326,185 328,186 330,188 333,189 335,191 337,192 340,194 342,195 344,197 347,198 349,200 352,201 354,203 356,204 359,205 361,207"/>
+      <!-- Legend -->
+      <line x1="250" y1="48" x2="278" y2="48" stroke="#2d5a4a" stroke-width="2.5"/>
+      <text x="282" y="52" font-size="11" font-family="Source Sans 3" fill="#2d5a4a">Exact: &#x2212;T ln(2 cosh &#x3B2;J)</text>
+      <line x1="250" y1="62" x2="278" y2="62" stroke="#8b3a3a" stroke-width="2.5" stroke-dasharray="8,4"/>
+      <text x="282" y="66" font-size="11" font-family="Source Sans 3" fill="#8b3a3a">NMF variational bound</text>
+      <!-- Annotation -->
+      <text x="160" y="145" font-size="11" font-family="Source Sans 3" fill="#5c5549" font-style="italic" transform="rotate(-50,160,145)">F&#x2091; &#x2212; F &#x2265; 0</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.5.</strong> Free energy per site: NMF (dashed) vs exact (solid) for the 1D Ising chain.</div>
+  </div>
+
+  <p>The NMF variational free energy $\mathcal{F}_q$ always lies above the exact free energy $F$ (it is less negative), as guaranteed by $D_{\text{KL}} \geq 0$. The two curves agree at low $T$ (where both approach $-J$, the ground state energy) and diverge most around $T \sim T_c^{\text{NMF}} = 2J$.</p>
+
+  <div class="insight physics">
+    <p><strong>Where does the phase transition show up in $f_q$?</strong>
+    Since the NMF transition is second-order, $f_q(T)$ itself is continuous <em>and</em> its first derivative $-\partial f_q/\partial T = S$ (the entropy) is also continuous at $T_c$. The transition is invisible in the free energy curve! It only appears in the <em>second</em> derivative: the specific heat $C = -T\,\partial^2 f_q / \partial T^2$ has a jump discontinuity at $T_c$. Above $T_c$ the NMF gives $f_q = -k_BT\ln 2$ (a straight line, zero specific heat), while just below $T_c$ the ordered solution bends the curve, giving a finite $C$. This specific-heat jump $\Delta C = \frac{3}{2}k_B$ per spin is the classic mean-field result.</p>
+    <p>By contrast, the exact 1D free energy $f = -k_BT\ln(2\cosh\beta J)$ is analytic for all $T > 0$ &mdash; smooth to all orders, with no transition at all.</p>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 4 — 2D Ising Application                             -->
+<!-- ============================================================ -->
+<section id="sec4">
+  <h2><span class="sec-num">4</span>2D Ising Application</h2>
+
+  <h3>Setup and energy function</h3>
+
+  <p>
+    Consider an $L \times L$ square lattice with $N = L^2$ spins and periodic boundary conditions (a torus). The energy is:
+  </p>
+
+  <div class="def-box blue">
+    <div class="def-label">2D Ising Energy</div>
+    $$
+    E(s) = -J \sum_{\langle i,j\rangle} s_i\, s_j\,,
+    \tag{22}
+    $$
+  </div>
+
+  <p>
+    where $\langle i,j \rangle$ runs over all nearest-neighbor pairs. On the square lattice, each site has coordination number $z = 4$. With periodic BCs, there are $N_{\text{bonds}} = 2N$ bonds in total (each site contributes 2 bonds: one to the right and one downward).
+  </p>
+
+  <div class="figure">
+    <svg width="280" height="280" viewBox="0 0 280 280">
+      <!-- Grid lines -->
+      <g stroke="#d4cec4" stroke-width="1.5">
+        <line x1="50" y1="50" x2="230" y2="50"/>
+        <line x1="50" y1="110" x2="230" y2="110"/>
+        <line x1="50" y1="170" x2="230" y2="170"/>
+        <line x1="50" y1="230" x2="230" y2="230"/>
+        <line x1="50" y1="50" x2="50" y2="230"/>
+        <line x1="110" y1="50" x2="110" y2="230"/>
+        <line x1="170" y1="50" x2="170" y2="230"/>
+        <line x1="230" y1="50" x2="230" y2="230"/>
+      </g>
+      <!-- periodic BCs hint -->
+      <g stroke="#8b3a3a" stroke-width="1" stroke-dasharray="3,3" opacity="0.6">
+        <path d="M 230 50 Q 260 50 260 80" fill="none"/>
+        <path d="M 260 80 Q 260 110 230 110" fill="none"/>
+        <path d="M 50 230 Q 50 260 80 260" fill="none"/>
+        <path d="M 80 260 Q 110 260 110 230" fill="none"/>
+      </g>
+      <!-- Sites -->
+      <g>
+        <circle cx="50" cy="50" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="110" cy="50" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="170" cy="50" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="230" cy="50" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="50" cy="110" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="110" cy="110" r="10" fill="#eae6dc" stroke="#2a2520" stroke-width="2.2"/>
+        <circle cx="170" cy="110" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="230" cy="110" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="50" cy="170" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="110" cy="170" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="170" cy="170" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="230" cy="170" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="50" cy="230" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="110" cy="230" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="170" cy="230" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+        <circle cx="230" cy="230" r="10" fill="#fff" stroke="#2a2520" stroke-width="1.8"/>
+      </g>
+      <!-- Neighbor highlight -->
+      <g stroke="#8b3a3a" stroke-width="2.5" fill="none">
+        <line x1="63" y1="110" x2="97" y2="110"/>
+        <line x1="123" y1="110" x2="157" y2="110"/>
+        <line x1="110" y1="63" x2="110" y2="97"/>
+        <line x1="110" y1="123" x2="110" y2="157"/>
+      </g>
+      <text x="110" y="115" text-anchor="middle" font-size="12" font-family="Source Sans 3" font-weight="600" fill="#2a2520">k</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.6.</strong> Square lattice: each site has $z = 4$ neighbors.</div>
+  </div>
+
+  <h3>NMF variational free energy for the 2D lattice</h3>
+
+  <p>
+    Again assuming a <strong>uniform solution</strong> $m_i = m$ for all $i$ (which respects the lattice translation symmetry):
+  </p>
+
+  <h4>Average energy</h4>
+
+  <div class="math-block">
+    $$
+    \avg{E}_q = -J \sum_{\langle i,j\rangle} m_i m_j = -J \cdot 2N \cdot m^2\,.
+    \tag{23}
+    $$
+  </div>
+
+  <p>(There are $2N$ bonds on the periodic square lattice, each contributing $-Jm^2$. Equivalently, each of the $N$ sites contributes $\frac{1}{2} z \cdot (-Jm^2) = -2Jm^2$ per site.)</p>
+
+  <h4>Entropy</h4>
+
+  <p>Exactly as before:</p>
+
+  <div class="math-block">
+    $$
+    S_q = k_B\, N\, \mathcal{H}(m)\,.
+    \tag{24}
+    $$
+  </div>
+
+  <h4>Variational free energy per site</h4>
+
+  <div class="def-box green">
+    <div class="def-label">2D NMF Free Energy per Site</div>
+    $$
+    f_q(m) = -2J m^2 + k_B T\left[\frac{1+m}{2}\ln\frac{1+m}{2} + \frac{1-m}{2}\ln\frac{1-m}{2}\right].
+    \tag{25}
+    $$
+  </div>
+
+  <div class="insight key">
+    <p><strong>Comparison with 1D.</strong>
+    The only difference from the 1D case (Eq. 19) is the coefficient of $m^2$ in the energy term: $-Jm^2$ (1D, $z=2$) vs. $-2Jm^2$ (2D, $z=4$). In general, for coordination number $z$, the energy per site is $-\tfrac{z}{2}Jm^2$. The entropy per site is the same: $-k_B\mathcal{H}(m)$.</p>
+  </div>
+
+  <h3>Deriving the NMF equations</h3>
+
+  <p>Minimizing $f_q(m)$ proceeds identically to the 1D case.</p>
+
+  <ol class="steps">
+    <li>
+      <strong>Differentiate:</strong>
+      $$
+      \frac{df_q}{dm} = -4Jm + k_BT\,\tanh^{-1}(m) = 0\,.
+      $$
+    </li>
+    <li>
+      <strong>Solve:</strong>
+      $$
+      m = \tanh\!\left(\frac{4J}{k_BT}\, m\right) = \tanh(4\beta J\, m)\,.
+      $$
+    </li>
+  </ol>
+
+  <p>This is the general result (14) specialized to the 2D square lattice with $z = 4$ neighbors:</p>
+
+  <div class="def-box green">
+    <div class="def-label">2D NMF Equation</div>
+    $$
+    \boxed{m = \tanh(4\beta J\, m)}
+    \tag{26}
+    $$
+  </div>
+
+  <div class="insight physics">
+    <p><strong>General pattern.</strong>
+    For any lattice with coordination number $z$ and uniform coupling $J$, the NMF equation in zero field is always:</p>
+    $$
+    m = \tanh(z\beta J\, m)\,,
+    $$
+    <p>with $\beta = 1/(k_BT)$. This follows directly from Eq. (14): each site has $z$ neighbors, each contributing $Jm$ to the effective field, giving $h^{\mathrm{eff}} = zJm$. The NMF critical temperature is $k_BT_c = zJ$.</p>
+  </div>
+
+  <table class="comp-table">
+    <thead>
+      <tr><th>Lattice</th><th>$d$</th><th>$z$</th><th>NMF equation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1D chain</td><td>1</td><td>2</td><td>$m = \tanh(2\beta J m)$</td></tr>
+      <tr><td>2D square</td><td>2</td><td>4</td><td>$m = \tanh(4\beta J m)$</td></tr>
+      <tr><td>2D triangular</td><td>2</td><td>6</td><td>$m = \tanh(6\beta J m)$</td></tr>
+      <tr><td>3D cubic</td><td>3</td><td>6</td><td>$m = \tanh(6\beta J m)$</td></tr>
+      <tr><td>$d$-dim hypercubic</td><td>$d$</td><td>$2d$</td><td>$m = \tanh(2d\,\beta J m)$</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Solving for the phase transition</h3>
+
+  <p>The analysis is identical to Section 3 but with $z = 4$ instead of $z = 2$.</p>
+
+  <p><strong>Bifurcation condition:</strong> $\frac{d}{dm}\tanh(4\beta J m)\big|_{m=0} = 4\beta J = 1$, giving:</p>
+
+  <div class="def-box green">
+    <div class="def-label">2D NMF Critical Temperature</div>
+    $$
+    \boxed{k_B T_c^{\text{NMF}} = 4J}
+    \qquad\text{(2D square lattice, NMF)}\,.
+    \tag{27}
+    $$
+  </div>
+
+  <p><strong>Below $T_c$:</strong> Two non-trivial solutions $m = \pm m_0(T)$ appear continuously from $m = 0$, indicating a <strong>second-order (continuous) phase transition</strong> to a ferromagnetic state.</p>
+
+  <p><strong>Critical exponents:</strong> Near $T_c$, expanding as before gives $m \sim |t|^{1/2}$ with $t = (T_c - T)/T_c$. All NMF critical exponents take the classical mean-field values regardless of lattice or dimension:</p>
+
+  <div class="math-block">
+    $$
+    \beta_{\text{MF}} = \tfrac{1}{2}\,, \quad
+    \gamma_{\text{MF}} = 1\,, \quad
+    \delta_{\text{MF}} = 3\,, \quad
+    \alpha_{\text{MF}} = 0\,.
+    \tag{28}
+    $$
+  </div>
+
+  <h4>Landau expansion of $f_q(m)$</h4>
+
+  <p>For small $m$, we can expand the Shannon entropy to get a Landau-type free energy. Using $\mathcal{H}(m) = \ln 2 - \frac{m^2}{2} - \frac{m^4}{12} - \cdots$:</p>
+
+  <ol class="steps">
+    <li>
+      $$
+      f_q(m) = -2Jm^2 - k_BT\left(\ln 2 - \frac{m^2}{2} - \frac{m^4}{12} - \cdots\right)
+      $$
+      $$
+      = \text{const} + \frac{1}{2}(k_BT - 4J)m^2 + \frac{k_BT}{12} m^4 + \cdots
+      $$
+    </li>
+    <li>
+      $$
+      = f_0 + \frac{a}{2}\, m^2 + \frac{b}{4}\, m^4 + \cdots
+      \tag{29}
+      $$
+      with $a = k_BT - k_BT_c = k_B(T - T_c)$ where $k_BT_c = 4J$, and $b = k_BT/3 > 0$.
+    </li>
+  </ol>
+
+  <p>This is precisely the <strong>Landau free energy</strong>. For $a > 0$ ($T > T_c$), the minimum is at $m = 0$. For $a < 0$ ($T < T_c$), minima appear at $m = \pm\sqrt{-a/b} = \pm\sqrt{3(4J - k_BT)/(k_BT)}$. The transition is continuous with $m \sim |a|^{1/2}$.</p>
+
+  <h3>Comparison with the exact Onsager solution</h3>
+
+  <p>
+    The 2D Ising model on the square lattice was solved exactly by Onsager (1944). The exact results are:
+  </p>
+
+  <p><strong>Critical temperature:</strong></p>
+
+  <div class="math-block">
+    <div class="math-label">Onsager Exact Result</div>
+    $$
+    k_B T_c^{\text{exact}} = \frac{2J}{\ln(1+\sqrt{2})} \approx 2.269\, J\,.
+    \tag{30}
+    $$
+  </div>
+
+  <p><strong>Critical exponent for magnetization:</strong> $\beta_{\text{exact}} = 1/8$ (Yang, 1952).</p>
+
+  <div class="insight warning">
+    <p><strong>NMF overestimates $T_c$ and gets the wrong exponents.</strong></p>
+
+    <table class="comp-table">
+      <thead>
+        <tr><th>Quantity</th><th>NMF</th><th>Exact</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>$k_BT_c / J$</td><td>$4.000$</td><td>$2.269$</td></tr>
+        <tr><td>$\beta$ (magn. exponent)</td><td>$1/2$</td><td>$1/8$</td></tr>
+        <tr><td>$\gamma$ (suscept. exponent)</td><td>$1$</td><td>$7/4$</td></tr>
+      </tbody>
+    </table>
+
+    <p>NMF overestimates $k_BT_c$ by a factor of $\sim 1.76$. This is because by ignoring correlations, NMF overestimates the tendency toward ordering (every spin "thinks" it has $z = 4$ perfectly aligned neighbors, rather than fluctuating ones). As the VAN paper demonstrates (Fig. 2a), more expressive variational ansatze dramatically reduce this error.</p>
+  </div>
+
+  <p>However, NMF is <strong>qualitatively correct</strong> in 2D: it correctly predicts the <em>existence</em> of a phase transition and the existence of spontaneous magnetization below $T_c$. This is a significant improvement over the 1D case, where NMF gives a qualitatively wrong prediction. The general rule is:</p>
+
+  <ul>
+    <li>In 1D: NMF is qualitatively wrong (predicts a transition where none exists).</li>
+    <li>In 2D: NMF is qualitatively correct but quantitatively poor.</li>
+    <li>In $d \geq 4$ (the upper critical dimension): NMF becomes exact for the critical exponents.</li>
+  </ul>
+
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- REFERENCES                                                    -->
+<!-- ============================================================ -->
+<section id="references">
+  <h2>References and Further Reading</h2>
+
+  <p><strong>[VAN]</strong> D. Wu, L. Wang, and P. Zhang, "Solving Statistical Mechanics Using Variational Autoregressive Networks," <em>Phys. Rev. Lett.</em> <strong>122</strong>, 080602 (2019). <a href="https://arxiv.org/abs/1809.10606">arXiv:1809.10606</a>. &mdash; The primary reference for the variational framework and notation used here.</p>
+
+  <p><strong>[Pandey&ndash;Xu]</strong> M. Pandey and M. Xu, "Mean Field Theory and its application to deep learning" (2019). <a href="https://mimee.xyz/meanfield.pdf">mimee.xyz/meanfield.pdf</a>. &mdash; Appendix 8.2 gives a full derivation of the NMF equations from the factorized $q(\sigma) = \prod q_i(\sigma_i)$ ansatz via KL divergence minimization, applied to the Ising model.</p>
+
+  <p><strong>[Arovas]</strong> D. Arovas, "Lecture Notes on Thermodynamics and Statistical Mechanics," Ch. 7: Mean Field Theory of Phase Transitions, UCSD Physics 210a. <a href="https://courses.physics.ucsd.edu/2010/Spring/physics210a/LECTURES/CH07.pdf">PDF</a>. &mdash; Comprehensive treatment using the variational density matrix $\varrho_N = \prod_i \varrho_i(\sigma_i)$.</p>
+
+  <p><strong>[Sakthivadivel]</strong> D. Sakthivadivel, "Magnetisation and Mean Field Theory in the Ising Model," <em>SciPost Phys. Lect. Notes</em> <strong>35</strong> (2022). <a href="https://scipost.org/SciPostPhysLectNotes.35/pdf">PDF</a>. &mdash; Careful pedagogical derivation via the Bogoliubov inequality.</p>
+
+  <p><strong>[Sudderth]</strong> E. Sudderth, "Lecture 9A: Variational Methods and Naive Mean Field," Brown CS242 (2016). <a href="https://cs.brown.edu/courses/cs242/lectures/lec09a_meanField.pdf">PDF</a>. &mdash; Clean derivation of naive MF for general pairwise MRFs from the information-theoretic/KL perspective.</p>
+
+  <p><strong>[Kappen&ndash;Wiegerinck]</strong> H. J. Kappen and W. Wiegerinck, "Mean Field Theory for Graphical Models," Ch. in <em>Advanced Mean Field Methods</em>, MIT Press (2001). <a href="https://www.academia.edu/50792156/Mean_Field_Theory_for_Graphical_Models">Link</a>. &mdash; Derives NMF and TAP equations from the KL divergence / Taylor expansion viewpoint.</p>
+
+  <p><strong>[Wainwright&ndash;Jordan]</strong> M. J. Wainwright and M. I. Jordan, "Graphical Models, Exponential Families, and Variational Inference," <em>Found. Trends Mach. Learn.</em> <strong>1</strong>(1&ndash;2), 1&ndash;305 (2008). &mdash; The definitive reference on variational inference for graphical models. Chapter 5 covers mean field methods.</p>
+
+  <p><strong>[Huang]</strong> Y.-P. Huang, "Mean-field theory," Lecture notes, NTHU Statistical Mechanics (2022). <a href="http://www.phys.nthu.edu.tw/~yphuang/MFT.html">Link</a>. &mdash; Works through the variational MFT for the Ising model using a factorizable trial Hamiltonian.</p>
+
+  <p><strong>[Onsager]</strong> L. Onsager, "Crystal Statistics. I. A Two-Dimensional Model with an Order-Disorder Transition," <em>Phys. Rev.</em> <strong>65</strong>, 117 (1944). &mdash; The exact solution of the 2D Ising model.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- FOOTER NAV                                                   -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="van-index.html"><span class="dir">&larr; Previous</span><span class="title">Course Home</span></a><a class="next" href="van-02-from-nmf-to-van.html"><span class="dir">Next &rarr;</span><span class="title">From NMF to VAN</span></a></div>
+</main>
+<footer><p><a href="van-index.html">&larr; Course Home</a> &middot; <a href="../index.html">All Notes</a></p></footer>
+<a href="#" class="back-to-top" aria-label="Back to top">&#8593;</a>
+<script>
+const fill = document.querySelector('.progress-fill');
+const main = document.querySelector('main');
+function updateProgress() {
+  const top = main.getBoundingClientRect().top;
+  const height = main.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (-top / height) * 100));
+  fill.style.width = pct + '%';
+}
+const btn = document.querySelector('.back-to-top');
+function updateBtn() {
+  btn.classList.toggle('visible', window.scrollY > 600);
+}
+window.addEventListener('scroll', function() { updateProgress(); updateBtn(); }, { passive: true });
+updateProgress();
+</script>
+</body>
+</html>
