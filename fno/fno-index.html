@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fourier Neural Operators for Parametric PDEs — Course Home</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-index">
+
+<header>
+  <div class="container">
+    <a class="back" href="../index.html">&larr; All Courses</a>
+    <h1>Fourier Neural Operators for Parametric PDEs</h1>
+    <p class="subtitle">
+      Background for reading Li et al., "Fourier Neural Operator for Parametric Partial Differential Equations" (arXiv:2010.08895).
+      Sentence-by-sentence breakdown of operator learning, the neural operator architecture, and the Fourier-space parameterization, with concrete Darcy-flow examples and SVG diagrams throughout.
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <div class="prereq">
+    <strong>Prerequisites:</strong> Multivariable calculus, basic PDEs (heat/wave equation), familiarity with Fourier transforms, some exposure to neural networks. No operator theory background assumed &mdash; everything is built from scratch.
+  </div>
+
+  <!-- PART I -->
+  <div class="section-label">Part I &mdash; The Problem &amp; Architecture</div>
+
+  <a class="ch-card" href="fno-01-operator-learning.html">
+    <div class="ch-num">01</div>
+    <div class="ch-body">
+      <h3>The Operator Learning Problem</h3>
+      <p>What problem are we solving? The spatial domain D, function spaces A and U, the operator G&dagger; that maps functions to functions, the parametric approximation, and discretization with resolution invariance. Grounded in 2D Darcy flow throughout.</p>
+      <div class="topics">Sections 1&ndash;6 &middot; Paper &sect;2 &middot; Darcy flow &middot; Resolution invariance</div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="fno-02-neural-operator.html">
+    <div class="ch-num">02</div>
+    <div class="ch-body">
+      <h3>The Neural Operator Architecture</h3>
+      <p>The lift&ndash;iterate&ndash;project pipeline. The lifting operator P, the iterative kernel integral layer (Definition 1), the kernel integral operator (Definition 2), the projection Q, and the full forward pass with concrete dimensions.</p>
+      <div class="topics">Sections 7&ndash;12 &middot; Paper &sect;3 &middot; Definitions 1&ndash;2 &middot; O(n&sup2;) bottleneck</div>
+    </div>
+  </a>
+
+  <!-- PART II -->
+  <div class="section-label">Part II &mdash; The Fourier Insight</div>
+
+  <a class="ch-card" href="fno-03-fourier-space.html">
+    <div class="ch-num">03</div>
+    <div class="ch-body">
+      <h3>From Kernels to Fourier Space</h3>
+      <p>Brief Fourier refresher, the convolution theorem, translation-invariant kernels, the key insight (Definition 3): learn R directly in Fourier space. Concrete tensor shapes and mode truncation.</p>
+      <div class="topics">Sections 13&ndash;17 &middot; Paper &sect;4 (first half) &middot; Definition 3 &middot; Mode truncation</div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="fno-04-fno-layer.html">
+    <div class="ch-num">04</div>
+    <div class="ch-body">
+      <h3>The Complete FNO Layer &amp; Forward Pass</h3>
+      <p>The full Fourier layer equation, two parallel paths (global Fourier + local W), the discrete FFT implementation, a complete forward-pass walkthrough with dimensions, and complexity analysis.</p>
+      <div class="topics">Sections 18&ndash;22 &middot; Paper &sect;4 (second half) &middot; FFT algorithm &middot; O(n log n)</div>
+    </div>
+  </a>
+
+  <!-- PART III -->
+  <div class="section-label">Part III &mdash; Applications</div>
+
+  <a class="ch-card" href="fno-05-real-pdes.html">
+    <div class="ch-num">05</div>
+    <div class="ch-body">
+      <h3>FNO on Real PDEs</h3>
+      <p>Burgers' equation (1D), Darcy flow (2D) with full experimental results, Navier&ndash;Stokes (2D+time), zero-shot super-resolution, and an honest assessment of what FNO can and can't do.</p>
+      <div class="topics">Sections 23&ndash;27 &middot; Paper &sect;5 &middot; Benchmarks &middot; FNO vs PINNs vs DeepONet</div>
+    </div>
+  </a>
+
+  <!-- PART IV -->
+  <div class="section-label">Part IV &mdash; Application: Ultrasonic NDT</div>
+
+  <a class="ch-card" href="fno-06-ultrasonic-ndt.html">
+    <div class="ch-num">06</div>
+    <div class="ch-body">
+      <h3>Elastic Waves &amp; Ultrasonic NDT</h3>
+      <p>The elastic wave equation, P-waves and S-waves, Snell's law and mode conversion,
+         the angle beam NDT setup, cracks as scatterers, and casting NDT as an operator
+         learning problem.</p>
+      <div class="topics">Sections 28&ndash;32 &middot; Elastic waves &middot; COMSOL setup &middot; NDT operator</div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="fno-07-fno-for-cracks.html">
+    <div class="ch-num">07</div>
+    <div class="ch-body">
+      <h3>FNO for Crack Detection</h3>
+      <p>Crack parameterization, FNO-3D vs signal-level architectures, training data
+         generation from COMSOL, evaluation metrics, and the challenges of applying FNO
+         to high-frequency wave scattering.</p>
+      <div class="topics">Sections 33&ndash;37 &middot; Architecture design &middot; Training pipeline &middot; FNO variants</div>
+    </div>
+  </a>
+
+</main>
+
+<footer>
+  <p><a href="../index.html">&larr; All Courses</a> &middot; <a href="https://github.com/carlm451/carlm451.github.io">Source on GitHub</a></p>
+</footer>
+
+</body>
+</html>

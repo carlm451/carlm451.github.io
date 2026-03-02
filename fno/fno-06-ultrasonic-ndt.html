@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elastic Waves &amp; Ultrasonic NDT — FNO Course</title>
+<script>
+window.MathJax={
+  tex:{
+    inlineMath:[['$','$'],['\\(','\\)']],
+    displayMath:[['$$','$$'],['\\[','\\]']],
+    macros:{
+      R:'\\mathbb{R}',
+      Z:'\\mathbb{Z}',
+      Ft:'\\mathcal{F}',
+      Fti:'\\mathcal{F}^{-1}',
+      da:'d_a',
+      du:'d_u',
+      dv:'d_v',
+      veps:'\\boldsymbol{\\varepsilon}',
+      vsig:'\\boldsymbol{\\sigma}',
+      vv:'\\mathbf{v}',
+      vu:'\\mathbf{u}',
+      vn:'\\mathbf{n}',
+      cp:'c_p',
+      cs:'c_s'
+    }
+  },
+  svg:{fontCache:'global'}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-chapter">
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / <a href="fno-index.html">FNO</a> / Chapter 6</div>
+    <span class="ch-num">Chapter 6</span>
+    <h1>Elastic Waves &amp; <strong>Ultrasonic NDT</strong></h1>
+    <p class="subtitle">The elastic wave equation, P-waves and S-waves, Snell's law and mode conversion, the angle beam NDT setup, cracks as scatterers, and casting NDT as an operator learning problem.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="fno-05-real-pdes.html">&larr; FNO on Real PDEs</a><span class="ch-title">Chapter 6</span><a href="fno-07-fno-for-cracks.html">FNO for Crack Detection &rarr;</a></div></nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<!-- Table of Contents -->
+<div class="toc">
+  <div class="toc-label">In this chapter</div>
+  <ol>
+    <li><a href="#sec28"><span class="toc-num">28</span>The Elastic Wave Equation</a></li>
+    <li><a href="#sec29"><span class="toc-num">29</span>Mode Conversion &amp; Snell's Law</a></li>
+    <li><a href="#sec30"><span class="toc-num">30</span>The Angle Beam NDT Setup</a></li>
+    <li><a href="#sec31"><span class="toc-num">31</span>Cracks as Scatterers</a></li>
+    <li><a href="#sec32"><span class="toc-num">32</span>The NDT Operator Learning Problem</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 28 — The Elastic Wave Equation                        -->
+<!-- ============================================================ -->
+<section id="sec28">
+  <h2><span class="sec-num">28</span>The Elastic Wave Equation</h2>
+
+  <p>
+    In Chapters 1&ndash;5 every PDE we studied was <strong>scalar</strong>: Darcy flow produces a single pressure value at each point, Burgers' equation tracks a single velocity component, and even Navier&ndash;Stokes in vorticity form reduces to a scalar field. Now we enter the world of <strong>vector wave propagation in solids</strong>, where the unknown is a displacement or velocity <em>vector</em> at every point in space and every instant in time.
+  </p>
+
+  <p>
+    The governing equations come from Newton's second law applied to a continuous medium. In the <strong>velocity&ndash;strain formulation</strong> (used by COMSOL's "Elastic Waves, Time Explicit" physics interface), the system reads:
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">Elastic Wave Equation (velocity&ndash;strain form)</div>
+    $$
+    \rho \frac{\partial \vv}{\partial t} = \nabla \cdot \vsig + \mathbf{F}
+    \tag{11}
+    $$
+    $$
+    \frac{\partial \veps}{\partial t} = \frac{1}{2}\!\left(\nabla \vv + (\nabla \vv)^T\right)
+    $$
+    $$
+    \vsig = \mathbf{C} : \veps
+    $$
+    <p>where $\rho$ is density, $\vv$ is the velocity vector, $\vsig$ is the Cauchy stress tensor, $\veps$ is the strain tensor, $\mathbf{C}$ is the fourth-order elasticity tensor, and $\mathbf{F}$ is a body force.</p>
+  </div>
+
+  <p>
+    The first equation is momentum conservation (force = mass &times; acceleration per unit volume). The second is the kinematic relation between velocity and strain rate. The third is the <strong>constitutive law</strong> &mdash; it tells us how stress relates to strain for a particular material.
+  </p>
+
+  <p>
+    For an <strong>isotropic</strong> material, the full elasticity tensor $\mathbf{C}$ reduces to just two independent parameters: the <strong>Lam&eacute; constants</strong> $\lambda$ and $\mu$. The stress&ndash;strain relation becomes:
+  </p>
+
+  $$
+  \vsig = \lambda\, (\text{tr}\,\veps)\, \mathbf{I} + 2\mu\, \veps
+  $$
+
+  <p>
+    where $\text{tr}\,\veps = \varepsilon_{xx} + \varepsilon_{yy}$ in 2D. These two parameters control the two fundamental wave types in solids:
+  </p>
+
+  <div class="def-box blue">
+    <div class="def-label">P-wave and S-wave speeds</div>
+    $$
+    \cp = \sqrt{\frac{\lambda + 2\mu}{\rho}} \qquad\text{(compressional / P-wave)}
+    \tag{12}
+    $$
+    $$
+    \cs = \sqrt{\frac{\mu}{\rho}} \qquad\text{(shear / S-wave)}
+    $$
+    <p>Since $\lambda + 2\mu > \mu$ for all real materials, we always have $\cp > \cs$.</p>
+  </div>
+
+  <p>
+    <strong>P-waves</strong> (primary, pressure, compressional) have particle motion <em>parallel</em> to the propagation direction &mdash; like a slinky being pushed and pulled. <strong>S-waves</strong> (secondary, shear) have particle motion <em>perpendicular</em> to propagation &mdash; like shaking a rope side-to-side. In metals, P-waves travel roughly twice as fast as S-waves.
+  </p>
+
+  <!-- SVG: P-wave vs S-wave particle motion -->
+  <div class="figure">
+    <svg viewBox="0 0 520 200" width="520" height="200">
+      <!-- P-wave illustration -->
+      <text x="130" y="20" class="label-text" text-anchor="middle" font-weight="bold">P-wave (compressional)</text>
+      <!-- Propagation arrow -->
+      <line x1="30" y1="70" x2="230" y2="70" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrow-grey)"/>
+      <text x="130" y="63" class="label-sm" text-anchor="middle">propagation</text>
+      <!-- Particles compressed and rarefied -->
+      <circle cx="45" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <circle cx="62" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <circle cx="75" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <circle cx="84" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <!-- rarefaction -->
+      <circle cx="108" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <circle cx="130" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <circle cx="152" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <!-- compression -->
+      <circle cx="170" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <circle cx="183" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <circle cx="192" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <circle cx="205" cy="100" r="5" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/>
+      <!-- Labels -->
+      <text x="82" y="130" class="label-sm" text-anchor="middle">compressed</text>
+      <text x="130" y="130" class="label-sm" text-anchor="middle">rarefied</text>
+      <text x="188" y="130" class="label-sm" text-anchor="middle">compressed</text>
+      <!-- Particle motion arrows -->
+      <line x1="110" y1="145" x2="150" y2="145" stroke="#b44a2f" stroke-width="1.5" marker-start="url(#arrow-red-back)" marker-end="url(#arrow-red)"/>
+      <text x="130" y="165" class="label-sm" text-anchor="middle" fill="#b44a2f">particle motion ∥ propagation</text>
+
+      <!-- S-wave illustration -->
+      <text x="390" y="20" class="label-text" text-anchor="middle" font-weight="bold">S-wave (shear)</text>
+      <!-- Propagation arrow -->
+      <line x1="290" y1="70" x2="490" y2="70" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrow-grey)"/>
+      <text x="390" y="63" class="label-sm" text-anchor="middle">propagation</text>
+      <!-- Particles displaced transversely (sine pattern) -->
+      <circle cx="305" cy="100" r="5" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <circle cx="325" cy="88" r="5" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <circle cx="345" cy="82" r="5" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <circle cx="365" cy="88" r="5" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <circle cx="385" cy="100" r="5" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <circle cx="405" cy="112" r="5" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <circle cx="425" cy="118" r="5" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <circle cx="445" cy="112" r="5" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <circle cx="465" cy="100" r="5" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/>
+      <!-- Particle motion arrow (vertical) -->
+      <line x1="390" y1="140" x2="390" y2="170" stroke="#2a6b5a" stroke-width="1.5" marker-start="url(#arrow-green-back)" marker-end="url(#arrow-green)"/>
+      <text x="390" y="185" class="label-sm" text-anchor="middle" fill="#2a6b5a">particle motion ⊥ propagation</text>
+
+      <!-- Arrow markers -->
+      <defs>
+        <marker id="arrow-grey" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#6b6560" stroke-width="1"/></marker>
+        <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#b44a2f" stroke-width="1"/></marker>
+        <marker id="arrow-red-back" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M8,0 L0,3 L8,6" fill="none" stroke="#b44a2f" stroke-width="1"/></marker>
+        <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#2a6b5a" stroke-width="1"/></marker>
+        <marker id="arrow-green-back" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M8,0 L0,3 L8,6" fill="none" stroke="#2a6b5a" stroke-width="1"/></marker>
+      </defs>
+    </svg>
+    <div class="caption"><strong>Figure 6.1.</strong> P-waves compress and rarefy material along the propagation direction; S-waves displace particles transversely. In aluminum, $\cp \approx 6200$ m/s and $\cs \approx 3120$ m/s.</div>
+  </div>
+
+  <p>
+    For the angle beam NDT problem we'll study, the relevant material properties are:
+  </p>
+
+  <table class="comp-table">
+    <thead>
+      <tr><th>Property</th><th>Aluminum</th><th>Acrylic (wedge)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Density $\rho$ (kg/m&sup3;)</td><td>2700</td><td>1190</td></tr>
+      <tr><td>P-wave speed $\cp$ (m/s)</td><td>6200</td><td>2080</td></tr>
+      <tr><td>S-wave speed $\cs$ (m/s)</td><td>3120</td><td>1000</td></tr>
+      <tr><td>Acoustic impedance $Z = \rho \cp$ (MRayl)</td><td>16.7</td><td>2.5</td></tr>
+    </tbody>
+  </table>
+
+  <div class="insight physics">
+    <p><strong>Physics note:</strong> Unlike Darcy flow (scalar, steady-state), elastic waves are vector-valued and time-dependent. The output isn't one number per grid point &mdash; it's a velocity vector $(v_x, v_y)$ at every point at every time step. This fundamentally changes the FNO architecture requirements, as we'll see in Chapter 7.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 29 — Mode Conversion & Snell's Law                    -->
+<!-- ============================================================ -->
+<section id="sec29">
+  <h2><span class="sec-num">29</span>Mode Conversion &amp; Snell's Law</h2>
+
+  <p>
+    When a wave travelling through one material hits an interface with a different material at an oblique angle, something remarkable happens: a single incident wave can generate <em>four</em> outgoing waves &mdash; reflected P, reflected S, refracted P, and refracted S. The relationship between all these angles is governed by a generalized form of Snell's law.
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">Snell's Law for Elastic Waves</div>
+    $$
+    \frac{\sin\alpha}{c_{p1}} = \frac{\sin\alpha'}{c_{p1}} = \frac{\sin\beta'}{c_{s1}} = \frac{\sin\beta}{c_{p2}} = \frac{\sin\gamma}{c_{s2}}
+    \tag{13}
+    $$
+    <p>where $\alpha$ = incident P-wave angle, $\alpha'$ = reflected P-wave angle, $\beta'$ = reflected S-wave angle, $\beta$ = refracted P-wave angle, $\gamma$ = refracted S-wave angle, and all speeds are in the respective materials.</p>
+  </div>
+
+  <p>
+    Let's use this for the angle beam NDT geometry. The transducer generates a <strong>P-wave in the acrylic wedge</strong> that hits the acrylic&ndash;aluminum interface. We want the refracted S-wave in the aluminum to travel at <strong>45&deg;</strong> to the interface normal &mdash; this is the standard NDT inspection angle.
+  </p>
+
+  <p>
+    <strong>Computing the wedge angle.</strong> We need $\gamma = 45°$:
+  </p>
+
+  $$
+  \frac{\sin\alpha}{c_{p1}} = \frac{\sin\gamma}{c_{s2}} \quad\Longrightarrow\quad \sin\alpha = \frac{c_{p1}\sin(45°)}{c_{s2}} = \frac{2080 \times 0.707}{3120} = 0.471
+  $$
+
+  $$
+  \alpha \approx 28.1°
+  $$
+
+  <p>
+    This sets the angle of the wedge face relative to the aluminum surface.
+  </p>
+
+  <p>
+    Now, what happens to the refracted <strong>P-wave</strong> in the aluminum? Its angle $\beta$ satisfies:
+  </p>
+
+  $$
+  \frac{\sin\beta}{c_{p2}} = \frac{\sin\alpha}{c_{p1}} \quad\Longrightarrow\quad \sin\beta = \frac{c_{p2}\sin\alpha}{c_{p1}} = \frac{6200 \times 0.471}{2080} = 1.40
+  $$
+
+  <p>
+    Since $\sin\beta > 1$, there is <strong>no real solution</strong> &mdash; the P-wave undergoes total internal reflection. We can verify this with the <strong>critical angle</strong>:
+  </p>
+
+  $$
+  \sin\alpha_c = \frac{c_{p1}}{c_{p2}} = \frac{2080}{6200} = 0.335 \quad\Longrightarrow\quad \alpha_c \approx 19.6°
+  $$
+
+  <p>
+    Our wedge angle $\alpha = 28.1°$ exceeds $\alpha_c = 19.6°$, so the P-wave is evanescent in the aluminum. Only the S-wave propagates.
+  </p>
+
+  <!-- SVG: Snell's law ray diagram -->
+  <div class="figure">
+    <svg viewBox="0 0 500 340" width="500" height="340">
+      <!-- Interface line -->
+      <line x1="40" y1="170" x2="460" y2="170" stroke="#6b6560" stroke-width="2"/>
+      <text x="470" y="174" class="label-sm">interface</text>
+
+      <!-- Material labels -->
+      <rect x="40" y="20" width="420" height="148" fill="#f0ebe4" rx="4" opacity="0.5"/>
+      <rect x="40" y="172" width="420" height="148" fill="#e8f0ed" rx="4" opacity="0.5"/>
+      <text x="60" y="45" class="label-text" font-weight="bold" fill="#6b6560">Acrylic wedge</text>
+      <text x="60" y="62" class="label-sm">$c_{p1}$ = 2080 m/s</text>
+      <text x="60" y="195" class="label-text" font-weight="bold" fill="#6b6560">Aluminum specimen</text>
+      <text x="60" y="212" class="label-sm">$c_{p2}$ = 6200 m/s, $c_{s2}$ = 3120 m/s</text>
+
+      <!-- Normal (dashed) -->
+      <line x1="250" y1="30" x2="250" y2="310" stroke="#6b6560" stroke-width="1" stroke-dasharray="5,5"/>
+      <text x="255" y="42" class="label-sm" fill="#6b6560">normal</text>
+
+      <!-- Incident P-wave (from upper-left) -->
+      <line x1="140" y1="50" x2="250" y2="170" stroke="#b44a2f" stroke-width="2.5" marker-end="url(#arr-red2)"/>
+      <text x="155" y="100" class="label-text" fill="#b44a2f" font-weight="bold">P (incident)</text>
+
+      <!-- Angle arc for incident -->
+      <path d="M250,100 A70,70 0 0,0 204,131" fill="none" stroke="#b44a2f" stroke-width="1.2"/>
+      <text x="215" y="108" class="label-sm" fill="#b44a2f">α = 28°</text>
+
+      <!-- Reflected P-wave -->
+      <line x1="250" y1="170" x2="360" y2="50" stroke="#b44a2f" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arr-red2)"/>
+      <text x="340" y="90" class="label-sm" fill="#b44a2f">P (reflected)</text>
+
+      <!-- Refracted P-wave (evanescent — show as fading dashed) -->
+      <line x1="250" y1="170" x2="280" y2="190" stroke="#999" stroke-width="1.2" stroke-dasharray="3,4" opacity="0.5"/>
+      <text x="285" y="195" class="label-sm" fill="#999">P (evanescent)</text>
+
+      <!-- Refracted S-wave at 45° -->
+      <line x1="250" y1="170" x2="370" y2="290" stroke="#2a6b5a" stroke-width="2.5" marker-end="url(#arr-grn2)"/>
+      <text x="340" y="260" class="label-text" fill="#2a6b5a" font-weight="bold">S (refracted)</text>
+
+      <!-- Angle arc for refracted S -->
+      <path d="M250,240 A70,70 0 0,1 299,231" fill="none" stroke="#2a6b5a" stroke-width="1.2"/>
+      <text x="265" y="255" class="label-sm" fill="#2a6b5a">γ = 45°</text>
+
+      <!-- Arrow markers -->
+      <defs>
+        <marker id="arr-red2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#b44a2f"/></marker>
+        <marker id="arr-grn2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#2a6b5a"/></marker>
+      </defs>
+    </svg>
+    <div class="caption"><strong>Figure 6.2.</strong> Snell's law at the acrylic&ndash;aluminum interface. The incident P-wave at $\alpha = 28°$ exceeds the P-wave critical angle ($19.6°$), so only the refracted S-wave at $\gamma = 45°$ propagates into the aluminum. This is by design.</div>
+  </div>
+
+  <div class="insight key">
+    <p><strong>Key idea:</strong> The wedge angle is not arbitrary &mdash; it's engineered so that only S-waves propagate into the aluminum. The P-wave is totally internally reflected. This gives a clean, single-mode beam for inspection.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 30 — The Angle Beam NDT Setup                         -->
+<!-- ============================================================ -->
+<section id="sec30">
+  <h2><span class="sec-num">30</span>The Angle Beam NDT Setup</h2>
+
+  <p>
+    Now let's describe the complete physical setup from the COMSOL "Angle Beam Nondestructive Testing" tutorial (models.aco.angle_beam_ndt). This is a standard 2D simulation of ultrasonic crack inspection that we'll use as our target for FNO surrogate modeling.
+  </p>
+
+  <!-- SVG: Full geometry cross-section -->
+  <div class="figure">
+    <svg viewBox="0 0 520 380" width="520" height="380">
+      <!-- Aluminum specimen -->
+      <rect x="60" y="150" width="400" height="200" fill="#e8f0ed" stroke="#2a6b5a" stroke-width="2" rx="2"/>
+      <text x="260" y="260" class="label-text" text-anchor="middle" font-weight="bold" fill="#2a6b5a">Aluminum specimen</text>
+      <text x="260" y="278" class="label-sm" text-anchor="middle">~35 mm &times; 32 mm</text>
+
+      <!-- Absorbing boundary indicators (bottom and sides) -->
+      <line x1="60" y1="345" x2="460" y2="345" stroke="#8b5a8c" stroke-width="3" stroke-dasharray="8,4"/>
+      <line x1="57" y1="150" x2="57" y2="350" stroke="#8b5a8c" stroke-width="3" stroke-dasharray="8,4"/>
+      <line x1="463" y1="150" x2="463" y2="350" stroke="#8b5a8c" stroke-width="3" stroke-dasharray="8,4"/>
+      <text x="260" y="368" class="label-sm" text-anchor="middle" fill="#8b5a8c">absorbing boundaries (low-reflecting / PML)</text>
+
+      <!-- Acrylic wedge (trapezoid) -->
+      <polygon points="140,150 230,150 260,50 160,50" fill="#f0ebe4" stroke="#b44a2f" stroke-width="2"/>
+      <text x="195" y="110" class="label-text" text-anchor="middle" font-weight="bold" fill="#b44a2f">Acrylic</text>
+      <text x="195" y="126" class="label-sm" text-anchor="middle">wedge</text>
+
+      <!-- Transducer on angled face -->
+      <line x1="157" y1="55" x2="138" y2="145" stroke="#3a5a8c" stroke-width="4"/>
+      <text x="108" y="95" class="label-text" fill="#3a5a8c" font-weight="bold">PZT-5H</text>
+      <text x="100" y="112" class="label-sm" fill="#3a5a8c">transducer</text>
+
+      <!-- 45° S-wave beam path -->
+      <line x1="190" y1="150" x2="310" y2="270" stroke="#2a6b5a" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arr-grn3)"/>
+      <text x="270" y="195" class="label-sm" fill="#2a6b5a" transform="rotate(45, 270, 195)">S-wave beam (45&deg;)</text>
+
+      <!-- Crack -->
+      <line x1="310" y1="250" x2="310" y2="300" stroke="#c0392b" stroke-width="3"/>
+      <text x="330" y="280" class="label-text" fill="#c0392b" font-weight="bold">crack</text>
+
+      <!-- Scattered wave (return path) -->
+      <line x1="310" y1="270" x2="195" y2="150" stroke="#2a6b5a" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arr-grn3)"/>
+      <text x="225" y="215" class="label-sm" fill="#6b6560" transform="rotate(-50, 225, 215)">scattered return</text>
+
+      <!-- Dimension annotations -->
+      <line x1="60" y1="150" x2="60" y2="140" stroke="#6b6560" stroke-width="1"/>
+      <line x1="460" y1="150" x2="460" y2="140" stroke="#6b6560" stroke-width="1"/>
+      <line x1="60" y1="143" x2="460" y2="143" stroke="#6b6560" stroke-width="1" marker-start="url(#dim-l)" marker-end="url(#dim-r)"/>
+      <text x="260" y="139" class="label-sm" text-anchor="middle">35 mm</text>
+
+      <defs>
+        <marker id="arr-grn3" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#2a6b5a"/></marker>
+        <marker id="dim-l" markerWidth="6" markerHeight="6" refX="0" refY="3" orient="auto"><line x1="0" y1="0" x2="0" y2="6" stroke="#6b6560" stroke-width="1"/></marker>
+        <marker id="dim-r" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><line x1="6" y1="0" x2="6" y2="6" stroke="#6b6560" stroke-width="1"/></marker>
+      </defs>
+    </svg>
+    <div class="caption"><strong>Figure 6.3.</strong> Cross-section of the angle beam NDT setup. The PZT-5H transducer drives a P-wave into the acrylic wedge. After mode conversion at the interface, a 45&deg; S-wave beam propagates through the aluminum toward the crack. Scattered waves return to the transducer for detection.</div>
+  </div>
+
+  <p>
+    The <strong>transducer excitation</strong> is a Gaussian-modulated sinusoidal pulse:
+  </p>
+
+  <div class="def-box">
+    <div class="def-label">Transducer voltage source</div>
+    $$
+    V_0(t) = 100 \exp\!\left(-\left(\frac{t - 2T_0}{T_0/2}\right)^{\!2}\right) \sin(2\pi f_0\, t)
+    \tag{14}
+    $$
+    <p>with center frequency $f_0 = 1.5$ MHz and period $T_0 = 1/f_0 \approx 0.667\;\mu$s. The PZT-5H converts this voltage into mechanical displacement via piezoelectric coupling.</p>
+  </div>
+
+  <!-- SVG: Pulse shape -->
+  <div class="figure">
+    <svg viewBox="0 0 460 180" width="460" height="180">
+      <!-- Axes -->
+      <line x1="50" y1="90" x2="430" y2="90" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arr-axis)"/>
+      <line x1="50" y1="160" x2="50" y2="20" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arr-axis)"/>
+      <text x="430" y="107" class="label-sm">$t$ (&mu;s)</text>
+      <text x="35" y="25" class="label-sm">$V_0$</text>
+
+      <!-- Gaussian envelope (dashed) -->
+      <path d="M60,90 Q100,90 130,88 Q160,82 190,60 Q210,40 230,30 Q250,40 270,60 Q300,82 330,88 Q360,90 400,90"
+            fill="none" stroke="#6b6560" stroke-width="1" stroke-dasharray="4,3"/>
+      <!-- Negative envelope -->
+      <path d="M60,90 Q100,90 130,92 Q160,98 190,120 Q210,140 230,150 Q250,140 270,120 Q300,98 330,92 Q360,90 400,90"
+            fill="none" stroke="#6b6560" stroke-width="1" stroke-dasharray="4,3"/>
+
+      <!-- Modulated sine wave -->
+      <path d="M60,90 L80,90 Q90,90 100,89 Q110,87 120,85 Q128,80 135,73 Q140,82 148,88 Q155,92 162,97 Q170,108 178,118 Q182,124 188,115 Q193,98 198,80 Q202,65 207,50 Q212,38 218,45 Q225,65 232,90 Q238,115 244,132 Q248,140 254,130 Q260,112 266,95 Q272,80 278,73 Q284,80 290,87 Q296,92 302,90 Q310,88 318,89 Q328,90 340,90 L400,90"
+            fill="none" stroke="#b44a2f" stroke-width="2"/>
+
+      <!-- Time labels -->
+      <text x="50" y="115" class="label-sm" text-anchor="middle">0</text>
+      <text x="140" y="115" class="label-sm" text-anchor="middle">$T_0$</text>
+      <text x="230" y="115" class="label-sm" text-anchor="middle">$2T_0$</text>
+      <text x="320" y="115" class="label-sm" text-anchor="middle">$3T_0$</text>
+
+      <!-- Annotations -->
+      <text x="350" y="55" class="label-sm" fill="#6b6560">Gaussian envelope</text>
+      <text x="350" y="70" class="label-sm" fill="#b44a2f">$V_0(t)$</text>
+
+      <defs>
+        <marker id="arr-axis" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#6b6560"/></marker>
+      </defs>
+    </svg>
+    <div class="caption"><strong>Figure 6.4.</strong> The transducer pulse $V_0(t)$: a Gaussian envelope (dashed) modulating a 1.5 MHz sinusoid. The pulse is compact in both time (~2 &mu;s duration) and frequency (~0.5 MHz bandwidth).</div>
+  </div>
+
+  <p>
+    <strong>Timeline of wave propagation</strong> &mdash; what happens during a single NDT measurement:
+  </p>
+
+  <ol class="steps">
+    <li><strong>$t \approx 0$&ndash;$4\;\mu$s:</strong> P-wave propagates through the acrylic wedge from the transducer face toward the aluminum interface.</li>
+    <li><strong>$t \approx 4$&ndash;$6\;\mu$s:</strong> Wave hits the acrylic&ndash;aluminum interface. Mode conversion occurs &mdash; the P-wave generates a refracted S-wave at 45&deg; (and an evanescent P-wave that decays rapidly).</li>
+    <li><strong>$t \approx 6$&ndash;$10\;\mu$s:</strong> The S-wave beam travels at 45&deg; through the aluminum toward the crack location.</li>
+    <li><strong>$t \approx 8$&ndash;$12\;\mu$s:</strong> S-wave hits the crack. Scattered waves are generated &mdash; specular reflections, tip diffractions, and mode-converted signals.</li>
+    <li><strong>$t \approx 12$&ndash;$18\;\mu$s:</strong> Scattered waves propagate back through the aluminum, through the wedge, and arrive at the transducer. The transducer converts mechanical motion back into a measurable voltage.</li>
+  </ol>
+
+  <div class="insight physics">
+    <p><strong>Physics note:</strong> The entire round trip &mdash; pulse emission, mode conversion, propagation to crack, scattering, return &mdash; takes about 15&ndash;18 &mu;s. At COMSOL's typical explicit time step of $\Delta t \approx 0.3$ ns (set by the CFL condition), that's roughly 50,000 time steps. This is why a surrogate model is attractive: a single FEM simulation takes minutes, and inverse problems require thousands of forward evaluations.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 31 — Cracks as Scatterers                             -->
+<!-- ============================================================ -->
+<section id="sec31">
+  <h2><span class="sec-num">31</span>Cracks as Scatterers</h2>
+
+  <p>
+    In the COMSOL model, the crack is represented as a <strong>Fracture boundary condition</strong>: a zero-thickness interior surface where the traction (force per unit area) vanishes on both faces.
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">Fracture boundary condition</div>
+    $$
+    \vsig \cdot \vn = \mathbf{0} \qquad\text{on both faces of the crack}
+    \tag{15}
+    $$
+    <p>The stress is zero at the crack faces (stress-free surfaces), but the displacement can be discontinuous across the crack.</p>
+  </div>
+
+  <p>
+    When the incident S-wave beam encounters this free surface, it produces several types of scattered signals:
+  </p>
+
+  <ul>
+    <li><strong>Specular reflection:</strong> A mirror-like bounce off the crack face. This is the strongest signal and depends on the crack orientation relative to the beam. A crack oriented perpendicular to the beam produces the strongest specular echo.</li>
+    <li><strong>Tip diffraction:</strong> Cylindrical waves emanating from each crack tip. These are weaker than specular reflections but are diagnostic of crack size &mdash; the two tip signals arrive at slightly different times, and the time difference encodes the crack length.</li>
+    <li><strong>Mode-converted scattering:</strong> The incident S-wave can generate P-waves at the crack faces (and vice versa). These arrive at different times due to the different wave speeds and provide additional information about the crack geometry.</li>
+  </ul>
+
+  <!-- SVG: Scattering from a crack -->
+  <div class="figure">
+    <svg viewBox="0 0 460 300" width="460" height="300">
+      <!-- Background -->
+      <rect x="30" y="30" width="400" height="240" fill="#e8f0ed" rx="4" opacity="0.4"/>
+
+      <!-- Crack -->
+      <line x1="230" y1="100" x2="230" y2="200" stroke="#c0392b" stroke-width="3.5"/>
+      <circle cx="230" cy="100" r="4" fill="#c0392b"/>
+      <circle cx="230" cy="200" r="4" fill="#c0392b"/>
+      <text x="244" y="155" class="label-text" fill="#c0392b" font-weight="bold">crack</text>
+      <text x="216" y="92" class="label-sm" fill="#c0392b">tip 1</text>
+      <text x="216" y="218" class="label-sm" fill="#c0392b">tip 2</text>
+
+      <!-- Incident S-wave beam -->
+      <line x1="80" y1="60" x2="220" y2="150" stroke="#2a6b5a" stroke-width="2.5" marker-end="url(#arr-grn4)"/>
+      <text x="110" y="90" class="label-text" fill="#2a6b5a" font-weight="bold">incident S</text>
+
+      <!-- Specular reflection -->
+      <line x1="225" y1="148" x2="100" y2="220" stroke="#3a5a8c" stroke-width="2" marker-end="url(#arr-blu)"/>
+      <text x="115" y="200" class="label-sm" fill="#3a5a8c" font-weight="bold">specular</text>
+      <text x="115" y="213" class="label-sm" fill="#3a5a8c">reflection</text>
+
+      <!-- Tip diffraction circles -->
+      <circle cx="230" cy="100" r="45" fill="none" stroke="#8b5a8c" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.7"/>
+      <circle cx="230" cy="200" r="45" fill="none" stroke="#8b5a8c" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.7"/>
+      <text x="290" y="82" class="label-sm" fill="#8b5a8c">tip diffraction</text>
+      <text x="290" y="230" class="label-sm" fill="#8b5a8c">tip diffraction</text>
+
+      <!-- Mode converted wave -->
+      <line x1="225" y1="150" x2="340" y2="80" stroke="#b44a2f" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-red3)"/>
+      <text x="320" y="65" class="label-sm" fill="#b44a2f">S&rarr;P converted</text>
+
+      <defs>
+        <marker id="arr-grn4" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#2a6b5a"/></marker>
+        <marker id="arr-blu" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#3a5a8c"/></marker>
+        <marker id="arr-red3" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#b44a2f"/></marker>
+      </defs>
+    </svg>
+    <div class="caption"><strong>Figure 6.5.</strong> Scattering of an incident S-wave from a crack. The specular reflection (blue) is the strongest signal. Tip diffractions (purple circles) emanate from each crack tip. Mode-converted S&rarr;P waves (red, dashed) travel at a different speed and arrive at different times.</div>
+  </div>
+
+  <p>
+    How the transducer signal depends on <strong>crack parameters</strong>:
+  </p>
+
+  <ul>
+    <li><strong>Position</strong> $(x_c, y_c)$: Changes the <em>time of flight</em> &mdash; the arrival time of the scattered signal at the transducer. A deeper crack means a later echo.</li>
+    <li><strong>Size</strong> (length $L$): Larger cracks produce stronger reflections and more separated tip diffraction signals. The time difference between the two tip echoes is proportional to $L$.</li>
+    <li><strong>Orientation</strong> (angle $\theta$): Changes the scattering pattern. A crack normal to the beam gives the strongest specular signal. A tilted crack redirects more energy away from the transducer.</li>
+  </ul>
+
+  <div class="insight key">
+    <p><strong>Key idea:</strong> The crack's signature is encoded in the scattered wavefield &mdash; specifically in <em>when</em> the echoes arrive, <em>how strong</em> they are, and <em>what pattern</em> they form. This is exactly the mapping an FNO needs to learn: crack parameters in, signal characteristics out.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 32 — The NDT Operator Learning Problem                -->
+<!-- ============================================================ -->
+<section id="sec32">
+  <h2><span class="sec-num">32</span>The NDT Operator Learning Problem</h2>
+
+  <p>
+    We now have all the physics. Let's cast the angle beam NDT problem in the operator learning language from Chapters 1&ndash;5.
+  </p>
+
+  <p>
+    <strong>Domain.</strong> $D = \Omega \times [0, T]$ where $\Omega \subset \R^2$ is the 2D aluminum cross-section (~35&nbsp;mm &times; 32&nbsp;mm) and $T \approx 20\;\mu$s is the total simulation time.
+  </p>
+
+  <p>
+    <strong>Input function space $\mathcal{A}$.</strong> We parameterize each straight-line crack by four numbers:
+  </p>
+
+  $$
+  a = (x_c,\, y_c,\, L,\, \theta) \in \R^4
+  $$
+
+  <p>
+    where $(x_c, y_c)$ is the crack center, $L$ is the crack length, and $\theta$ is the orientation angle measured from vertical. This gives $\da = 4$ &mdash; compact, interpretable, and directly the quantities an NDT practitioner wants to infer. The sampling distribution and parameter ranges are defined precisely in &sect;33.
+  </p>
+
+  <p>
+    <strong>Output function space $\mathcal{U}$.</strong> Two options, depending on what we want to predict:
+  </p>
+
+  <ul>
+    <li><strong>Full wavefield:</strong> $u(\mathbf{x}, t) = (v_x, v_y)$ at every spatial point and time step &mdash; a tensor $\in \R^{N_x \times N_y \times N_t \times 2}$.</li>
+    <li><strong>Transducer signal:</strong> $V(t) \in \R$ &mdash; the voltage measured at the transducer, a 1D time series. This is what an NDT practitioner actually measures.</li>
+  </ul>
+
+  <div class="def-box green">
+    <div class="def-label">The NDT operator</div>
+    <p><strong>Full-field version:</strong></p>
+    $$
+    G^\dagger: a \mapsto \vv(\mathbf{x}, t), \qquad a \in \mathcal{A},\;\; \vv: \Omega \times [0, T] \to \R^2
+    $$
+    <p><strong>Signal-level version:</strong></p>
+    $$
+    G^\dagger: a \mapsto V(t), \qquad a \in \mathcal{A},\;\; V: [0, T] \to \R
+    $$
+    <p>In both cases, $G^\dagger$ maps a crack configuration to the resulting wavefield or signal &mdash; the same abstract framework from Chapter 1, now with richer physics.</p>
+  </div>
+
+  <p>
+    <strong>Why operator learning?</strong> Each COMSOL simulation takes 2&ndash;5 minutes. An FNO forward pass takes milliseconds. This speedup enables:
+  </p>
+
+  <ul>
+    <li><strong>Inversion:</strong> Given a measured signal $V_{\text{obs}}(t)$, infer the crack parameters $(x_c, y_c, L, \theta)$ via Bayesian inference (same idea as &sect;26) &mdash; requires thousands of forward evaluations.</li>
+    <li><strong>Design:</strong> Optimize inspection parameters (transducer frequency, wedge angle, position) for a given class of defects.</li>
+    <li><strong>Real-time inspection:</strong> Deploy a trained FNO on an edge device for in-field crack characterization.</li>
+  </ul>
+
+  <p>
+    Let's compare this to the Darcy flow problem from Parts I&ndash;III:
+  </p>
+
+  <table class="comp-table">
+    <thead>
+      <tr><th>Property</th><th>Darcy Flow (Ch 1&ndash;5)</th><th>Ultrasonic NDT (Ch 6&ndash;7)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>PDE type</td><td>Scalar, elliptic, steady-state</td><td>Vector, hyperbolic, time-dependent</td></tr>
+      <tr><td>Domain $D$</td><td>$(0,1)^2$ (2D spatial)</td><td>$\Omega \times [0, T]$ (2D spatial + time)</td></tr>
+      <tr><td>Input $a$</td><td>Permeability field $a(x)$ ($\da = 1$, smooth)</td><td>Crack parameters $(x_c, y_c, L, \theta)$, $\da = 4$</td></tr>
+      <tr><td>Output $u$</td><td>Pressure (scalar, smooth)</td><td>Velocity vector or signal (sharp wavefronts)</td></tr>
+      <tr><td>Boundaries</td><td>Dirichlet ($u = 0$)</td><td>Absorbing + free surface</td></tr>
+      <tr><td>Key challenge</td><td>Piecewise-constant $a(x)$</td><td>High-frequency scattering, non-periodic</td></tr>
+      <tr><td>Simulation cost</td><td>~seconds</td><td>~minutes</td></tr>
+    </tbody>
+  </table>
+
+  <div class="insight physics">
+    <p><strong>Physics note:</strong> This is the same abstract framework from Chapter 1 &mdash; just with richer physics. The domain $D$ is now spatiotemporal, the output is vector-valued, and the "coefficient field" is a crack geometry instead of a permeability field. The FNO architecture needs only modest modifications to handle these differences, as we'll see in Chapter 7.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- FOOTER NAV                                                   -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="fno-05-real-pdes.html"><span class="dir">&larr; Previous</span><span class="title">FNO on Real PDEs</span></a><a class="next" href="fno-07-fno-for-cracks.html"><span class="dir">Next &rarr;</span><span class="title">FNO for Crack Detection</span></a></div>
+</main>
+<footer><p><a href="fno-index.html">&larr; Course Home</a> &middot; <a href="../index.html">All Notes</a></p></footer>
+<a href="#" class="back-to-top" aria-label="Back to top">&#8593;</a>
+<script>
+const fill = document.querySelector('.progress-fill');
+const main = document.querySelector('main');
+function updateProgress() {
+  const top = main.getBoundingClientRect().top;
+  const height = main.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (-top / height) * 100));
+  fill.style.width = pct + '%';
+}
+const btn = document.querySelector('.back-to-top');
+function updateBtn() {
+  btn.classList.toggle('visible', window.scrollY > 600);
+}
+window.addEventListener('scroll', function() { updateProgress(); updateBtn(); }, { passive: true });
+updateProgress();
+</script>
+</body>
+</html>

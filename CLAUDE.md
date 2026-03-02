@@ -33,8 +33,17 @@ carlm451.github.io/
 │   ├── van-01-mean-field.html # Ch 1: Variational free energy, NMF ansatz, 1D & 2D Ising
 │   └── van-02-from-nmf-to-van.html # Ch 2: Autoregressive decomposition, one-layer VAN, training
 │
+├── fno/                   # Fourier Neural Operators course (live)
+│   ├── fno-index.html         # Course table of contents (body.page-index)
+│   ├── fno-01-operator-learning.html  # Ch 1: Domain D, function spaces, operator G†, discretization
+│   ├── fno-02-neural-operator.html    # Ch 2: Lift-iterate-project, kernel integral, Definitions 1-2
+│   ├── fno-03-fourier-space.html      # Ch 3: Convolution theorem, Definition 3, R tensor, mode truncation
+│   ├── fno-04-fno-layer.html          # Ch 4: Full FNO layer, two paths, FFT implementation, complexity
+│   ├── fno-05-real-pdes.html          # Ch 5: Burgers, Darcy, Navier-Stokes, super-resolution, limitations
+│   ├── fno-06-ultrasonic-ndt.html     # Ch 6: Elastic waves, P/S-waves, Snell's law, angle beam NDT setup
+│   └── fno-07-fno-for-cracks.html     # Ch 7: Crack parameterization, FNO architecture, training, challenges
+│
 ├── [pinns/]               # Physics-Informed Neural Networks (planned)
-├── [fno/]                 # Fourier Neural Operators (planned)
 └── [pde/]                 # PDEs for ML (planned)
 ```
 
@@ -110,6 +119,34 @@ The VAN paper (Eq. 8) uses **no biases**: σ(∑W_ij s_j), N(N-1)/2 params. The 
 ### Equation Numbering
 Equations are numbered sequentially across both chapters: Ch 1 uses \tag{1}–\tag{31}, Ch 2 uses \tag{32}–\tag{33}+.
 
+## FNO Course — Key Facts
+
+The FNO course breaks down Li et al. (arXiv:2010.08895) with a 2D Darcy flow running example. Section numbering is globally sequential within the FNO course:
+- **Chapter 1 (§1–§6):** Darcy flow PDE, domain D=(0,1)², function spaces A and U, operator G†, training objective (Eq. 1), discretization, resolution invariance
+- **Chapter 2 (§7–§12):** Lift-iterate-project pipeline, P (pointwise lift), Definition 1 (iterative update, Eq. 2), Definition 2 (kernel integral, Eq. 3), Q (projection), forward pass dimensions
+- **Chapter 3 (§13–§17):** Fourier refresher, convolution theorem, translation-invariant kernels, Definition 3 (Fourier integral operator, Eq. 4), R tensor shape (C^{12×12×32×32}), mode truncation
+- **Chapter 4 (§18–§22):** Full FNO layer (Eq. 5), two parallel paths (Fourier global + W local), discrete FFT implementation (Eq. 6), complete forward pass with tensor shapes, complexity O(n log n)
+- **Chapter 5 (§23–§27):** Burgers (Eq. 7), Darcy with experimental results, Navier-Stokes (Eqs. 8-10), zero-shot super-resolution, FNO vs PINNs vs DeepONet comparison
+- **Chapter 6 (§28–§32):** Elastic wave equation (Eq. 11), P/S-wave speeds (Eq. 12), Snell's law (Eq. 13), angle beam NDT setup, transducer pulse (Eq. 14), fracture BC (Eq. 15), NDT operator
+- **Chapter 7 (§33–§37):** Crack parameterization (Eq. 16), signal-level FNO-1D (Eq. 17), full-field FNO-3D (Eq. 18), training data from COMSOL, loss function (Eq. 19), resolution transfer (Eq. 20), Bayesian inversion (Eq. 21), FNO variant comparison (PINO, Geo-FNO, U-FNO, FFNO)
+
+### Running Example (Parts I–III)
+- **PDE:** −∇·(a(x)∇u(x)) = 1 on D=(0,1)², u=0 on boundary
+- **Input:** Permeability a(x) ∈ {3, 12} (piecewise constant)
+- **Output:** Pressure field u(x)
+- **Architecture:** d_a=1, d_v=32, d_u=1, k_max=12, T=4 layers, ~1.19M params
+
+### Running Example (Part IV)
+- **PDE:** Elastic wave equation (velocity-strain form) in 2D aluminum + acrylic wedge
+- **Geometry:** Aluminum specimen ~35mm × 32mm, acrylic wedge, PZT-5H transducer at 1.5 MHz
+- **Physics:** P-wave in wedge → mode conversion → S-wave at 45° in aluminum → crack scattering
+- **Input:** Crack parameters (x_c, y_c, L, θ) or binary field encoding
+- **Output:** Velocity wavefield v(x,t) or transducer signal V(t)
+- **Materials:** Aluminum (ρ=2700, cp=6200, cs=3120), Acrylic (ρ=1190, cp=2080, cs=1000)
+
+### Equation Numbering
+Equations numbered sequentially across all chapters: Eq. 1 (training objective) through Eq. 21 (Bayesian inversion posterior).
+
 ## Key Reference Papers
 
 ### TDL Course
@@ -122,6 +159,11 @@ Equations are numbered sequentially across both chapters: Ch 1 uses \tag{1}–\t
 ### VAN Course
 1. **Wu, Wang & Zhang (2019)** — "Solving Statistical Mechanics Using Variational Autoregressive Networks," Phys. Rev. Lett. 122, 080602 (arXiv:1809.10606) — the primary paper this course provides background for
 2. **Onsager (1944)** — Exact solution of the 2D Ising model — comparison target for NMF
+
+### FNO Course
+1. **Li et al. (2020)** — "Fourier Neural Operator for Parametric Partial Differential Equations" (arXiv:2010.08895) — the primary paper this course provides background for
+2. **COMSOL tutorial** — "Angle Beam Nondestructive Testing" (models.aco.angle_beam_ndt) — source material for Part IV NDT application
+3. **Mehtaj & Banerjee (2025)** — "SciML for Elastic and Acoustic Wave Propagation" (Sensors, 25, 3588) — review of FNO/DeepONet/PINNs for wave problems
 
 ## Navigation Pattern
 
@@ -162,7 +204,7 @@ From `index.html` placeholders (in rough priority order):
 | Course | Directory | File prefix | Status |
 |--------|-----------|-------------|--------|
 | Physics-Informed Neural Networks | `pinns/` | `pinns-` | Planned |
-| Fourier Neural Operators | `fno/` | `fno-` | Planned |
+| Fourier Neural Operators | `fno/` | `fno-` | Live |
 | DeepONet & Neural Operator Theory | `deeponet/` | `deeponet-` | Planned |
 | PDEs for Machine Learning | `pde/` | `pde-` | Planned |
 | Optimization for Deep Learning | `optim/` | `optim-` | Planned |
