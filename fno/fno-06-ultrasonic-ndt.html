@@ -68,6 +68,10 @@ window.MathJax={
   </p>
 
   <p>
+    This chapter and the next draw on two sources: the <a href="https://www.comsol.com/model/angle-beam-nondestructive-testing-19585">COMSOL "Angle Beam Nondestructive Testing" tutorial</a>, which provides a complete 2D simulation of ultrasonic crack inspection; and the review by <a href="https://doi.org/10.3390/s25113588">Mehtaj &amp; Banerjee (2025)</a>, which surveys the application of FNO, DeepONet, and PINNs to elastic and acoustic wave propagation problems. Together they motivate a concrete FNO pipeline for crack detection.
+  </p>
+
+  <p>
     The governing equations come from Newton's second law applied to a continuous medium. In the <strong>velocity&ndash;strain formulation</strong> (used by COMSOL's "Elastic Waves, Time Explicit" physics interface), the system reads:
   </p>
 
@@ -327,7 +331,7 @@ window.MathJax={
   <h2><span class="sec-num">30</span>The Angle Beam NDT Setup</h2>
 
   <p>
-    Now let's describe the complete physical setup from the COMSOL "Angle Beam Nondestructive Testing" tutorial (models.aco.angle_beam_ndt). This is a standard 2D simulation of ultrasonic crack inspection that we'll use as our target for FNO surrogate modeling.
+    Now let's describe the complete physical setup from the <a href="https://www.comsol.com/model/angle-beam-nondestructive-testing-19585">COMSOL "Angle Beam Nondestructive Testing" tutorial</a>. This is a standard 2D simulation of ultrasonic crack inspection that we'll use as our target for FNO surrogate modeling.
   </p>
 
   <!-- SVG: Full geometry cross-section -->
@@ -618,6 +622,20 @@ window.MathJax={
   <div class="insight physics">
     <p><strong>Physics note:</strong> This is the same abstract framework from Chapter 1 &mdash; just with richer physics. The domain $D$ is now spatiotemporal, the output is vector-valued, and the "coefficient field" is a crack geometry instead of a permeability field. The FNO architecture needs only modest modifications to handle these differences, as we'll see in Chapter 7.</p>
   </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- REFERENCES                                                   -->
+<!-- ============================================================ -->
+<section id="references">
+  <h2>References</h2>
+  <ul>
+    <li><strong>Li et al. (2020)</strong> &mdash; "Fourier Neural Operator for Parametric Partial Differential Equations." <em>arXiv:2010.08895.</em> <a href="https://arxiv.org/abs/2010.08895">arxiv.org/abs/2010.08895</a> &mdash; The primary FNO paper this course is based on (Chapters 1&ndash;5).</li>
+    <li><strong>Mehtaj &amp; Banerjee (2025)</strong> &mdash; "Scientific Machine Learning for Elastic and Acoustic Wave Propagation: Neural Operator and Physics-Guided Neural Network." <em>Sensors</em>, 25(11), 3588. <a href="https://doi.org/10.3390/s25113588">doi.org/10.3390/s25113588</a> &mdash; Review of FNO, DeepONet, and PINNs applied to wave problems; documents challenges and architecture variants for elastic wave scattering.</li>
+    <li><strong>COMSOL (2024)</strong> &mdash; "Angle Beam Nondestructive Testing" tutorial (model ID 19585). <a href="https://www.comsol.com/model/angle-beam-nondestructive-testing-19585">comsol.com/model/angle-beam-nondestructive-testing-19585</a> &mdash; Complete 2D simulation of P-wave&ndash;to&ndash;S-wave mode conversion through an acrylic wedge into aluminum with a zero-thickness fracture defect.</li>
+  </ul>
 </section>
 
 <hr class="divider">

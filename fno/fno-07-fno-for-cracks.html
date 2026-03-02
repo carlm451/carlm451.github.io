@@ -630,7 +630,7 @@ window.MathJax={
   <h2><span class="sec-num">37</span>Challenges &amp; What Comes Next</h2>
 
   <p>
-    Applying FNO to ultrasonic wave scattering exposes limitations that don't arise in the smooth, periodic-ish problems from Chapter 5. Here are the four main challenges and the FNO variants designed to address them.
+    Applying FNO to ultrasonic wave scattering exposes limitations that don't arise in the smooth, periodic-ish problems from Chapter 5. <a href="https://doi.org/10.3390/s25113588">Mehtaj &amp; Banerjee (2025)</a> provide a thorough review of these challenges across elastic and acoustic wave problems, documenting where standard FNO succeeds and where specialized variants are needed. Here are the four main challenges and the FNO variants designed to address them.
   </p>
 
   <h3>Challenge 1: High-frequency scattering</h3>
@@ -644,7 +644,7 @@ window.MathJax={
   </p>
   <ul>
     <li>Increase $k_{\max}$ (retain more Fourier modes, at computational cost)</li>
-    <li>Use <strong>PINO</strong> (physics-informed neural operator) &mdash; add the elastic wave equation residual to the loss, encouraging physical consistency even at unresolved scales</li>
+    <li>Use <a href="https://arxiv.org/abs/2111.03794"><strong>PINO</strong></a> (physics-informed neural operator) &mdash; add the elastic wave equation residual to the loss, encouraging physical consistency even at unresolved scales</li>
     <li>Lean on the <strong>$W$ path</strong> (local/pointwise) to capture sharp features that the Fourier path misses</li>
   </ul>
 
@@ -659,7 +659,7 @@ window.MathJax={
   </p>
   <ul>
     <li>Zero-pad the domain before the FFT (extend with zeros to reduce wrap-around artifacts)</li>
-    <li>Use <strong>Geo-FNO</strong> for the spatial dimensions &mdash; it maps irregular geometries to a regular latent domain via a learned deformation, avoiding the periodicity assumption</li>
+    <li>Use <a href="https://arxiv.org/abs/2207.05209"><strong>Geo-FNO</strong></a> for the spatial dimensions &mdash; it maps irregular geometries to a regular latent domain via a learned deformation, avoiding the periodicity assumption</li>
     <li>The $W$ path naturally handles boundary effects since it's a pointwise linear transform with no periodicity assumption</li>
   </ul>
 
@@ -673,8 +673,8 @@ window.MathJax={
     <strong>Mitigations:</strong>
   </p>
   <ul>
-    <li><strong>U-FNO:</strong> Adds U-Net-style skip connections to the Fourier layers, capturing both coarse and fine features simultaneously</li>
-    <li><strong>Factorized FNO (FFNO):</strong> Decomposes the 3D FFT into sequential 1D FFTs along each axis &mdash; more efficient and allows different $k_{\max}$ per dimension (e.g., more temporal modes than spatial modes, since the signal evolves over many cycles but the spatial domain is only a few wavelengths across)</li>
+    <li><a href="https://arxiv.org/abs/2109.03697"><strong>U-FNO:</strong></a> Adds U-Net-style skip connections to the Fourier layers, capturing both coarse and fine features simultaneously</li>
+    <li><a href="https://arxiv.org/abs/2111.13802"><strong>Factorized FNO (FFNO):</strong></a> Decomposes the 3D FFT into sequential 1D FFTs along each axis &mdash; more efficient and allows different $k_{\max}$ per dimension (e.g., more temporal modes than spatial modes, since the signal evolves over many cycles but the spatial domain is only a few wavelengths across)</li>
   </ul>
 
   <h3>Challenge 4: Generalization beyond the training distribution</h3>
@@ -785,6 +785,24 @@ window.MathJax={
   <div class="insight physics">
     <p><strong>The big picture:</strong> FNO for NDT inverts the usual workflow. Instead of "measure signal → guess crack → simulate to check → iterate," it becomes "measure signal → run fast FNO inversion → get crack parameters." The expensive simulation happens once, during training data generation. Inference is instantaneous. This is the promise of operator learning for engineering applications: train once on physics, deploy everywhere.</p>
   </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- REFERENCES                                                   -->
+<!-- ============================================================ -->
+<section id="references">
+  <h2>References</h2>
+  <ul>
+    <li><strong>Li et al. (2020)</strong> &mdash; "Fourier Neural Operator for Parametric Partial Differential Equations." <em>arXiv:2010.08895.</em> <a href="https://arxiv.org/abs/2010.08895">arxiv.org/abs/2010.08895</a> &mdash; The primary FNO paper (Chapters 1&ndash;5). Architecture, Darcy/Burgers/Navier&ndash;Stokes benchmarks, resolution invariance.</li>
+    <li><strong>Mehtaj &amp; Banerjee (2025)</strong> &mdash; "Scientific Machine Learning for Elastic and Acoustic Wave Propagation: Neural Operator and Physics-Guided Neural Network." <em>Sensors</em>, 25(11), 3588. <a href="https://doi.org/10.3390/s25113588">doi.org/10.3390/s25113588</a> &mdash; Comprehensive review of FNO, DeepONet, and PINNs for wave problems. Documents challenges (high-frequency scattering, non-periodic BCs) and architecture variants (PINO, Geo-FNO, U-FNO, FFNO) discussed in &sect;37.</li>
+    <li><strong>COMSOL (2024)</strong> &mdash; "Angle Beam Nondestructive Testing" tutorial (model ID 19585). <a href="https://www.comsol.com/model/angle-beam-nondestructive-testing-19585">comsol.com/model/angle-beam-nondestructive-testing-19585</a> &mdash; Source for the NDT geometry, material properties, transducer excitation, and fracture boundary condition used throughout Chapter 6.</li>
+    <li><strong>Li et al. (2022)</strong> &mdash; "Physics-Informed Neural Operator for Learning Partial Differential Equations." <em>arXiv:2111.03794.</em> <a href="https://arxiv.org/abs/2111.03794">arxiv.org/abs/2111.03794</a> &mdash; PINO: adds PDE residual loss to the neural operator framework.</li>
+    <li><strong>Li et al. (2022)</strong> &mdash; "Fourier Neural Operator with Learned Deformations for PDEs on General Geometries." <em>arXiv:2207.05209.</em> <a href="https://arxiv.org/abs/2207.05209">arxiv.org/abs/2207.05209</a> &mdash; Geo-FNO: handles non-periodic and irregular domains via learned coordinate deformations.</li>
+    <li><strong>Wen et al. (2022)</strong> &mdash; "U-FNO &mdash; An Enhanced Fourier Neural Operator with U-Net for Multiscale Problems." <em>arXiv:2109.03697.</em> <a href="https://arxiv.org/abs/2109.03697">arxiv.org/abs/2109.03697</a> &mdash; U-FNO: U-Net skip connections for multi-scale features.</li>
+    <li><strong>Tran et al. (2023)</strong> &mdash; "Factorized Fourier Neural Operators." <em>arXiv:2111.13802.</em> <a href="https://arxiv.org/abs/2111.13802">arxiv.org/abs/2111.13802</a> &mdash; FFNO: factorized 1D FFTs for efficiency and per-axis mode control.</li>
+  </ul>
 </section>
 
 <hr class="divider">
