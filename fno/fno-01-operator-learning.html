@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Operator Learning Problem — FNO Course</title>
+<script>
+window.MathJax={
+  tex:{
+    inlineMath:[['$','$'],['\\(','\\)']],
+    displayMath:[['$$','$$'],['\\[','\\]']],
+    macros:{
+      R:'\\mathbb{R}',
+      Z:'\\mathbb{Z}',
+      Ft:'\\mathcal{F}',
+      Fti:'\\mathcal{F}^{-1}',
+      da:'d_a',
+      du:'d_u',
+      dv:'d_v'
+    }
+  },
+  svg:{fontCache:'global'}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-chapter">
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / <a href="fno-index.html">FNO</a> / Chapter 1</div>
+    <span class="ch-num">Chapter 1</span>
+    <h1>The <strong>Operator Learning</strong> Problem</h1>
+    <p class="subtitle">What problem does FNO solve? Defining the domain, function spaces, and the operator that maps permeability to pressure &mdash; all grounded in 2D Darcy flow.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="fno-index.html">&larr; Course Home</a><span class="ch-title">Chapter 1</span><a href="fno-02-neural-operator.html">Neural Operator Architecture &rarr;</a></div></nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<!-- Table of Contents -->
+<div class="toc">
+  <div class="toc-label">In this chapter</div>
+  <ol>
+    <li><a href="#sec1"><span class="toc-num">1</span>What Problem Are We Solving?</a></li>
+    <li><a href="#sec2"><span class="toc-num">2</span>The Spatial Domain D</a></li>
+    <li><a href="#sec3"><span class="toc-num">3</span>Function Spaces A and U</a></li>
+    <li><a href="#sec4"><span class="toc-num">4</span>The Operator G&dagger;</a></li>
+    <li><a href="#sec5"><span class="toc-num">5</span>The Parametric Approximation</a></li>
+    <li><a href="#sec6"><span class="toc-num">6</span>Discretization and Resolution Invariance</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 1 — What Problem Are We Solving?                      -->
+<!-- ============================================================ -->
+<section id="sec1">
+  <h2><span class="sec-num">1</span>What Problem Are We Solving?</h2>
+
+  <p>
+    We follow Li et al. (arXiv:2010.08895), referred to throughout as the <em>FNO paper</em>. The central problem is this: traditional PDE solvers (finite elements, finite differences, spectral methods) are accurate but slow. Every time you change a parameter &mdash; a boundary condition, an initial condition, a material property &mdash; you must re-solve from scratch. What if a neural network could learn the mapping from parameters to solutions, and then predict solutions <em>instantly</em> for any new set of parameters?
+  </p>
+
+  <p>
+    Our running example throughout this course is <strong>2D Darcy flow</strong>, a PDE that describes pressure-driven flow through porous media (think: groundwater through rock, or oil through a reservoir). The permeability of the rock varies spatially &mdash; some regions are porous and easy to flow through, others are dense and resist flow. Given a permeability field $a(x)$, we want to find the resulting pressure field $u(x)$.
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">Darcy Flow (Running Example)</div>
+    <p>On the domain $D = (0,1)^2$ with homogeneous Dirichlet boundary conditions:</p>
+    $$
+    -\nabla \cdot \bigl(a(x)\,\nabla u(x)\bigr) = f(x), \qquad u\big|_{\partial D} = 0,
+    $$
+    <p>where $a(x) > 0$ is the <strong>permeability</strong> (input), $u(x)$ is the <strong>pressure</strong> (output), and $f(x) = 1$ is a constant forcing.</p>
+  </div>
+
+  <p>
+    In words: the divergence of the flux $a(x)\nabla u(x)$ equals the source term $f$. Where permeability $a$ is high, flow moves easily and pressure gradients are small. Where $a$ is low, flow is impeded and pressure builds up.
+  </p>
+
+  <div class="insight physics">
+    <p><strong>Physics intuition:</strong> Every time you change the rock permeability $a(x)$ &mdash; say, by drilling a new well or discovering a different geological layer &mdash; you need to re-solve the PDE. A traditional solver might take minutes or hours for a high-resolution 3D problem. What if a neural network could instantly predict $u(x)$ for <em>any</em> $a(x)$?</p>
+  </div>
+
+  <p>
+    This is not a toy problem. Darcy flow is the workhorse PDE for subsurface modeling, reservoir engineering, and groundwater hydrology. The FNO paper uses it as a primary benchmark, and so will we.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 2 — The Spatial Domain D                              -->
+<!-- ============================================================ -->
+<section id="sec2">
+  <h2><span class="sec-num">2</span>The Spatial Domain D</h2>
+
+  <p>
+    The paper begins: <em>"Let $D$ be a bounded, open subset of $\R^d$."</em> In our concrete example:
+  </p>
+
+  <div class="def-box">
+    <div class="def-label">Domain</div>
+    <p>$D = (0,1)^2 \subset \R^2$ &mdash; the open unit square. We have $d=2$ spatial dimensions, and each point $x = (x_1, x_2) \in D$ is a location in the square.</p>
+  </div>
+
+  <p>
+    The word <strong>open</strong> means we exclude the boundary (the edges of the square). The word <strong>bounded</strong> means the domain doesn't extend to infinity. These are standard assumptions that guarantee the PDE is well-posed.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 320 300" width="320" height="300">
+      <!-- Grid background -->
+      <defs>
+        <pattern id="grid1" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e0dcd8" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <!-- Domain square -->
+      <rect x="60" y="20" width="240" height="240" fill="#faf8f5" stroke="none"/>
+      <rect x="60" y="20" width="240" height="240" fill="url(#grid1)"/>
+      <!-- Interior fill -->
+      <rect x="61" y="21" width="238" height="238" fill="#e8a88a" fill-opacity="0.15" stroke="none"/>
+      <!-- Boundary dashed -->
+      <rect x="60" y="20" width="240" height="240" fill="none" stroke="#b44a2f" stroke-width="2" stroke-dasharray="6,4"/>
+      <!-- Sample points -->
+      <circle cx="140" cy="100" r="4" fill="#2a6b5a"/>
+      <text x="150" y="97" class="label-sm" fill="#2a6b5a">x=(0.33, 0.67)</text>
+      <circle cx="220" cy="180" r="4" fill="#2a6b5a"/>
+      <text x="230" y="177" class="label-sm" fill="#2a6b5a">x=(0.67, 0.33)</text>
+      <circle cx="180" cy="140" r="4" fill="#2a6b5a"/>
+      <text x="190" y="137" class="label-sm" fill="#2a6b5a">x=(0.5, 0.5)</text>
+      <!-- Axes labels -->
+      <text x="180" y="285" class="label-text" text-anchor="middle">x&#x2081;</text>
+      <text x="38" y="145" class="label-text" text-anchor="middle">x&#x2082;</text>
+      <!-- Corner labels -->
+      <text x="55" y="270" class="label-sm" text-anchor="end">0</text>
+      <text x="300" y="270" class="label-sm" text-anchor="middle">1</text>
+      <text x="55" y="25" class="label-sm" text-anchor="end">1</text>
+      <!-- Boundary label -->
+      <text x="180" y="15" class="label-sm" text-anchor="middle" fill="#b44a2f">&#x2202;D (boundary, dashed)</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.1.</strong> The domain $D = (0,1)^2$. The dashed boundary $\partial D$ is where $u=0$ (Dirichlet condition). Points $x \in D$ are locations where we evaluate $a(x)$ and $u(x)$.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 3 — Function Spaces A and U                           -->
+<!-- ============================================================ -->
+<section id="sec3">
+  <h2><span class="sec-num">3</span>Function Spaces A and U</h2>
+
+  <p>
+    The paper defines: <em>"$\mathcal{A} = \mathcal{A}(D; \R^{\da})$"</em> and <em>"$\mathcal{U} = \mathcal{U}(D; \R^{\du})$."</em> These are the spaces of input and output functions respectively.
+  </p>
+
+  <p>
+    For Darcy flow:
+  </p>
+
+  <ul>
+    <li>$\mathcal{A}$ = the space of all valid permeability fields. Each $a \in \mathcal{A}$ is a function $a: D \to \R^+$ (a positive scalar at every point). So $\da = 1$.</li>
+    <li>$\mathcal{U}$ = the space of all valid pressure fields. Each $u \in \mathcal{U}$ is a function $u: D \to \R$ (a scalar at every point). So $\du = 1$.</li>
+  </ul>
+
+  <p>
+    In general, $\da$ and $\du$ can be larger than 1. For a vector PDE like Navier&ndash;Stokes, the output might be a velocity field $u: D \to \R^2$, giving $\du = 2$. But for Darcy flow, both are scalar: one number per spatial point.
+  </p>
+
+  <div class="def-box blue">
+    <div class="def-label">Banach Spaces (Light Touch)</div>
+    <p>$\mathcal{A}$ and $\mathcal{U}$ are <strong>Banach spaces</strong> &mdash; complete normed function spaces. For our purposes, think of them as "$L^2(D)$: the space of square-integrable functions on $D$," equipped with the norm $\|a\|_{L^2}^2 = \int_D |a(x)|^2\,dx$. Completeness means: limits of convergent sequences stay in the space.</p>
+  </div>
+
+  <div class="figure">
+    <svg viewBox="0 0 600 240" width="600" height="240">
+      <!-- Left: permeability field a(x) -->
+      <text x="120" y="20" class="label-text" text-anchor="middle" font-weight="bold">Input: a(x)</text>
+      <text x="120" y="36" class="label-sm" text-anchor="middle">permeability</text>
+      <!-- Checkerboard-style permeability -->
+      <rect x="30" y="50" width="180" height="180" fill="#faf8f5" stroke="#6b6560" stroke-width="1.5"/>
+      <!-- High permeability regions -->
+      <rect x="30" y="50" width="90" height="90" fill="#e8a88a" fill-opacity="0.6"/>
+      <rect x="120" y="140" width="90" height="90" fill="#e8a88a" fill-opacity="0.6"/>
+      <!-- Low permeability regions -->
+      <rect x="120" y="50" width="90" height="90" fill="#a8c0e0" fill-opacity="0.4"/>
+      <rect x="30" y="140" width="90" height="90" fill="#a8c0e0" fill-opacity="0.4"/>
+      <text x="75" y="100" class="label-text" text-anchor="middle">a=12</text>
+      <text x="165" y="100" class="label-text" text-anchor="middle">a=3</text>
+      <text x="75" y="190" class="label-text" text-anchor="middle">a=3</text>
+      <text x="165" y="190" class="label-text" text-anchor="middle">a=12</text>
+
+      <!-- Arrow G† -->
+      <line x1="230" y1="140" x2="350" y2="140" class="edge-line" stroke-width="2" marker-end="url(#arrowG)"/>
+      <defs><marker id="arrowG" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#6b6560"/></marker></defs>
+      <text x="290" y="130" class="label-text" text-anchor="middle" font-weight="bold">G&dagger;</text>
+      <text x="290" y="158" class="label-sm" text-anchor="middle">solve PDE</text>
+
+      <!-- Right: pressure field u(x) -->
+      <text x="470" y="20" class="label-text" text-anchor="middle" font-weight="bold">Output: u(x)</text>
+      <text x="470" y="36" class="label-sm" text-anchor="middle">pressure</text>
+      <rect x="380" y="50" width="180" height="180" fill="#faf8f5" stroke="#6b6560" stroke-width="1.5"/>
+      <!-- Smooth pressure gradient approximation -->
+      <defs>
+        <linearGradient id="pressGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#2a6b5a;stop-opacity:0.1"/>
+          <stop offset="50%" style="stop-color:#2a6b5a;stop-opacity:0.4"/>
+          <stop offset="100%" style="stop-color:#2a6b5a;stop-opacity:0.1"/>
+        </linearGradient>
+      </defs>
+      <rect x="381" y="51" width="178" height="178" fill="url(#pressGrad)"/>
+      <!-- Contour hints -->
+      <ellipse cx="470" cy="130" rx="50" ry="40" fill="none" stroke="#2a6b5a" stroke-width="1" stroke-opacity="0.5"/>
+      <ellipse cx="470" cy="135" rx="30" ry="25" fill="none" stroke="#2a6b5a" stroke-width="1" stroke-opacity="0.7"/>
+      <text x="470" y="140" class="label-sm" text-anchor="middle" fill="#2a6b5a">u=max</text>
+      <!-- Zero boundary labels -->
+      <text x="470" y="48" class="label-sm" text-anchor="middle" fill="#6b6560">u=0</text>
+      <text x="470" y="245" class="label-sm" text-anchor="middle" fill="#6b6560">u=0</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.2.</strong> The operator G&dagger; maps a permeability field $a(x)$ (left, piecewise constant: 12 or 3) to a pressure field $u(x)$ (right, smooth with $u=0$ on the boundary). Each is a <em>function</em> defined over the entire domain $D$.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 4 — The Operator G†                                   -->
+<!-- ============================================================ -->
+<section id="sec4">
+  <h2><span class="sec-num">4</span>The Operator G&dagger;</h2>
+
+  <p>
+    The paper states: <em>"$G^\dagger: \mathcal{A} \to \mathcal{U}$ maps input functions to solutions."</em> This is the conceptual core of the entire paper.
+  </p>
+
+  <p>
+    A regular function $f: \R \to \R$ takes a <em>number</em> and returns a <em>number</em>. An <strong>operator</strong> $G^\dagger: \mathcal{A} \to \mathcal{U}$ takes an <em>entire function</em> $a(\cdot)$ and returns an <em>entire function</em> $u(\cdot)$.
+  </p>
+
+  <div class="insight key">
+    <p><strong>Key idea:</strong> This is the conceptual leap. We are not learning $f(x) = y$ where $x$ and $y$ are numbers or finite-dimensional vectors. We are learning $G^\dagger(a) = u$ where both $a$ and $u$ are <em>functions</em> defined over the whole domain $D$. The input is infinite-dimensional (a function has a value at every point), and so is the output.</p>
+  </div>
+
+  <p>
+    For Darcy flow: $G^\dagger$ is the operator that takes any permeability field $a \in \mathcal{A}$ and returns the corresponding pressure solution $u \in \mathcal{U}$. Internally, $G^\dagger$ is defined implicitly by the PDE &mdash; $u$ is whatever function satisfies $-\nabla\cdot(a\nabla u) = f$ with the given boundary conditions.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 600 200" width="600" height="200">
+      <!-- Standard NN -->
+      <text x="140" y="20" class="label-text" text-anchor="middle" font-weight="bold">Standard Neural Network</text>
+      <!-- Input vector -->
+      <rect x="30" y="40" width="60" height="80" rx="4" fill="#e8a88a" fill-opacity="0.3" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="60" y="70" class="label-sm" text-anchor="middle">x &isin; R&#x207F;</text>
+      <text x="60" y="85" class="label-sm" text-anchor="middle">(vector)</text>
+      <!-- Arrow -->
+      <line x1="95" y1="80" x2="155" y2="80" class="edge-line" stroke-width="2" marker-end="url(#arrowG)"/>
+      <text x="125" y="72" class="label-sm" text-anchor="middle">f&#x2095;</text>
+      <!-- Output vector -->
+      <rect x="160" y="40" width="60" height="80" rx="4" fill="#8ec5b6" fill-opacity="0.3" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="190" y="70" class="label-sm" text-anchor="middle">y &isin; R&#x1D50;</text>
+      <text x="190" y="85" class="label-sm" text-anchor="middle">(vector)</text>
+
+      <!-- Divider -->
+      <line x1="290" y1="30" x2="290" y2="180" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="4,3"/>
+
+      <!-- Operator -->
+      <text x="450" y="20" class="label-text" text-anchor="middle" font-weight="bold">Neural Operator</text>
+      <!-- Input function -->
+      <rect x="320" y="40" width="80" height="80" rx="4" fill="#e8a88a" fill-opacity="0.3" stroke="#b44a2f" stroke-width="1.5"/>
+      <!-- Wavy line to suggest function -->
+      <path d="M335,90 Q345,60 355,80 Q365,100 375,70 Q385,55 390,75" fill="none" stroke="#b44a2f" stroke-width="1.5"/>
+      <text x="360" y="110" class="label-sm" text-anchor="middle">a(&middot;)</text>
+      <text x="360" y="135" class="label-sm" text-anchor="middle">(function)</text>
+      <!-- Arrow -->
+      <line x1="405" y1="80" x2="465" y2="80" class="edge-line" stroke-width="2" marker-end="url(#arrowG)"/>
+      <text x="435" y="72" class="label-sm" text-anchor="middle">G&#x2020;&#x2095;</text>
+      <!-- Output function -->
+      <rect x="470" y="40" width="80" height="80" rx="4" fill="#8ec5b6" fill-opacity="0.3" stroke="#2a6b5a" stroke-width="1.5"/>
+      <path d="M485,85 Q500,55 510,75 Q520,90 535,65" fill="none" stroke="#2a6b5a" stroke-width="1.5"/>
+      <text x="510" y="110" class="label-sm" text-anchor="middle">u(&middot;)</text>
+      <text x="510" y="135" class="label-sm" text-anchor="middle">(function)</text>
+
+      <!-- Labels below -->
+      <text x="140" y="175" class="label-sm" text-anchor="middle" fill="#6b6560">Finite-dimensional</text>
+      <text x="140" y="190" class="label-sm" text-anchor="middle" fill="#6b6560">input &rarr; output</text>
+      <text x="450" y="175" class="label-sm" text-anchor="middle" fill="#6b6560">Infinite-dimensional</text>
+      <text x="450" y="190" class="label-sm" text-anchor="middle" fill="#6b6560">function &rarr; function</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.3.</strong> Standard neural networks map vectors to vectors: $f_\theta: \R^n \to \R^m$. Neural operators map functions to functions: $G^\dagger_\theta: \mathcal{A} \to \mathcal{U}$. Both input and output live in infinite-dimensional function spaces.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 5 — The Parametric Approximation                      -->
+<!-- ============================================================ -->
+<section id="sec5">
+  <h2><span class="sec-num">5</span>The Parametric Approximation</h2>
+
+  <p>
+    We want to learn $G^\dagger$ from data. The paper introduces a parametric approximation $G_\theta: \mathcal{A} \to \mathcal{U}$ with parameters $\theta \in \Theta$ (the neural network weights). The goal is to find $\theta$ such that $G_\theta \approx G^\dagger$.
+  </p>
+
+  <p>
+    We assume access to $N$ training pairs $\{(a_j, u_j)\}_{j=1}^N$ where each $u_j = G^\dagger(a_j)$ is obtained by solving the PDE with a traditional solver. The optimization problem is:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Training Objective</div>
+    $$
+    \min_{\theta \in \Theta}\; \mathbb{E}_{a \sim \mu}\bigl[\mathcal{C}\bigl(G_\theta(a),\, G^\dagger(a)\bigr)\bigr]
+    \tag{1}
+    $$
+  </div>
+
+  <p>
+    where $\mu$ is a probability measure on $\mathcal{A}$ (the distribution of input functions we care about) and $\mathcal{C}$ is a cost functional. The paper uses the <strong>relative $L^2$ error</strong>:
+  </p>
+
+  $$
+  \mathcal{C}(G_\theta(a),\, G^\dagger(a)) = \frac{\|G_\theta(a) - G^\dagger(a)\|_{L^2(D)}}{\|G^\dagger(a)\|_{L^2(D)}}
+  $$
+
+  <div class="def-box green">
+    <div class="def-label">The Training Setup</div>
+    <ol>
+      <li><strong>Generate data:</strong> Sample $N$ random permeability fields $a_1, \ldots, a_N$ from distribution $\mu$.</li>
+      <li><strong>Solve PDEs:</strong> For each $a_j$, solve the Darcy equation to get $u_j = G^\dagger(a_j)$. This is expensive (the whole reason we're doing this).</li>
+      <li><strong>Train:</strong> Optimize neural operator $G_\theta$ to minimize the average relative $L^2$ error between $G_\theta(a_j)$ and $u_j$.</li>
+      <li><strong>Deploy:</strong> For any new permeability $a_*$, predict $u_* \approx G_\theta(a_*)$ in milliseconds, without re-solving the PDE.</li>
+    </ol>
+  </div>
+
+  <p>
+    Concretely for Darcy flow: generate 1000 random permeability fields, solve the PDE for each (taking perhaps hours of compute), then train $G_\theta$ on those 1000 pairs. Once trained, $G_\theta$ can predict pressure for a new permeability in a single forward pass.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 6 — Discretization and Resolution Invariance          -->
+<!-- ============================================================ -->
+<section id="sec6">
+  <h2><span class="sec-num">6</span>Discretization and Resolution Invariance</h2>
+
+  <p>
+    Functions live in continuous space, but computers work with discrete grids. The paper addresses this carefully: we evaluate each function on a finite set of grid points $D_j = \{x_1, \ldots, x_n\} \subset D$.
+  </p>
+
+  <p>
+    On this grid, the continuous function $a: D \to \R^{\da}$ becomes a finite vector:
+  </p>
+
+  $$
+  a\big|_{D_j} \in \R^{n \times \da}, \qquad u\big|_{D_j} \in \R^{n \times \du}.
+  $$
+
+  <p>
+    For Darcy on a $16 \times 16$ grid: $n = 256$ points, so $a|_D \in \R^{256 \times 1}$ and $u|_D \in \R^{256 \times 1}$. On a $64 \times 64$ grid: $n = 4096$ and the same function is represented by 4096 values.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 540 250" width="540" height="250">
+      <!-- Coarse grid (4x4) -->
+      <text x="100" y="20" class="label-text" text-anchor="middle" font-weight="bold">Coarse: 4&times;4</text>
+      <!-- Grid lines -->
+      <g stroke="#e0dcd8" stroke-width="0.5">
+        <line x1="20" y1="35" x2="180" y2="35"/><line x1="20" y1="75" x2="180" y2="75"/>
+        <line x1="20" y1="115" x2="180" y2="115"/><line x1="20" y1="155" x2="180" y2="155"/>
+        <line x1="20" y1="195" x2="180" y2="195"/>
+        <line x1="20" y1="35" x2="20" y2="195"/><line x1="60" y1="35" x2="60" y2="195"/>
+        <line x1="100" y1="35" x2="100" y2="195"/><line x1="140" y1="35" x2="140" y2="195"/>
+        <line x1="180" y1="35" x2="180" y2="195"/>
+      </g>
+      <!-- Colored cells for permeability -->
+      <rect x="20" y="35" width="40" height="40" fill="#e8a88a" fill-opacity="0.6"/>
+      <rect x="60" y="35" width="40" height="40" fill="#e8a88a" fill-opacity="0.6"/>
+      <rect x="100" y="35" width="40" height="40" fill="#a8c0e0" fill-opacity="0.4"/>
+      <rect x="140" y="35" width="40" height="40" fill="#a8c0e0" fill-opacity="0.4"/>
+      <rect x="20" y="75" width="40" height="40" fill="#e8a88a" fill-opacity="0.6"/>
+      <rect x="60" y="75" width="40" height="40" fill="#a8c0e0" fill-opacity="0.4"/>
+      <rect x="100" y="75" width="40" height="40" fill="#a8c0e0" fill-opacity="0.4"/>
+      <rect x="140" y="75" width="40" height="40" fill="#e8a88a" fill-opacity="0.6"/>
+      <rect x="20" y="115" width="40" height="40" fill="#a8c0e0" fill-opacity="0.4"/>
+      <rect x="60" y="115" width="40" height="40" fill="#a8c0e0" fill-opacity="0.4"/>
+      <rect x="100" y="115" width="40" height="40" fill="#e8a88a" fill-opacity="0.6"/>
+      <rect x="140" y="115" width="40" height="40" fill="#e8a88a" fill-opacity="0.6"/>
+      <rect x="20" y="155" width="40" height="40" fill="#a8c0e0" fill-opacity="0.4"/>
+      <rect x="60" y="155" width="40" height="40" fill="#e8a88a" fill-opacity="0.6"/>
+      <rect x="100" y="155" width="40" height="40" fill="#e8a88a" fill-opacity="0.6"/>
+      <rect x="140" y="155" width="40" height="40" fill="#a8c0e0" fill-opacity="0.4"/>
+      <text x="100" y="220" class="label-sm" text-anchor="middle">n = 16 points</text>
+
+      <!-- Fine grid (16x16) — simplified visualization -->
+      <text x="400" y="20" class="label-text" text-anchor="middle" font-weight="bold">Fine: 16&times;16</text>
+      <rect x="300" y="35" width="200" height="160" fill="#faf8f5" stroke="#6b6560" stroke-width="1"/>
+      <!-- Dense grid lines -->
+      <g stroke="#e0dcd8" stroke-width="0.3">
+        <line x1="300" y1="45" x2="500" y2="45"/><line x1="300" y1="55" x2="500" y2="55"/>
+        <line x1="300" y1="65" x2="500" y2="65"/><line x1="300" y1="75" x2="500" y2="75"/>
+        <line x1="300" y1="85" x2="500" y2="85"/><line x1="300" y1="95" x2="500" y2="95"/>
+        <line x1="300" y1="105" x2="500" y2="105"/><line x1="300" y1="115" x2="500" y2="115"/>
+        <line x1="300" y1="125" x2="500" y2="125"/><line x1="300" y1="135" x2="500" y2="135"/>
+        <line x1="300" y1="145" x2="500" y2="145"/><line x1="300" y1="155" x2="500" y2="155"/>
+        <line x1="300" y1="165" x2="500" y2="165"/><line x1="300" y1="175" x2="500" y2="175"/>
+        <line x1="300" y1="185" x2="500" y2="185"/>
+        <line x1="312.5" y1="35" x2="312.5" y2="195"/><line x1="325" y1="35" x2="325" y2="195"/>
+        <line x1="337.5" y1="35" x2="337.5" y2="195"/><line x1="350" y1="35" x2="350" y2="195"/>
+        <line x1="362.5" y1="35" x2="362.5" y2="195"/><line x1="375" y1="35" x2="375" y2="195"/>
+        <line x1="387.5" y1="35" x2="387.5" y2="195"/><line x1="400" y1="35" x2="400" y2="195"/>
+        <line x1="412.5" y1="35" x2="412.5" y2="195"/><line x1="425" y1="35" x2="425" y2="195"/>
+        <line x1="437.5" y1="35" x2="437.5" y2="195"/><line x1="450" y1="35" x2="450" y2="195"/>
+        <line x1="462.5" y1="35" x2="462.5" y2="195"/><line x1="475" y1="35" x2="475" y2="195"/>
+        <line x1="487.5" y1="35" x2="487.5" y2="195"/>
+      </g>
+      <!-- Rough color regions for same function -->
+      <rect x="300" y="35" width="100" height="40" fill="#e8a88a" fill-opacity="0.5"/>
+      <rect x="400" y="35" width="100" height="40" fill="#a8c0e0" fill-opacity="0.35"/>
+      <rect x="300" y="75" width="50" height="40" fill="#e8a88a" fill-opacity="0.5"/>
+      <rect x="350" y="75" width="100" height="40" fill="#a8c0e0" fill-opacity="0.35"/>
+      <rect x="450" y="75" width="50" height="40" fill="#e8a88a" fill-opacity="0.5"/>
+      <rect x="300" y="115" width="50" height="40" fill="#a8c0e0" fill-opacity="0.35"/>
+      <rect x="350" y="115" width="100" height="40" fill="#e8a88a" fill-opacity="0.5"/>
+      <rect x="450" y="115" width="50" height="40" fill="#a8c0e0" fill-opacity="0.35"/>
+      <rect x="300" y="155" width="50" height="40" fill="#a8c0e0" fill-opacity="0.35"/>
+      <rect x="350" y="155" width="50" height="40" fill="#e8a88a" fill-opacity="0.5"/>
+      <rect x="400" y="155" width="50" height="40" fill="#e8a88a" fill-opacity="0.5"/>
+      <rect x="450" y="155" width="50" height="40" fill="#a8c0e0" fill-opacity="0.35"/>
+      <text x="400" y="220" class="label-sm" text-anchor="middle">n = 256 points</text>
+
+      <!-- Arrow between -->
+      <text x="240" y="110" class="label-text" text-anchor="middle" fill="#6b6560">same</text>
+      <text x="240" y="128" class="label-text" text-anchor="middle" fill="#6b6560">a(x)</text>
+      <path d="M210,115 L215,115" stroke="#6b6560" stroke-width="1"/>
+      <path d="M265,115 L295,115" stroke="#6b6560" stroke-width="1" marker-end="url(#arrowG)"/>
+    </svg>
+    <div class="caption"><strong>Figure 1.4.</strong> The same permeability function $a(x)$ represented on a coarse 4&times;4 grid ($n=16$ values) and a fine 16&times;16 grid ($n=256$ values). The underlying function is the same &mdash; only the discretization changes.</div>
+  </div>
+
+  <p>
+    Now here is the crucial property that distinguishes neural operators from standard neural networks:
+  </p>
+
+  <div class="insight key">
+    <p><strong>Resolution invariance:</strong> The operator $G^\dagger$ lives in continuous function space. It doesn't care about grids. A neural operator should inherit this property: train on a $16\times 16$ grid, and evaluate on a $64\times 64$ or $256\times 256$ grid &mdash; <em>without retraining</em>. This is impossible for a standard neural network, whose architecture is tied to a fixed input size.</p>
+  </div>
+
+  <p>
+    A standard CNN or MLP takes a fixed-size input (say, a $64 \times 64$ image) and cannot handle a $128 \times 128$ image without architectural changes. A neural operator, by contrast, is designed so that its learned parameters are independent of the grid resolution. We will see exactly how FNO achieves this in Chapters 3&ndash;4, through its Fourier-space parameterization.
+  </p>
+
+  <p>
+    This completes our setup of the problem. We have:
+  </p>
+  <ul>
+    <li>A domain $D = (0,1)^2$</li>
+    <li>Function spaces $\mathcal{A}$ (permeabilities) and $\mathcal{U}$ (pressures)</li>
+    <li>A ground-truth operator $G^\dagger: \mathcal{A} \to \mathcal{U}$ defined by the Darcy PDE</li>
+    <li>A training objective: find $G_\theta \approx G^\dagger$</li>
+    <li>A key desideratum: resolution invariance</li>
+  </ul>
+
+  <p>
+    In the next chapter, we build the neural network architecture that will approximate $G^\dagger$.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- FOOTER NAV                                                   -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="fno-index.html"><span class="dir">&larr; Previous</span><span class="title">Course Home</span></a><a class="next" href="fno-02-neural-operator.html"><span class="dir">Next &rarr;</span><span class="title">The Neural Operator Architecture</span></a></div>
+</main>
+<footer><p><a href="fno-index.html">&larr; Course Home</a> &middot; <a href="../index.html">All Notes</a></p></footer>
+<a href="#" class="back-to-top" aria-label="Back to top">&#8593;</a>
+<script>
+const fill = document.querySelector('.progress-fill');
+const main = document.querySelector('main');
+function updateProgress() {
+  const top = main.getBoundingClientRect().top;
+  const height = main.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (-top / height) * 100));
+  fill.style.width = pct + '%';
+}
+const btn = document.querySelector('.back-to-top');
+function updateBtn() {
+  btn.classList.toggle('visible', window.scrollY > 600);
+}
+window.addEventListener('scroll', function() { updateProgress(); updateBtn(); }, { passive: true });
+updateProgress();
+</script>
+</body>
+</html>
