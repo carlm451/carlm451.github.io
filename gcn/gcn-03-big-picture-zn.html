@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Big Picture for Z_N — GCN Course</title>
+<script>
+window.MathJax={
+  tex:{
+    inlineMath:[['$','$'],['\\(','\\)']],
+    displayMath:[['$$','$$'],['\\[','\\]']],
+    macros:{
+      R:'\\mathbb{R}',
+      C:'\\mathbb{C}',
+      Z:'\\mathbb{Z}',
+      ZN:'{\\mathbb{Z}_N}',
+      Ft:'\\mathcal{F}',
+      Fti:'\\mathcal{F}^{-1}'
+    }
+  },
+  svg:{fontCache:'global'}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-chapter">
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / <a href="gcn-index.html">GCN</a> / Chapter 3</div>
+    <span class="ch-num">Chapter 3</span>
+    <h1>The Big Picture for <strong>Z<sub>N</sub></strong></h1>
+    <p class="subtitle">The DFT matrix, spectral filtering, three isomorphic algebras, and what will break on graphs.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="gcn-02-discovering-dft.html">&larr; Discovering the DFT</a><span class="ch-title">Chapter 3</span><a href="gcn-04-ring-to-graph.html">From Ring to Graph &rarr;</a></div></nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<!-- Table of Contents -->
+<div class="toc">
+  <div class="toc-label">In this chapter</div>
+  <ol>
+    <li><a href="#sec9"><span class="toc-num">9</span>The DFT Matrix and Spectral Filtering</a></li>
+    <li><a href="#sec10"><span class="toc-num">10</span>Three Isomorphic Algebras</a></li>
+    <li><a href="#sec11"><span class="toc-num">11</span>Why Everything Worked</a></li>
+    <li><a href="#sec12"><span class="toc-num">12</span>What Will Break on Graphs</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 9 — The DFT Matrix and Spectral Filtering             -->
+<!-- ============================================================ -->
+<section id="sec9">
+  <h2><span class="sec-num">9</span>The DFT Matrix and Spectral Filtering</h2>
+
+  <p>
+    In the previous chapter we derived the eigenvectors of the shift operator $S$ &mdash; the columns of the DFT matrix. Now we assemble the full picture: the DFT as a matrix, and the spectral filtering recipe that makes convolution diagonal.
+  </p>
+
+  <p>
+    Let $\omega = e^{i2\pi/N}$ be a primitive $N$th root of unity. The <strong>DFT matrix</strong> $W$ has entries:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 15 &mdash; DFT Matrix</div>
+    $$
+    W_{mk} \;=\; \frac{1}{\sqrt{N}}\, e^{\,i\,2\pi mk/N} \;=\; \frac{1}{\sqrt{N}}\,\omega^{mk}, \qquad m,k = 0,1,\ldots,N-1 \tag{15}
+    $$
+  </div>
+
+  <p>
+    The row index $m$ labels the <em>frequency</em> and the column index $k$ labels the <em>position</em>. Each row of $W$ is a complex sinusoid at frequency $m$, sampled at positions $k = 0, \ldots, N-1$. The $1/\sqrt{N}$ normalization makes $W$ <strong>unitary</strong>: $W^*W = WW^* = I$, where $W^*$ is the conjugate transpose. The inverse is therefore:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 16 &mdash; Inverse DFT</div>
+    $$
+    W^{-1} = W^* = \overline{W}^T, \qquad \text{or equivalently } (W^{-1})_{km} = \frac{1}{\sqrt{N}}\,\omega^{-mk} \tag{16}
+    $$
+  </div>
+
+  <p>
+    With the unitary normalization, $W^{-1} = W^*$. Some texts use the convention without the $1/\sqrt{N}$ factor in $W$, placing all $N$ in the inverse: $W_{mk} = \omega^{mk}$, $W^{-1} = \frac{1}{N}W^*$. The physics is the same; only the bookkeeping differs.
+  </p>
+
+  <p>
+    Now recall the fundamental result from Chapter 2: every circulant matrix $C_h$ is diagonalized by $W$. This means convolution with any filter $h$ can be performed in three steps:
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">The Spectral Filtering Recipe</div>
+    <p>To compute $y = h * x$ (circular convolution of filter $h$ with signal $x$):</p>
+    <ol class="steps">
+      <li><strong>Transform:</strong> $\hat{x} = Wx$ &mdash; decompose the signal into frequency components.</li>
+      <li><strong>Multiply:</strong> $\hat{y}_m = \hat{h}_m \cdot \hat{x}_m$ for each $m$ &mdash; scale each frequency independently.</li>
+      <li><strong>Invert:</strong> $y = W^{-1}\hat{y}$ &mdash; reconstruct the filtered signal.</li>
+    </ol>
+  </div>
+
+  <p>
+    In matrix notation, step 2 is multiplication by a diagonal matrix $\operatorname{diag}(\hat{h})$, so the entire pipeline collapses to:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 17 &mdash; Spectral Filtering Formula</div>
+    $$
+    y \;=\; W^{-1}\,\operatorname{diag}(\hat{h})\; W\, x \;=\; C_h\, x \tag{17}
+    $$
+  </div>
+
+  <p>
+    This is the convolution theorem in matrix form. The circulant $C_h$ factors as $W^{-1}\operatorname{diag}(\hat{h})\,W$: conjugate into the frequency domain, apply a diagonal scaling, conjugate back. Convolution in the spatial domain is pointwise multiplication in the frequency domain.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 680 120" width="680" height="120">
+      <!-- x -->
+      <rect x="10" y="35" width="60" height="50" rx="6" fill="#faf8f5" stroke="#b44a2f" stroke-width="2"/>
+      <text x="40" y="65" font-family="JetBrains Mono, monospace" font-size="16" fill="#b44a2f" text-anchor="middle" font-weight="700">x</text>
+      <!-- Arrow to W -->
+      <line x1="75" y1="60" x2="110" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowSF)"/>
+      <!-- W block -->
+      <rect x="115" y="35" width="70" height="50" rx="6" fill="#e8a88a" fill-opacity="0.3" stroke="#b44a2f" stroke-width="2"/>
+      <text x="150" y="65" font-family="JetBrains Mono, monospace" font-size="15" fill="#b44a2f" text-anchor="middle" font-weight="700">W</text>
+      <text x="150" y="105" font-family="Source Sans 3, sans-serif" font-size="11" fill="#6b6560" text-anchor="middle">DFT</text>
+      <!-- Arrow to x-hat -->
+      <line x1="190" y1="60" x2="225" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowSF)"/>
+      <!-- x-hat -->
+      <rect x="230" y="35" width="60" height="50" rx="6" fill="#faf8f5" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="260" y="58" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a6b5a" text-anchor="middle" font-weight="700">x&#x0302;</text>
+      <!-- Arrow to multiply -->
+      <line x1="295" y1="60" x2="330" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowSF)"/>
+      <!-- Multiply block -->
+      <rect x="335" y="35" width="70" height="50" rx="6" fill="#8ec5b6" fill-opacity="0.3" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="370" y="58" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a6b5a" text-anchor="middle" font-weight="700">&times; h&#x0302;</text>
+      <text x="370" y="105" font-family="Source Sans 3, sans-serif" font-size="11" fill="#6b6560" text-anchor="middle">pointwise</text>
+      <!-- Arrow to y-hat -->
+      <line x1="410" y1="60" x2="445" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowSF)"/>
+      <!-- y-hat -->
+      <rect x="450" y="35" width="60" height="50" rx="6" fill="#faf8f5" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="480" y="58" font-family="JetBrains Mono, monospace" font-size="15" fill="#3a5a8c" text-anchor="middle" font-weight="700">y&#x0302;</text>
+      <!-- Arrow to W-inv -->
+      <line x1="515" y1="60" x2="545" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowSF)"/>
+      <!-- W-inv block -->
+      <rect x="550" y="35" width="70" height="50" rx="6" fill="#a8c0e0" fill-opacity="0.3" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="585" y="60" font-family="JetBrains Mono, monospace" font-size="13" fill="#3a5a8c" text-anchor="middle" font-weight="700">W&#x207B;&#xB9;</text>
+      <text x="585" y="105" font-family="Source Sans 3, sans-serif" font-size="11" fill="#6b6560" text-anchor="middle">inverse DFT</text>
+      <!-- Arrow to y -->
+      <line x1="625" y1="60" x2="640" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowSF)"/>
+      <!-- y = h*x -->
+      <rect x="645" y="35" width="30" height="50" rx="6" fill="#faf8f5" stroke="#8b5a8c" stroke-width="2"/>
+      <text x="660" y="65" font-family="JetBrains Mono, monospace" font-size="16" fill="#8b5a8c" text-anchor="middle" font-weight="700">y</text>
+      <text x="660" y="20" font-family="Source Sans 3, sans-serif" font-size="11" fill="#6b6560" text-anchor="middle">= h*x</text>
+      <!-- Arrowhead marker -->
+      <defs>
+        <marker id="arrowSF" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="#6b6560" stroke-width="1"/>
+        </marker>
+      </defs>
+    </svg>
+    <div class="caption"><strong>Figure 3.1.</strong> The spectral filtering pipeline. A signal $x$ is transformed by the DFT matrix $W$, multiplied pointwise by the filter&rsquo;s spectrum $\hat{h}$, then transformed back by $W^{-1}$. The result is identical to circular convolution $h * x$.</div>
+  </div>
+
+  <div class="insight key">
+    <p><strong>Why this matters for graphs:</strong> The spectral filtering formula $y = W^{-1}\operatorname{diag}(\hat{h})\,Wx$ does not mention the group $\ZN$ at all. It only requires an eigenbasis $W$ and a set of spectral multipliers $\hat{h}$. This is the formula that will generalize to graphs &mdash; we will simply replace $W$ with the eigenvectors of the graph Laplacian.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 10 — Three Isomorphic Algebras                        -->
+<!-- ============================================================ -->
+<section id="sec10">
+  <h2><span class="sec-num">10</span>Three Isomorphic Algebras</h2>
+
+  <p>
+    We have been building three different descriptions of the same mathematical object. Now we state the precise relationship. The following theorem is the capstone of the $\ZN$ story.
+  </p>
+
+  <div class="def-box blue">
+    <div class="def-label">Theorem 5.1 (Bamieh) &mdash; Three Isomorphic Algebras</div>
+    <p>The following three sets, each equipped with their natural operations, are <strong>isomorphic as algebras</strong>:</p>
+    <ol>
+      <li><strong>Circulant matrices</strong> $\{C_h : h \in \C^N\}$ &mdash; the set of all $N \times N$ circulant matrices, with matrix multiplication.</li>
+      <li><strong>Convolution sequences</strong> $(\C^N, *)$ &mdash; the set of all $N$-vectors, with circular convolution as multiplication.</li>
+      <li><strong>Spectral multipliers</strong> $\{\operatorname{diag}(\hat{h}) : \hat{h} \in \C^N\}$ &mdash; diagonal matrices in the DFT basis, with matrix multiplication (= pointwise multiplication of spectra).</li>
+    </ol>
+  </div>
+
+  <p>
+    The word &ldquo;isomorphic&rdquo; means there are bijective maps between these three sets that preserve addition and multiplication. In concrete terms:
+  </p>
+
+  <ul>
+    <li><strong>Embedding:</strong> $h \;\leftrightarrow\; C_h$ &mdash; any vector $h$ can be embedded as the first column of a circulant matrix, and conversely any circulant is determined by its first column.</li>
+    <li><strong>Fourier transform:</strong> $h \;\leftrightarrow\; \hat{h} = Wh$ &mdash; the DFT maps convolution sequences to spectral multipliers.</li>
+    <li><strong>Diagonalization:</strong> $C_h \;\leftrightarrow\; \operatorname{diag}(\hat{h})$ via $C_h = W^{-1}\operatorname{diag}(\hat{h})\,W$ &mdash; the DFT diagonalizes every circulant.</li>
+  </ul>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 18 &mdash; The Isomorphism</div>
+    $$
+    \underbrace{\{C_h\}}_{\text{Circulant matrices}} \;\cong\; \underbrace{(\C^N, *)}_{\text{Convolution sequences}} \;\cong\; \underbrace{\{\operatorname{diag}(\hat{h})\}}_{\text{Spectral multipliers}} \tag{18}
+    $$
+  </div>
+
+  <p>
+    The isomorphism means that any statement about one algebra translates directly into a statement about the others. Convolution of two sequences $h * g$ corresponds to multiplication of two circulants $C_h C_g = C_{h*g}$, which corresponds to pointwise multiplication of spectra $\hat{h} \cdot \hat{g} = \widehat{h*g}$. The three viewpoints are three windows onto a single algebraic structure.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 500 320" width="500" height="320">
+      <!-- Triangle vertices -->
+      <!-- Top: Circulant matrices -->
+      <rect x="155" y="15" width="190" height="50" rx="8" fill="#e8a88a" fill-opacity="0.2" stroke="#b44a2f" stroke-width="2"/>
+      <text x="250" y="45" font-family="Source Sans 3, sans-serif" font-size="14" fill="#b44a2f" text-anchor="middle" font-weight="700">Circulant Matrices {C<tspan baseline-shift="sub" font-size="10">h</tspan>}</text>
+
+      <!-- Bottom-left: Convolution sequences -->
+      <rect x="15" y="235" width="190" height="50" rx="8" fill="#8ec5b6" fill-opacity="0.2" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="110" y="258" font-family="Source Sans 3, sans-serif" font-size="14" fill="#2a6b5a" text-anchor="middle" font-weight="700">Sequences (C<tspan baseline-shift="sup" font-size="10">N</tspan>, *)</text>
+
+      <!-- Bottom-right: Spectral multipliers -->
+      <rect x="295" y="235" width="190" height="50" rx="8" fill="#a8c0e0" fill-opacity="0.2" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="390" y="258" font-family="Source Sans 3, sans-serif" font-size="14" fill="#3a5a8c" text-anchor="middle" font-weight="700">Spectral diag(h&#x0302;)</text>
+
+      <!-- Left edge: embedding h <-> C_h -->
+      <line x1="170" y1="70" x2="115" y2="230" stroke="#6b6560" stroke-width="1.8"/>
+      <polygon points="115,230 120,220 110,222" fill="#6b6560"/>
+      <polygon points="170,70 165,80 175,78" fill="#6b6560"/>
+      <text x="105" y="155" font-family="Source Sans 3, sans-serif" font-size="12" fill="#6b6560" text-anchor="middle" transform="rotate(-68,105,155)">embed h &harr; C<tspan baseline-shift="sub" font-size="9">h</tspan></text>
+
+      <!-- Right edge: diagonalization C_h <-> diag(h-hat) -->
+      <line x1="330" y1="70" x2="385" y2="230" stroke="#6b6560" stroke-width="1.8"/>
+      <polygon points="385,230 380,220 390,222" fill="#6b6560"/>
+      <polygon points="330,70 335,80 325,78" fill="#6b6560"/>
+      <text x="395" y="155" font-family="Source Sans 3, sans-serif" font-size="12" fill="#6b6560" text-anchor="middle" transform="rotate(68,395,155)">diagonalize</text>
+
+      <!-- Bottom edge: DFT h <-> h-hat -->
+      <line x1="210" y1="262" x2="290" y2="262" stroke="#6b6560" stroke-width="1.8"/>
+      <polygon points="290,262 280,257 280,267" fill="#6b6560"/>
+      <polygon points="210,262 220,257 220,267" fill="#6b6560"/>
+      <text x="250" y="300" font-family="Source Sans 3, sans-serif" font-size="12" fill="#6b6560" text-anchor="middle">DFT: h&#x0302; = Wh</text>
+    </svg>
+    <div class="caption"><strong>Figure 3.2.</strong> The commutative triangle of the three isomorphic algebras. Any path between two vertices gives the same result: embedding then diagonalizing is the same as taking the DFT then forming the diagonal. This is Bamieh&rsquo;s Theorem 5.1.</div>
+  </div>
+
+  <div class="insight physics">
+    <p><strong>Physics parallel:</strong> This triangle is analogous to the position/momentum duality in quantum mechanics. A quantum state can be described equivalently in position space $\psi(x)$, momentum space $\tilde{\psi}(p) = \Ft[\psi](p)$, or as a matrix in some operator basis. The Fourier transform shuttles between representations, but the physics is representation-independent. Here, the &ldquo;physics&rdquo; is the convolution operation, and the three algebras are three representations of it.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 11 — Why Everything Worked                            -->
+<!-- ============================================================ -->
+<section id="sec11">
+  <h2><span class="sec-num">11</span>Why Everything Worked</h2>
+
+  <p>
+    Before we move to graphs, it is essential to understand <em>why</em> the $\ZN$ story was so clean. Three structural properties conspired to make everything work. Understanding them will tell us exactly what breaks on general graphs.
+  </p>
+
+  <div class="def-box purple">
+    <div class="def-label">The Three Pillars of the Z<sub>N</sub> Story</div>
+    <ol>
+      <li><strong>Group structure.</strong> $\ZN$ is a group (under addition mod $N$) that acts on the set of vertices $\{0, 1, \ldots, N-1\}$ by translation. Every vertex &ldquo;looks the same&rdquo; &mdash; the group acts <em>transitively</em>. This is the algebraic root of translation invariance: shifting a signal by $k$ positions is the group element $k$ acting on the signal.</li>
+      <li><strong>Canonical generator.</strong> The group $\ZN$ is cyclic, generated by the single element $1$. This gives a unique &ldquo;shift by one&rdquo; operator $S$, which in turn gives a unique notion of convolution: linear operators that commute with $S$. There is no ambiguity about <em>which</em> shift to use.</li>
+      <li><strong>Distinct eigenvalues.</strong> The shift operator $S$ has $N$ <em>distinct</em> eigenvalues: the $N$th roots of unity $\omega^0, \omega^1, \ldots, \omega^{N-1}$. Because all eigenvalues are distinct, each eigenspace is one-dimensional, and the eigenbasis is unique (up to scalar multiples).</li>
+    </ol>
+  </div>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 19 &mdash; Distinct Eigenvalues</div>
+    $$
+    |\operatorname{spectrum}(S)| = N \quad\text{(all eigenvalues distinct)} \tag{19}
+    $$
+  </div>
+
+  <p>
+    The distinctness of the eigenvalues is what made the commutant theorem so powerful. Because $S$ has $N$ distinct eigenvalues, the set of matrices that commute with $S$ is <em>exactly</em> the set of polynomials in $S$ &mdash; which is exactly the set of circulant matrices. The three characterizations (group-theoretic, algebraic, spectral) all coincide precisely because of this distinctness.
+  </p>
+
+  <p>
+    To summarize the logical chain:
+  </p>
+  <ul>
+    <li>Group structure $\Rightarrow$ a natural notion of &ldquo;shift&rdquo; and translation invariance.</li>
+    <li>Canonical generator $\Rightarrow$ a unique shift operator $S$, hence a unique algebra of convolutions.</li>
+    <li>Distinct eigenvalues $\Rightarrow$ a unique eigenbasis (the DFT), and the three characterizations coincide.</li>
+  </ul>
+
+  <div class="insight key">
+    <p><strong>The punchline:</strong> Everything rested on three pillars: group structure, a canonical generator, and distinct eigenvalues. On graphs, we lose two of them.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 12 — What Will Break on Graphs                        -->
+<!-- ============================================================ -->
+<section id="sec12">
+  <h2><span class="sec-num">12</span>What Will Break on Graphs</h2>
+
+  <p>
+    Now we preview Part II of the course. Consider an arbitrary undirected graph &mdash; say, a social network, a molecule, or a finite-element mesh. What happens to our three pillars?
+  </p>
+
+  <p>
+    <strong>Pillar 1: Group structure &mdash; BROKEN.</strong> An irregular graph has no translation symmetry. There is no group acting transitively on its vertices. Vertex 0 might have degree 5 while vertex 1 has degree 2 &mdash; they are fundamentally different. The group-theoretic definition of convolution (&ldquo;linear operators that commute with the group action&rdquo;) simply does not apply.
+  </p>
+
+  <p>
+    <strong>Pillar 2: Canonical generator &mdash; BROKEN.</strong> With no group, there is no canonical shift operator. On a general graph, we will use the graph <strong>Laplacian</strong> $L$ (or the adjacency matrix $A$, or the normalized Laplacian $\tilde{L}$) as our &ldquo;shift-like&rdquo; operator. But this is a <em>choice</em>, not a necessity. Different choices lead to different notions of convolution.
+  </p>
+
+  <p>
+    <strong>Pillar 3: Distinct eigenvalues &mdash; OFTEN BROKEN.</strong> Real symmetric matrices (like $L$ and $A$) can have repeated eigenvalues. When they do, the corresponding eigenspace is multi-dimensional, and any orthonormal basis for that eigenspace works equally well. The eigenbasis is no longer unique.
+  </p>
+
+  <p>
+    Despite these losses, not everything dies. The key insight is that two of our three characterizations survive:
+  </p>
+
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Z<sub>N</sub></th>
+        <th>General Graph</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Group structure</td>
+        <td style="color:#2a6b5a;">&#10003; Z<sub>N</sub> acts on vertices</td>
+        <td style="color:#b44a2f;">&#10007; No transitive group</td>
+      </tr>
+      <tr>
+        <td>Canonical generator</td>
+        <td style="color:#2a6b5a;">&#10003; Shift S</td>
+        <td style="color:#b44a2f;">&#10007; Must choose (L, A, &hellip;)</td>
+      </tr>
+      <tr>
+        <td>Distinct eigenvalues</td>
+        <td style="color:#2a6b5a;">&#10003; (roots of unity)</td>
+        <td style="color:#b44a2f;">Often &#10007; (repeated)</td>
+      </tr>
+      <tr>
+        <td>Algebraic char. (poly in operator)</td>
+        <td style="color:#2a6b5a;">&#10003;</td>
+        <td style="color:#2a6b5a;">&#10003;</td>
+      </tr>
+      <tr>
+        <td>Spectral char. (diagonal in eigenbasis)</td>
+        <td style="color:#2a6b5a;">&#10003;</td>
+        <td style="color:#2a6b5a;">&#10003;</td>
+      </tr>
+      <tr>
+        <td>Group-theoretic char. (commute with S)</td>
+        <td style="color:#2a6b5a;">&#10003;</td>
+        <td style="color:#b44a2f;">&#10007;</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 20 &mdash; What Survives</div>
+    $$
+    \underbrace{p(L) = \theta_0 I + \theta_1 L + \cdots + \theta_d L^d}_{\text{Algebraic: polynomial in }L}
+    \qquad\longleftrightarrow\qquad
+    \underbrace{U\,\operatorname{diag}(\hat{h})\,U^T\,x}_{\text{Spectral: diagonal in eigenbasis}} \tag{20}
+    $$
+  </div>
+
+  <p>
+    The algebraic characterization &mdash; define convolutions as polynomials in a chosen operator &mdash; survives because we can always form polynomials in any matrix. The spectral characterization &mdash; define convolutions as diagonal in the operator&rsquo;s eigenbasis &mdash; survives because any real symmetric matrix has a complete orthonormal eigenbasis (even with repeated eigenvalues, we can always choose one). The group-theoretic characterization is the one that genuinely dies, because an irregular graph has no group.
+  </p>
+
+  <div class="insight warning">
+    <p><strong>Subtlety ahead:</strong> On $\ZN$, the algebraic and spectral characterizations define the <em>same</em> set of operators. On graphs with repeated eigenvalues, the spectral class is <em>strictly larger</em> than the polynomial class. There exist spectral multipliers that are not polynomials in $L$. This gap will become important in Chapter 5 when we compare spectral and polynomial graph convolutions.</p>
+  </div>
+
+  <p>
+    With this roadmap in hand, we are ready to leave the comfort of $\ZN$ and step onto general graphs. In the next chapter, we begin by symmetrizing the shift operator (forming $A = S + S^*$), see eigenvalue collapse in action, introduce the graph Laplacian $L$, and verify which characterizations survive.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- FOOTER NAV                                                   -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="gcn-02-discovering-dft.html"><span class="dir">&larr; Previous</span><span class="title">Discovering the DFT</span></a><a class="next" href="gcn-04-ring-to-graph.html"><span class="dir">Next &rarr;</span><span class="title">From the Ring to General Graphs</span></a></div>
+</main>
+<footer><p><a href="gcn-index.html">&larr; Course Home</a> &middot; <a href="../index.html">All Notes</a></p></footer>
+<a href="#" class="back-to-top" aria-label="Back to top">&#8593;</a>
+<script>
+const fill = document.querySelector('.progress-fill');
+const main = document.querySelector('main');
+function updateProgress() {
+  const top = main.getBoundingClientRect().top;
+  const height = main.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (-top / height) * 100));
+  fill.style.width = pct + '%';
+}
+const btn = document.querySelector('.back-to-top');
+function updateBtn() {
+  btn.classList.toggle('visible', window.scrollY > 600);
+}
+window.addEventListener('scroll', function() { updateProgress(); updateBtn(); }, { passive: true });
+updateProgress();
+</script>
+</body>
+</html>

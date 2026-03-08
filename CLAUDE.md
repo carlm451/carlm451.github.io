@@ -43,6 +43,17 @@ carlm451.github.io/
 │   ├── fno-06-ultrasonic-ndt.html     # Ch 6: Elastic waves, P/S-waves, Snell's law, angle beam NDT setup
 │   └── fno-07-fno-for-cracks.html     # Ch 7: Crack parameterization, FNO architecture, training, challenges
 │
+├── gcn/                   # Discovering Graph Convolutions course (live)
+│   ├── gcn-index.html         # Course table of contents (body.page-index)
+│   ├── gcn-01-circulants.html     # Ch 1: Z_N signals, shift operator S, circulant matrices, circular convolution
+│   ├── gcn-02-discovering-dft.html # Ch 2: Shift invariance, simultaneous diagonalization, eigenvectors of S*, DFT emerges
+│   ├── gcn-03-big-picture-zn.html # Ch 3: DFT matrix, spectral filtering, three isomorphic algebras, what breaks on graphs
+│   ├── gcn-04-ring-to-graph.html  # Ch 4: A=S+S*, eigenvalue collapse, graph Laplacian, eigendecomposition, three chars revisited
+│   ├── gcn-05-graph-convolutions.html # Ch 5: GFT, spectral convolutions, polynomial convolutions, lost characterization
+│   ├── gcn-06-spectral-to-nn.html # Ch 6: ChebNet, GCN, message passing, oversmoothing, full GCN layer walkthrough
+│   ├── gcn-07-analogies.html      # Ch 7: Complete analogy table, modern GNN variants, beyond graphs, further reading
+│   └── eigenvisual_v7.html        # Interactive eigenvisual app (copied from graphconvolutions/, embedded in Ch 2)
+│
 ├── [pinns/]               # Physics-Informed Neural Networks (planned)
 └── [pde/]                 # PDEs for ML (planned)
 ```
@@ -147,6 +158,30 @@ The FNO course breaks down Li et al. (arXiv:2010.08895) with a 2D Darcy flow run
 ### Equation Numbering
 Equations numbered sequentially across all chapters: Eq. 1 (training objective) through Eq. 21 (Bayesian inversion posterior).
 
+## GCN Course — Key Facts
+
+The GCN course tells the mathematical story of how graph convolutions emerge from the same ideas that produce the DFT, following Bamieh (2018)'s "discovery" approach. Section numbering is globally sequential within the GCN course:
+- **Chapter 1 (§1–§4):** Z_N signals on a ring, shift operator S (8×8), circulant matrices as polynomials in S, circular convolution = polynomial in S
+- **Chapter 2 (§5–§8):** Shift invariance as commutativity (SM=MS), simultaneous diagonalization theorem, constructive derivation of eigenvectors of S*, DFT forced by diagonalization
+- **Chapter 3 (§9–§12):** DFT matrix W, spectral filtering recipe (DFT→multiply→IDFT), three isomorphic algebras (Bamieh Thm 5.1), three pillars, preview of what breaks on graphs
+- **Chapter 4 (§13–§17):** A=S+S* (undirected ring), eigenvalue collapse λ_k=2cos(2πk/N), 6-vertex running graph, graph Laplacian L=D−A, full eigendecomposition, three characterizations revisited
+- **Chapter 5 (§18–§22):** Graph Fourier Transform (x̂=U^Tx), spectral graph convolutions (U diag(ĥ) U^T x), polynomial convolutions (p_θ(L)), connecting both views, lost group-theoretic characterization
+- **Chapter 6 (§23–§27):** Computational bottleneck (O(N³) vs O(d|E|)), ChebNet, GCN (Kipf & Welling degree-1), message passing as consequence, oversmoothing, full GCN layer worked example
+- **Chapter 7 (§28–§32):** Complete Z_N↔graph analogy table, what we discovered, modern GNN variants (GAT, GraphSAGE, GIN), beyond graphs (Hodge Laplacian), further reading
+
+### Running Examples
+- **Part I (Z_8):** Shift operator S on Z_8, kernel h = [3,1,0,0,0,0,0,2], circulant matrix C_h, DFT verification
+- **Part II (6-vertex graph):** Two triangles {0,1,2} and {3,4,5} connected by bridge edge {2,3}
+  - Adjacency A, Degree D = diag(2,2,3,3,2,2), Laplacian L = D−A
+  - Eigenvalues: λ₀=0, λ₁=(5−√17)/2≈0.44, λ₂=λ₃=λ₄=3 (triple!), λ₅=(5+√17)/2≈4.56
+  - The triple eigenvalue at 3 demonstrates non-unique eigenbasis on graphs
+
+### Interactive Elements
+- **eigenvisual_v7.html** — copied from graphconvolutions/ into gcn/, embedded via iframe in Ch 2 §7
+
+### Equation Numbering
+Equations numbered sequentially across all chapters: Eq. 1 (signal as vector) through Eq. 48 (Hodge Laplacian).
+
 ## Key Reference Papers
 
 ### TDL Course
@@ -164,6 +199,14 @@ Equations numbered sequentially across all chapters: Eq. 1 (training objective) 
 1. **Li et al. (2020)** — "Fourier Neural Operator for Parametric Partial Differential Equations" (arXiv:2010.08895) — the primary paper this course provides background for
 2. **COMSOL tutorial** — "Angle Beam Nondestructive Testing" (models.aco.angle_beam_ndt) — source material for Part IV NDT application
 3. **Mehtaj & Banerjee (2025)** — "SciML for Elastic and Acoustic Wave Propagation" (Sensors, 25, 3588) — review of FNO/DeepONet/PINNs for wave problems
+
+### GCN Course
+1. **Bamieh (2018)** — "A Tutorial on Matrix Functions and their use in the Discovery of the DFT" — the primary reference for Part I (circulant matrices, simultaneous diagonalization, discovering the DFT)
+2. **Hammond, Vandergheynst & Gribonval (2011)** — "Wavelets on Graphs via Spectral Graph Theory" — foundational graph signal processing, ancestor of ChebNet
+3. **Defferrard, Bresson & Vandergheynst (2016)** — "Convolutional Neural Networks on Graphs with Fast Localized Spectral Filtering" — ChebNet, bridge from spectral theory to neural networks
+4. **Kipf & Welling (2017)** — "Semi-Supervised Classification with Graph Convolutional Networks" — the GCN degree-1 simplification
+5. **Bronstein, Bruna, Cohen & Veličković (2021)** — "Geometric Deep Learning: Grids, Groups, Graphs, Geodesics, and Gauges" — the "5G" blueprint paper
+6. **Distill.pub (2021)** — "Understanding Convolutions on Graphs" — complementary visual introduction (this course goes deeper mathematically)
 
 ## Navigation Pattern
 
@@ -203,6 +246,7 @@ From `index.html` placeholders (in rough priority order):
 
 | Course | Directory | File prefix | Status |
 |--------|-----------|-------------|--------|
+| Discovering Graph Convolutions | `gcn/` | `gcn-` | Live |
 | Physics-Informed Neural Networks | `pinns/` | `pinns-` | Planned |
 | Fourier Neural Operators | `fno/` | `fno-` | Live |
 | DeepONet & Neural Operator Theory | `deeponet/` | `deeponet-` | Planned |

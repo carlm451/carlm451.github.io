@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Convolutions — The Two Surviving Characterizations — GCN Course</title>
+<script>
+window.MathJax={
+  tex:{
+    inlineMath:[['$','$'],['\\(','\\)']],
+    displayMath:[['$$','$$'],['\\[','\\]']],
+    macros:{
+      R:'\\mathbb{R}',
+      C:'\\mathbb{C}',
+      Z:'\\mathbb{Z}',
+      ZN:'{\\mathbb{Z}_N}',
+      Ft:'\\mathcal{F}',
+      Fti:'\\mathcal{F}^{-1}'
+    }
+  },
+  svg:{fontCache:'global'}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-chapter">
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / <a href="gcn-index.html">GCN</a> / Chapter 5</div>
+    <span class="ch-num">Chapter 5</span>
+    <h1>Graph Convolutions &mdash; The Two <strong>Surviving Characterizations</strong></h1>
+    <p class="subtitle">The graph Fourier transform, spectral and polynomial convolutions, connecting both views, and the lost characterization.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="gcn-04-ring-to-graph.html">&larr; From Ring to Graph</a><span class="ch-title">Chapter 5</span><a href="gcn-06-spectral-to-nn.html">Spectral Theory to NNs &rarr;</a></div></nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<!-- Table of Contents -->
+<div class="toc">
+  <div class="toc-label">In this chapter</div>
+  <ol>
+    <li><a href="#sec18"><span class="toc-num">18</span>The Graph Fourier Transform</a></li>
+    <li><a href="#sec19"><span class="toc-num">19</span>Spectral Graph Convolutions</a></li>
+    <li><a href="#sec20"><span class="toc-num">20</span>Polynomial Graph Convolutions</a></li>
+    <li><a href="#sec21"><span class="toc-num">21</span>Connecting Spectral and Polynomial</a></li>
+    <li><a href="#sec22"><span class="toc-num">22</span>The Lost Characterization</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 18 — The Graph Fourier Transform                      -->
+<!-- ============================================================ -->
+<section id="sec18">
+  <h2><span class="sec-num">18</span>The Graph Fourier Transform</h2>
+
+  <p>
+    In the previous chapter we built the graph Laplacian $L$ and observed that it is real, symmetric, and positive semidefinite. The spectral theorem guarantees a decomposition:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eigendecomposition of the Laplacian</div>
+    $$
+    L = U \Lambda U^T, \quad U = [u_0 \mid u_1 \mid \cdots \mid u_{N-1}], \quad \Lambda = \operatorname{diag}(\lambda_0, \lambda_1, \ldots, \lambda_{N-1})
+    $$
+  </div>
+
+  <p>
+    where $u_0, u_1, \ldots, u_{N-1}$ are orthonormal eigenvectors and $0 = \lambda_0 \leq \lambda_1 \leq \cdots \leq \lambda_{N-1}$ are the corresponding eigenvalues. The columns of $U$ form an orthonormal basis for $\R^N$, meaning $U^T U = U U^T = I$.
+  </p>
+
+  <p>
+    This eigendecomposition gives us a new basis in which to express any graph signal $x \in \R^N$. The <strong>Graph Fourier Transform</strong> (GFT) projects a signal onto these eigenvectors:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 29 &mdash; Graph Fourier Transform</div>
+    $$
+    \hat{x} = U^T x
+    \tag{29}
+    $$
+  </div>
+
+  <p>
+    The coefficient $\hat{x}_k = u_k^T x$ measures how much of the signal $x$ lies along the $k$-th eigenvector $u_k$. To recover the original signal from its transform, we simply invert:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 30 &mdash; Inverse GFT</div>
+    $$
+    x = U \hat{x}
+    \tag{30}
+    $$
+  </div>
+
+  <p>
+    This works because $U$ is orthogonal: $x = UU^T x = U\hat{x}$. The signal $x$ can be reconstructed as a linear combination of eigenvectors: $x = \sum_{k=0}^{N-1} \hat{x}_k \, u_k$.
+  </p>
+
+  <p>
+    The eigenvectors of $L$ serve as <strong>graph frequencies</strong>, with the eigenvalue $\lambda_k$ measuring the "frequency" or oscillation level of each mode:
+  </p>
+
+  <ul>
+    <li><strong>$u_0$ ($\lambda_0 = 0$)</strong>: the constant signal $u_0 \propto (1,1,1,1,1,1)^T$. This is the lowest frequency &mdash; maximally smooth, with zero variation across every edge. It is always an eigenvector of any connected graph's Laplacian, because $L\mathbf{1} = (D - A)\mathbf{1} = D\mathbf{1} - A\mathbf{1} = d - d = 0$.</li>
+    <li><strong>$u_1$ ($\lambda_1 \approx 0.44$)</strong>: a slowly varying signal that takes similar values within each triangle but changes sign across the bridge edge $(2,3)$. This is the <em>Fiedler vector</em> &mdash; it reveals the graph's bottleneck.</li>
+    <li><strong>$u_2, u_3, u_4$ ($\lambda_2 = \lambda_3 = \lambda_4 = 3$)</strong>: a degenerate eigenspace. These signals oscillate within the triangles, with higher variation than $u_1$.</li>
+    <li><strong>$u_5$ ($\lambda_5 \approx 4.56$)</strong>: the highest frequency &mdash; maximally oscillatory, with the greatest total variation across edges.</li>
+  </ul>
+
+  <p>
+    The analogy to the classical DFT is exact in structure: on $\ZN$, the DFT projects a signal onto the complex exponentials $e^{i2\pi m k/N}$, which are the eigenvectors of the shift operator $S$. On a graph, the GFT projects onto the eigenvectors of $L$. The frequencies $\lambda_k$ play the role of the classical frequency indices.
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">Graph Fourier Transform</div>
+    <p>Given $L = U\Lambda U^T$, the <strong>GFT</strong> of a signal $x \in \R^N$ is $\hat{x} = U^T x$. The coefficient $\hat{x}_k = u_k^T x$ measures the component of $x$ along the $k$-th graph frequency $u_k$. The inverse GFT is $x = U\hat{x}$.</p>
+  </div>
+
+  <p>
+    <strong>Worked example.</strong> Consider the signal $x = (1, 1, 0, 0, -1, -1)^T$ on our 6-vertex graph. This signal assigns $+1$ to the first triangle's vertices 0 and 1, $0$ to the bridge vertices 2 and 3, and $-1$ to the second triangle's vertices 4 and 5. Its GFT coefficients $\hat{x} = U^T x$ tell us how this signal decomposes into graph frequencies. The signal has no DC component (it sums to zero, so $\hat{x}_0 = 0$) and loads heavily onto the Fiedler mode $u_1$ because it varies primarily across the bridge.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 260" width="700" height="260">
+      <!-- Left: signal on graph -->
+      <text x="140" y="20" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">Signal x on graph</text>
+      <!-- Edges -->
+      <line x1="60" y1="80" x2="140" y2="80" class="edge-line" stroke="#6b6560" stroke-width="1.5"/>
+      <line x1="60" y1="80" x2="100" y2="145" class="edge-line" stroke="#6b6560" stroke-width="1.5"/>
+      <line x1="140" y1="80" x2="100" y2="145" class="edge-line" stroke="#6b6560" stroke-width="1.5"/>
+      <line x1="100" y1="145" x2="180" y2="145" class="edge-line" stroke="#6b6560" stroke-width="1.5"/>
+      <line x1="180" y1="145" x2="220" y2="80" class="edge-line" stroke="#6b6560" stroke-width="1.5"/>
+      <line x1="180" y1="145" x2="220" y2="210" class="edge-line" stroke="#6b6560" stroke-width="1.5"/>
+      <line x1="220" y1="80" x2="220" y2="210" class="edge-line" stroke="#6b6560" stroke-width="1.5"/>
+      <!-- Nodes with signal values as color -->
+      <!-- v0: x=+1 (warm) -->
+      <circle cx="60" cy="80" r="18" fill="#e07040" stroke="#b44a2f" stroke-width="2"/>
+      <text x="60" y="85" text-anchor="middle" class="label-text" font-weight="bold" fill="#fff">+1</text>
+      <text x="60" y="60" text-anchor="middle" class="label-sm" fill="#6b6560">v0</text>
+      <!-- v1: x=+1 (warm) -->
+      <circle cx="140" cy="80" r="18" fill="#e07040" stroke="#b44a2f" stroke-width="2"/>
+      <text x="140" y="85" text-anchor="middle" class="label-text" font-weight="bold" fill="#fff">+1</text>
+      <text x="140" y="60" text-anchor="middle" class="label-sm" fill="#6b6560">v1</text>
+      <!-- v2: x=0 (neutral) -->
+      <circle cx="100" cy="145" r="18" fill="#d4cfc8" stroke="#6b6560" stroke-width="2"/>
+      <text x="100" y="150" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">0</text>
+      <text x="100" y="175" text-anchor="middle" class="label-sm" fill="#6b6560">v2</text>
+      <!-- v3: x=0 (neutral) -->
+      <circle cx="180" cy="145" r="18" fill="#d4cfc8" stroke="#6b6560" stroke-width="2"/>
+      <text x="180" y="150" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">0</text>
+      <text x="180" y="175" text-anchor="middle" class="label-sm" fill="#6b6560">v3</text>
+      <!-- v4: x=-1 (cool) -->
+      <circle cx="220" cy="80" r="18" fill="#4a8ab0" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="220" y="85" text-anchor="middle" class="label-text" font-weight="bold" fill="#fff">-1</text>
+      <text x="220" y="60" text-anchor="middle" class="label-sm" fill="#6b6560">v4</text>
+      <!-- v5: x=-1 (cool) -->
+      <circle cx="220" cy="210" r="18" fill="#4a8ab0" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="220" y="215" text-anchor="middle" class="label-text" font-weight="bold" fill="#fff">-1</text>
+      <text x="220" y="240" text-anchor="middle" class="label-sm" fill="#6b6560">v5</text>
+
+      <!-- Arrow -->
+      <line x1="280" y1="130" x2="340" y2="130" stroke="#6b6560" stroke-width="2" marker-end="url(#arrowGFT)"/>
+      <text x="310" y="120" text-anchor="middle" class="label-sm" fill="#6b6560">GFT</text>
+      <text x="310" y="148" text-anchor="middle" class="label-sm" fill="#6b6560">x&#x0302; = U&#x1D40;x</text>
+      <defs>
+        <marker id="arrowGFT" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#6b6560"/>
+        </marker>
+      </defs>
+
+      <!-- Right: bar chart of GFT coefficients -->
+      <text x="520" y="20" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">GFT coefficients x&#x0302;</text>
+      <!-- Axes -->
+      <line x1="370" y1="200" x2="670" y2="200" stroke="#6b6560" stroke-width="1"/>
+      <line x1="370" y1="40" x2="370" y2="200" stroke="#6b6560" stroke-width="1"/>
+      <!-- Zero line -->
+      <line x1="370" y1="130" x2="670" y2="130" stroke="#ccc8c0" stroke-width="1" stroke-dasharray="4,3"/>
+      <!-- Axis labels -->
+      <text x="370" y="218" text-anchor="middle" class="label-sm" fill="#6b6560">0</text>
+      <text x="420" y="218" text-anchor="middle" class="label-sm" fill="#6b6560">0.44</text>
+      <text x="470" y="218" text-anchor="middle" class="label-sm" fill="#6b6560">3</text>
+      <text x="520" y="218" text-anchor="middle" class="label-sm" fill="#6b6560">3</text>
+      <text x="570" y="218" text-anchor="middle" class="label-sm" fill="#6b6560">3</text>
+      <text x="620" y="218" text-anchor="middle" class="label-sm" fill="#6b6560">4.56</text>
+      <text x="520" y="245" text-anchor="middle" class="label-sm" fill="#6b6560">eigenvalue &#955;&#x2096;</text>
+      <!-- Bars: x0_hat ~ 0 (DC), x1_hat ~ large (Fiedler), x2-x4 ~ small, x5 ~ 0 -->
+      <!-- Bar 0: ~0 -->
+      <rect x="360" y="128" width="20" height="4" fill="#d4cfc8" stroke="#6b6560" stroke-width="0.5"/>
+      <!-- Bar 1: large positive (Fiedler) -->
+      <rect x="410" y="55" width="20" height="75" fill="#e07040" stroke="#b44a2f" stroke-width="0.5"/>
+      <text x="420" y="48" text-anchor="middle" class="label-sm" fill="#b44a2f" font-weight="bold">1.87</text>
+      <!-- Bar 2: small -->
+      <rect x="460" y="115" width="20" height="15" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="0.5"/>
+      <!-- Bar 3: small -->
+      <rect x="510" y="120" width="20" height="10" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="0.5"/>
+      <!-- Bar 4: small -->
+      <rect x="560" y="118" width="20" height="12" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="0.5"/>
+      <!-- Bar 5: ~0 -->
+      <rect x="610" y="127" width="20" height="6" fill="#d4cfc8" stroke="#6b6560" stroke-width="0.5"/>
+    </svg>
+    <div class="caption"><strong>Figure 5.1.</strong> Left: a signal $x = (1,1,0,0,-1,-1)^T$ on the 6-vertex running example, with warm colors for positive values and cool colors for negative. Right: its GFT coefficients $\hat{x}_k$ plotted against the eigenvalues $\lambda_k$. The signal loads heavily onto the Fiedler mode ($\lambda_1 \approx 0.44$) because it varies primarily across the bridge edge.</div>
+  </div>
+
+  <div class="insight physics">
+    <p><strong>Physics intuition:</strong> The GFT decomposes a graph signal into its "vibration modes." Small eigenvalues correspond to slow, smooth variations (like the fundamental mode of a drum). Large eigenvalues correspond to rapid, oscillatory variations (like high harmonics). The Laplacian eigenvectors are literally the normal modes of a network of springs connected along the graph's edges.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 19 — Spectral Graph Convolutions                      -->
+<!-- ============================================================ -->
+<section id="sec19">
+  <h2><span class="sec-num">19</span>Spectral Graph Convolutions</h2>
+
+  <p>
+    With the GFT in hand, we can define graph convolutions by exactly the same recipe used on $\ZN$: transform to the frequency domain, multiply by a spectral response, and transform back.
+  </p>
+
+  <p>
+    A <strong>spectral graph convolution</strong> filters a signal $x$ using a spectral response $\hat{h} = (\hat{h}_0, \hat{h}_1, \ldots, \hat{h}_{N-1})^T$. The filter independently scales each graph frequency:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 31 &mdash; Spectral graph convolution</div>
+    $$
+    y = U \operatorname{diag}(\hat{h}_0, \ldots, \hat{h}_{N-1})\, U^T x
+    \tag{31}
+    $$
+  </div>
+
+  <p>
+    The recipe proceeds in three steps, directly paralleling the classical Fourier filtering pipeline:
+  </p>
+
+  <ol>
+    <li><strong>GFT:</strong> compute $\hat{x} = U^T x$ &mdash; project the signal onto graph frequencies.</li>
+    <li><strong>Multiply:</strong> compute $\hat{y}_k = \hat{h}_k \cdot \hat{x}_k$ for each $k$ &mdash; scale each frequency independently.</li>
+    <li><strong>Inverse GFT:</strong> compute $y = U \hat{y}$ &mdash; map back to the vertex domain.</li>
+  </ol>
+
+  <p>
+    This is the <strong>spectral characterization</strong>: graph convolutions are precisely those linear operators that are diagonal in the Laplacian eigenbasis. They act on each graph frequency independently, just as classical convolutions act on each Fourier mode independently.
+  </p>
+
+  <p>
+    The choice of $\hat{h}$ determines the filter's behavior. A <em>low-pass</em> filter sets $\hat{h}_k \approx 1$ for small $\lambda_k$ and $\hat{h}_k \approx 0$ for large $\lambda_k$, retaining smooth components and suppressing oscillatory ones. A <em>high-pass</em> filter does the opposite. A <em>band-pass</em> filter retains only an intermediate range.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 120" width="700" height="120">
+      <!-- Pipeline diagram: x → [U^T] → x̂ → [×ĥ] → ŷ → [U] → y -->
+      <!-- x -->
+      <rect x="10" y="35" width="60" height="50" rx="6" fill="#faf8f5" stroke="#b44a2f" stroke-width="2"/>
+      <text x="40" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#b44a2f">x</text>
+      <text x="40" y="100" text-anchor="middle" class="label-sm" fill="#6b6560">signal</text>
+      <!-- Arrow -->
+      <line x1="75" y1="60" x2="115" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowPipe)"/>
+      <!-- U^T -->
+      <rect x="120" y="35" width="80" height="50" rx="6" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="160" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">U&#x1D40;</text>
+      <text x="160" y="100" text-anchor="middle" class="label-sm" fill="#6b6560">GFT</text>
+      <!-- Arrow -->
+      <line x1="205" y1="60" x2="245" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowPipe)"/>
+      <!-- x_hat -->
+      <rect x="250" y="35" width="60" height="50" rx="6" fill="#faf8f5" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="280" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a6b5a">x&#x0302;</text>
+      <text x="280" y="100" text-anchor="middle" class="label-sm" fill="#6b6560">spectrum</text>
+      <!-- Arrow -->
+      <line x1="315" y1="60" x2="355" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowPipe)"/>
+      <!-- ×ĥ -->
+      <rect x="360" y="35" width="80" height="50" rx="6" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="400" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">&times; h&#x0302;</text>
+      <text x="400" y="100" text-anchor="middle" class="label-sm" fill="#6b6560">filter</text>
+      <!-- Arrow -->
+      <line x1="445" y1="60" x2="485" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowPipe)"/>
+      <!-- y_hat -->
+      <rect x="490" y="35" width="60" height="50" rx="6" fill="#faf8f5" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="520" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#3a5a8c">y&#x0302;</text>
+      <text x="520" y="100" text-anchor="middle" class="label-sm" fill="#6b6560">filtered</text>
+      <!-- Arrow -->
+      <line x1="555" y1="60" x2="595" y2="60" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowPipe)"/>
+      <!-- U -->
+      <rect x="600" y="35" width="80" height="50" rx="6" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="640" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">U</text>
+      <text x="640" y="100" text-anchor="middle" class="label-sm" fill="#6b6560">inverse GFT</text>
+      <defs>
+        <marker id="arrowPipe" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#6b6560"/>
+        </marker>
+      </defs>
+      <!-- Top label: y = h * x -->
+      <text x="350" y="20" text-anchor="middle" class="label-text" fill="#2a2520" font-style="italic">y = h * x (graph convolution)</text>
+    </svg>
+    <div class="caption"><strong>Figure 5.2.</strong> The spectral convolution pipeline: transform to the graph frequency domain via $U^T$, multiply each frequency by the spectral response $\hat{h}_k$, and transform back via $U$. This is structurally identical to classical Fourier filtering on $\ZN$.</div>
+  </div>
+
+  <div class="insight key">
+    <p><strong>Key idea:</strong> The recipe is identical to classical Fourier filtering: transform, multiply, invert. Only the basis has changed &mdash; from complex exponentials to graph Laplacian eigenvectors.</p>
+  </div>
+
+  <p>
+    <strong>Example: low-pass filter on the running graph.</strong> Consider a spectral response that keeps low frequencies and kills high ones: $\hat{h} = (1, 0.9, 0, 0, 0, 0)^T$. This retains the constant mode fully, keeps 90% of the Fiedler mode, and zeroes out everything at $\lambda \geq 3$. Applied to the signal $x = (1,1,0,0,-1,-1)^T$, this filter would produce a smoothed version that preserves the gross "left-positive, right-negative" structure while eliminating any within-triangle variation.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 20 — Polynomial Graph Convolutions                    -->
+<!-- ============================================================ -->
+<section id="sec20">
+  <h2><span class="sec-num">20</span>Polynomial Graph Convolutions</h2>
+
+  <p>
+    There is a second, purely algebraic way to define graph convolutions &mdash; one that never mentions eigenvalues or eigenvectors. A <strong>polynomial graph convolution</strong> of degree $d$ is:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 32 &mdash; Polynomial graph convolution</div>
+    $$
+    p_\theta(L) = \sum_{k=0}^{d} \theta_k L^k = \theta_0 I + \theta_1 L + \theta_2 L^2 + \cdots + \theta_d L^d
+    \tag{32}
+    $$
+  </div>
+
+  <p>
+    This is a matrix polynomial in $L$ with learnable coefficients $\theta = (\theta_0, \theta_1, \ldots, \theta_d)^T$. The output for signal $x$ is $y = p_\theta(L)\, x$. The crucial property is <strong>locality</strong>: the matrix $L^k$ connects $k$-hop neighbors, and nothing farther.
+  </p>
+
+  <p>
+    To see why, recall that $L_{ij} \neq 0$ only when $i = j$ or $i \sim j$ (i.e., $i$ and $j$ are adjacent). Therefore $(L^2)_{ij} = \sum_m L_{im} L_{mj}$ is nonzero only when there exists some vertex $m$ that is adjacent to both $i$ and $j$ &mdash; meaning $i$ and $j$ are at most 2 hops apart. By induction:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 33 &mdash; Locality of polynomial filters</div>
+    $$
+    (L^k)_{ij} = 0 \quad \text{if} \quad \operatorname{dist}(i,j) > k
+    \tag{33}
+    $$
+  </div>
+
+  <p>
+    A degree-$d$ polynomial filter only mixes information within $d$-hop neighborhoods. This is the <strong>algebraic characterization</strong>: graph convolutions are polynomials in the graph operator $L$, and the polynomial degree controls the spatial reach.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 700 200" width="700" height="200">
+      <!-- Three small graphs showing L^0, L^1, L^2 neighborhoods of vertex 0 -->
+      <!-- Graph 1: L^0 (just vertex 0) -->
+      <text x="110" y="20" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">L&#x2070; (0-hop)</text>
+      <!-- Edges (faded) -->
+      <line x1="50" y1="60" x2="110" y2="60" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="50" y1="60" x2="80" y2="115" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="110" y1="60" x2="80" y2="115" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="80" y1="115" x2="140" y2="115" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="140" y1="115" x2="170" y2="60" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="140" y1="115" x2="170" y2="170" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="170" y1="60" x2="170" y2="170" stroke="#e0dcd8" stroke-width="1"/>
+      <!-- Highlighted vertex 0 -->
+      <circle cx="50" cy="60" r="14" fill="#e07040" stroke="#b44a2f" stroke-width="2.5"/>
+      <text x="50" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#fff">0</text>
+      <!-- Other vertices (faded) -->
+      <circle cx="110" cy="60" r="12" fill="#f0ece8" stroke="#ccc8c0" stroke-width="1.5"/>
+      <text x="110" y="65" text-anchor="middle" class="label-sm" fill="#aaa5a0">1</text>
+      <circle cx="80" cy="115" r="12" fill="#f0ece8" stroke="#ccc8c0" stroke-width="1.5"/>
+      <text x="80" y="120" text-anchor="middle" class="label-sm" fill="#aaa5a0">2</text>
+      <circle cx="140" cy="115" r="12" fill="#f0ece8" stroke="#ccc8c0" stroke-width="1.5"/>
+      <text x="140" y="120" text-anchor="middle" class="label-sm" fill="#aaa5a0">3</text>
+      <circle cx="170" cy="60" r="12" fill="#f0ece8" stroke="#ccc8c0" stroke-width="1.5"/>
+      <text x="170" y="65" text-anchor="middle" class="label-sm" fill="#aaa5a0">4</text>
+      <circle cx="170" cy="170" r="12" fill="#f0ece8" stroke="#ccc8c0" stroke-width="1.5"/>
+      <text x="170" y="175" text-anchor="middle" class="label-sm" fill="#aaa5a0">5</text>
+
+      <!-- Graph 2: L^1 (vertex 0 and direct neighbors 1,2) -->
+      <text x="360" y="20" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">L&#xB9; (1-hop)</text>
+      <!-- Edges -->
+      <line x1="300" y1="60" x2="360" y2="60" stroke="#b44a2f" stroke-width="2"/>
+      <line x1="300" y1="60" x2="330" y2="115" stroke="#b44a2f" stroke-width="2"/>
+      <line x1="360" y1="60" x2="330" y2="115" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="330" y1="115" x2="390" y2="115" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="390" y1="115" x2="420" y2="60" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="390" y1="115" x2="420" y2="170" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="420" y1="60" x2="420" y2="170" stroke="#e0dcd8" stroke-width="1"/>
+      <!-- Highlighted vertices 0, 1, 2 -->
+      <circle cx="300" cy="60" r="14" fill="#e07040" stroke="#b44a2f" stroke-width="2.5"/>
+      <text x="300" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#fff">0</text>
+      <circle cx="360" cy="60" r="14" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="360" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">1</text>
+      <circle cx="330" cy="115" r="14" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="330" y="120" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">2</text>
+      <!-- Faded -->
+      <circle cx="390" cy="115" r="12" fill="#f0ece8" stroke="#ccc8c0" stroke-width="1.5"/>
+      <text x="390" y="120" text-anchor="middle" class="label-sm" fill="#aaa5a0">3</text>
+      <circle cx="420" cy="60" r="12" fill="#f0ece8" stroke="#ccc8c0" stroke-width="1.5"/>
+      <text x="420" y="65" text-anchor="middle" class="label-sm" fill="#aaa5a0">4</text>
+      <circle cx="420" cy="170" r="12" fill="#f0ece8" stroke="#ccc8c0" stroke-width="1.5"/>
+      <text x="420" y="175" text-anchor="middle" class="label-sm" fill="#aaa5a0">5</text>
+
+      <!-- Graph 3: L^2 (vertex 0, neighbors 1,2, and 2-hop neighbor 3) -->
+      <text x="600" y="20" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">L&#xB2; (2-hop)</text>
+      <!-- Edges -->
+      <line x1="540" y1="60" x2="600" y2="60" stroke="#b44a2f" stroke-width="2"/>
+      <line x1="540" y1="60" x2="570" y2="115" stroke="#b44a2f" stroke-width="2"/>
+      <line x1="600" y1="60" x2="570" y2="115" stroke="#b44a2f" stroke-width="2"/>
+      <line x1="570" y1="115" x2="630" y2="115" stroke="#2a6b5a" stroke-width="2"/>
+      <line x1="630" y1="115" x2="660" y2="60" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="630" y1="115" x2="660" y2="170" stroke="#e0dcd8" stroke-width="1"/>
+      <line x1="660" y1="60" x2="660" y2="170" stroke="#e0dcd8" stroke-width="1"/>
+      <!-- Highlighted vertices 0, 1, 2, 3 -->
+      <circle cx="540" cy="60" r="14" fill="#e07040" stroke="#b44a2f" stroke-width="2.5"/>
+      <text x="540" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#fff">0</text>
+      <circle cx="600" cy="60" r="14" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="600" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">1</text>
+      <circle cx="570" cy="115" r="14" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="570" y="120" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">2</text>
+      <circle cx="630" cy="115" r="14" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="630" y="120" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">3</text>
+      <!-- Faded -->
+      <circle cx="660" cy="60" r="12" fill="#f0ece8" stroke="#ccc8c0" stroke-width="1.5"/>
+      <text x="660" y="65" text-anchor="middle" class="label-sm" fill="#aaa5a0">4</text>
+      <circle cx="660" cy="170" r="12" fill="#f0ece8" stroke="#ccc8c0" stroke-width="1.5"/>
+      <text x="660" y="175" text-anchor="middle" class="label-sm" fill="#aaa5a0">5</text>
+    </svg>
+    <div class="caption"><strong>Figure 5.3.</strong> Locality of polynomial filters, illustrated from the perspective of vertex 0. <strong>Left:</strong> $L^0 = I$ sees only vertex 0 itself. <strong>Center:</strong> $L^1 = L$ reaches the 1-hop neighbors $\{1, 2\}$. <strong>Right:</strong> $L^2$ reaches the 2-hop neighborhood $\{1, 2, 3\}$. A degree-$d$ polynomial mixes information only within $d$ hops.</div>
+  </div>
+
+  <p>
+    Two advantages of the polynomial view are paramount:
+  </p>
+
+  <p>
+    <strong>Parameter efficiency.</strong> A degree-$d$ polynomial filter has $d+1$ learnable parameters $\theta_0, \ldots, \theta_d$, regardless of the graph size $N$. A spectral filter requires $N$ parameters $\hat{h}_0, \ldots, \hat{h}_{N-1}$ &mdash; one per eigenvalue. For a graph with a million nodes, the polynomial filter might use 5 parameters; the spectral filter would need a million.
+  </p>
+
+  <p>
+    <strong>No eigendecomposition.</strong> Computing $p_\theta(L)\, x$ requires only repeated sparse matrix-vector products: compute $Lx$, then $L(Lx) = L^2 x$, and so on, accumulating $\theta_k L^k x$ at each step. Since $L$ is sparse (only $O(|E|)$ nonzeros for $|E|$ edges), each multiplication costs $O(|E|)$, and the total cost is $O(d|E|)$. No eigendecomposition &mdash; no $O(N^3)$ bottleneck.
+  </p>
+
+  <div class="def-box blue">
+    <div class="def-label">Polynomial Graph Convolution</div>
+    <p>$p_\theta(L) = \sum_{k=0}^{d} \theta_k L^k$. <strong>Parameters:</strong> $\theta_0, \ldots, \theta_d$ ($d+1$ numbers). <strong>Locality:</strong> mixes information only within $d$-hop neighborhoods. <strong>Computation:</strong> $O(d|E|)$ via sparse matrix-vector products &mdash; no eigenvectors needed.</p>
+  </div>
+
+  <p>
+    <strong>Running example.</strong> On our 6-vertex graph, take a degree-1 polynomial $p_\theta(L) = \theta_0 I + \theta_1 L$ with $\theta_0 = 0.5$ and $\theta_1 = -0.2$:
+  </p>
+
+  $$
+  p_\theta(L) = 0.5 \begin{pmatrix} 1&0&0&0&0&0 \\ 0&1&0&0&0&0 \\ 0&0&1&0&0&0 \\ 0&0&0&1&0&0 \\ 0&0&0&0&1&0 \\ 0&0&0&0&0&1 \end{pmatrix}
+  - 0.2 \begin{pmatrix} 2&-1&-1&0&0&0 \\ -1&2&-1&0&0&0 \\ -1&-1&3&-1&0&0 \\ 0&0&-1&3&-1&-1 \\ 0&0&0&-1&2&-1 \\ 0&0&0&-1&-1&2 \end{pmatrix}
+  = \begin{pmatrix} 0.1&0.2&0.2&0&0&0 \\ 0.2&0.1&0.2&0&0&0 \\ 0.2&0.2&-0.1&0.2&0&0 \\ 0&0&0.2&-0.1&0.2&0.2 \\ 0&0&0&0.2&0.1&0.2 \\ 0&0&0&0.2&0.2&0.1 \end{pmatrix}
+  $$
+
+  <p>
+    Notice the sparsity pattern: $p_\theta(L)$ is nonzero only where $L$ is nonzero (diagonal and adjacent entries). The filter is local &mdash; it mixes each vertex's value only with its direct neighbors.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 21 — Connecting Spectral and Polynomial               -->
+<!-- ============================================================ -->
+<section id="sec21">
+  <h2><span class="sec-num">21</span>Connecting Spectral and Polynomial</h2>
+
+  <p>
+    The spectral and polynomial characterizations are not independent &mdash; they are two views of the same object, connected by a beautiful algebraic identity. If the spectral filter values are evaluations of a polynomial at the eigenvalues:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 34 &mdash; Spectral-polynomial connection</div>
+    $$
+    \hat{h}_k = p(\lambda_k) = \sum_{j=0}^{d} \theta_j \lambda_k^j \quad \implies \quad U \operatorname{diag}(\hat{h}) U^T = p_\theta(L)
+    \tag{34}
+    $$
+  </div>
+
+  <p>
+    <strong>Proof.</strong> Expand the spectral form using the polynomial expression for $\hat{h}_k$:
+  </p>
+
+  $$
+  U \operatorname{diag}(p(\lambda_0), \ldots, p(\lambda_{N-1})) U^T
+  = U \operatorname{diag}\!\left(\sum_j \theta_j \lambda_0^j, \ldots, \sum_j \theta_j \lambda_{N-1}^j\right) U^T
+  $$
+
+  <p>
+    By linearity of the diagonal:
+  </p>
+
+  $$
+  = \sum_{j=0}^{d} \theta_j \, U \operatorname{diag}(\lambda_0^j, \ldots, \lambda_{N-1}^j) \, U^T
+  = \sum_{j=0}^{d} \theta_j \, (U \Lambda U^T)^j
+  = \sum_{j=0}^{d} \theta_j \, L^j
+  = p_\theta(L)
+  $$
+
+  <p>
+    The critical step is recognizing that $U \operatorname{diag}(\lambda_0^j, \ldots, \lambda_{N-1}^j) U^T = U \Lambda^j U^T = (U\Lambda U^T)^j = L^j$. This is the functional calculus of symmetric matrices: for any function $f$, we define $f(L) = U \operatorname{diag}(f(\lambda_0), \ldots, f(\lambda_{N-1})) U^T$.
+  </p>
+
+  <p>
+    The equivalence holds in one direction unconditionally: <strong>every polynomial filter IS a spectral filter</strong> with $\hat{h}_k = p(\lambda_k)$. But the converse fails when eigenvalues repeat.
+  </p>
+
+  <p>
+    In our running example, $\lambda_2 = \lambda_3 = \lambda_4 = 3$. A polynomial $p$ evaluated at these three eigenvalues gives the same value: $p(3) = p(3) = p(3)$. But a general spectral filter can assign three <em>different</em> values $\hat{h}_2 \neq \hat{h}_3 \neq \hat{h}_4$ to these three modes. Such a filter cannot be represented as any polynomial in $L$.
+  </p>
+
+  <p>
+    The practical lesson: spectral filters are more expressive in principle, but this extra expressiveness is illusory for machine learning. The "extra" spectral filters distinguish between eigenvectors with the same eigenvalue &mdash; they break the symmetry of the operator $L$ in arbitrary ways. Polynomial filters are the physically natural subclass.
+  </p>
+
+  <div class="insight key">
+    <p><strong>Key idea:</strong> Two views, one object. Spectral filtering tells you <strong>what</strong> the filter does (which frequencies it passes). Polynomial filtering tells you <strong>how</strong> to compute it (sparse matrix multiplications). For practical GNNs, the polynomial view wins.</p>
+  </div>
+
+  <p>
+    <strong>Running example.</strong> Take the degree-1 polynomial $p(\lambda) = 0.5 - 0.2\lambda$. Its spectral filter values on our eigenvalues are:
+  </p>
+
+  <ul>
+    <li>$\hat{h}_0 = p(0) = 0.5$</li>
+    <li>$\hat{h}_1 = p(0.44) \approx 0.412$</li>
+    <li>$\hat{h}_2 = \hat{h}_3 = \hat{h}_4 = p(3) = -0.1$</li>
+    <li>$\hat{h}_5 = p(4.56) \approx -0.412$</li>
+  </ul>
+
+  <p>
+    This is a low-pass filter: it retains low frequencies ($\hat{h}_0 = 0.5$, $\hat{h}_1 \approx 0.41$) and attenuates or inverts high frequencies ($\hat{h}_5 \approx -0.41$). We can verify that $U\operatorname{diag}(\hat{h})U^T$ equals the matrix $p_\theta(L) = 0.5I - 0.2L$ we computed in the previous section.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 22 — The Lost Characterization                        -->
+<!-- ============================================================ -->
+<section id="sec22">
+  <h2><span class="sec-num">22</span>The Lost Characterization</h2>
+
+  <p>
+    On $\ZN$, we had <em>three</em> equivalent characterizations of convolution:
+  </p>
+
+  <ol>
+    <li><strong>Spectral:</strong> diagonal in the DFT basis.</li>
+    <li><strong>Algebraic:</strong> polynomial in the shift operator $S$.</li>
+    <li><strong>Group-theoretic:</strong> commutes with $S$ (i.e., $TS = ST$).</li>
+  </ol>
+
+  <p>
+    The equivalence of (2) and (3) relied on a crucial property of $S$: <strong>all its eigenvalues are distinct</strong> (the $N$-th roots of unity $\omega^0, \omega^1, \ldots, \omega^{N-1}$ are all different). When a matrix has distinct eigenvalues, its commutant &mdash; the set of all matrices commuting with it &mdash; equals its polynomial algebra. This is a standard theorem in linear algebra.
+  </p>
+
+  <p>
+    On graphs, this equivalence breaks down. The natural candidate for the "shift" is the Laplacian $L$, and "commutes with $L$" would be the natural graph analog of "commutes with $S$." But when $L$ has <strong>repeated eigenvalues</strong>, the commutant of $L$ is strictly larger than the polynomial algebra:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 35 &mdash; Commutant vs. polynomial algebra</div>
+    $$
+    \dim(\text{commutant of } L) \geq \dim(\text{polynomials in } L)
+    \tag{35}
+    $$
+    with equality if and only if all eigenvalues of $L$ are distinct.
+  </div>
+
+  <p>
+    In our running example, $L$ has the eigenvalue $\lambda = 3$ with multiplicity 3. Any matrix that commutes with $L$ must preserve each eigenspace of $L$, but within the 3-dimensional eigenspace for $\lambda = 3$, it can act as an <em>arbitrary</em> $3 \times 3$ matrix. A polynomial $p(L)$ acts as $p(3) \cdot I_3$ on this eigenspace &mdash; a scalar multiple of the identity. The commutant is much larger: it includes non-local operators that act nontrivially within the degenerate eigenspace.
+  </p>
+
+  <p>
+    Concretely, the commutant of $L$ has dimension $1^2 + 1^2 + 3^2 + 1^2 = 12$ (summing the squares of the multiplicities: $\lambda_0$ has multiplicity 1, $\lambda_1$ has multiplicity 1, $\lambda_{2,3,4}$ have multiplicity 3, and $\lambda_5$ has multiplicity 1). The polynomial algebra has dimension at most equal to the number of <em>distinct</em> eigenvalues, which is 4. So the commutant is a 12-dimensional space, while the polynomial algebra is only 4-dimensional. The 8 "extra" dimensions correspond to operators that commute with $L$ but are not polynomials in it &mdash; and these include non-local operators we would not want to call convolutions.
+  </p>
+
+  <p>
+    A separate concept sometimes confused with the commutativity condition is <strong>permutation equivariance</strong>. A polynomial filter $p_\theta(L)$ satisfies:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 36 &mdash; Permutation equivariance</div>
+    $$
+    p_\theta(PLP^T)(Px) = P\,p_\theta(L)\,x \quad \text{for any permutation matrix } P
+    \tag{36}
+    $$
+  </div>
+
+  <p>
+    This says: if you relabel the vertices of the graph (applying permutation $P$ to the adjacency, degree, and Laplacian matrices), the filter output transforms consistently. It is a <em>sanity check</em> &mdash; the computation does not depend on the arbitrary numbering of vertices. But it is fundamentally different from the commutativity condition on $\ZN$:
+  </p>
+
+  <ul>
+    <li><strong>Commutativity ($TS = ST$):</strong> one fixed operator $S$, asking if $T$ commutes with it. This is a strong algebraic constraint that, when $S$ has distinct eigenvalues, forces $T$ to be a polynomial in $S$. It gives a complete characterization of convolution.</li>
+    <li><strong>Permutation equivariance:</strong> relabeling the entire graph. It says the filter is "intrinsic" to the graph's structure, not dependent on labeling. But it does not single out polynomial filters &mdash; many non-polynomial operators are also permutation-equivariant.</li>
+  </ul>
+
+  <div class="insight warning">
+    <p><strong>Warning:</strong> Permutation equivariance is <strong>not</strong> the graph analog of shift commutativity. It is a much weaker condition &mdash; essentially just saying "the computation does not depend on arbitrary vertex labeling." The group-theoretic characterization of convolutions is genuinely gone on graphs. We retain the spectral and polynomial characterizations, but the elegant algebraic closure that made all three equivalent on $\ZN$ is lost when eigenvalues repeat.</p>
+  </div>
+
+  <p>
+    This is the honest state of affairs. On $\ZN$, the rich group structure of the cyclic group gave us three equivalent ways to think about convolution: frequency filtering, polynomial algebra, and symmetry commutation. On general graphs, we keep two of these (and they are still deeply connected, as Section 21 showed). The third &mdash; the most beautiful, the one that said "convolution = the operators respecting the symmetry" &mdash; is the one we lose.
+  </p>
+
+  <p>
+    What remains is powerful enough: spectral filtering gives us intuition about what a graph convolution does (which frequencies it passes), and polynomial filtering gives us a practical algorithm (sparse matrix products). In the next chapter, we will see how these ideas become neural network layers.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- FOOTER NAV                                                   -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="gcn-04-ring-to-graph.html"><span class="dir">&larr; Previous</span><span class="title">From the Ring to General Graphs</span></a><a class="next" href="gcn-06-spectral-to-nn.html"><span class="dir">Next &rarr;</span><span class="title">From Spectral Theory to Neural Networks</span></a></div>
+</main>
+<footer><p><a href="gcn-index.html">&larr; Course Home</a> &middot; <a href="../index.html">All Notes</a></p></footer>
+<a href="#" class="back-to-top" aria-label="Back to top">&#8593;</a>
+<script>
+const fill = document.querySelector('.progress-fill');
+const main = document.querySelector('main');
+function updateProgress() {
+  const top = main.getBoundingClientRect().top;
+  const height = main.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (-top / height) * 100));
+  fill.style.width = pct + '%';
+}
+const btn = document.querySelector('.back-to-top');
+function updateBtn() {
+  btn.classList.toggle('visible', window.scrollY > 600);
+}
+window.addEventListener('scroll', function() { updateProgress(); updateBtn(); }, { passive: true });
+updateProgress();
+</script>
+</body>
+</html>

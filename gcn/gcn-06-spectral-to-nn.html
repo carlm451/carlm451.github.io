@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Spectral Theory to Neural Networks — GCN Course</title>
+<script>
+window.MathJax={
+  tex:{
+    inlineMath:[['$','$'],['\\(','\\)']],
+    displayMath:[['$$','$$'],['\\[','\\]']],
+    macros:{
+      R:'\\mathbb{R}',
+      C:'\\mathbb{C}',
+      Z:'\\mathbb{Z}',
+      ZN:'{\\mathbb{Z}_N}',
+      Ft:'\\mathcal{F}',
+      Fti:'\\mathcal{F}^{-1}'
+    }
+  },
+  svg:{fontCache:'global'}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-chapter">
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / <a href="gcn-index.html">GCN</a> / Chapter 6</div>
+    <span class="ch-num">Chapter 6</span>
+    <h1>From Spectral Theory to <strong>Neural Networks</strong></h1>
+    <p class="subtitle">The computational bottleneck, Chebyshev filters, the GCN simplification, message passing, and oversmoothing.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="gcn-05-graph-convolutions.html">&larr; Graph Convolutions</a><span class="ch-title">Chapter 6</span><a href="gcn-07-analogies.html">The Chain of Analogies &rarr;</a></div></nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<!-- Table of Contents -->
+<div class="toc">
+  <div class="toc-label">In this chapter</div>
+  <ol>
+    <li><a href="#sec23"><span class="toc-num">23</span>The Computational Problem</a></li>
+    <li><a href="#sec24"><span class="toc-num">24</span>ChebNet: Chebyshev Polynomial Filters</a></li>
+    <li><a href="#sec25"><span class="toc-num">25</span>GCN: The Degree-1 Simplification</a></li>
+    <li><a href="#sec26"><span class="toc-num">26</span>Message Passing as a Consequence</a></li>
+    <li><a href="#sec27"><span class="toc-num">27</span>Receptive Fields and Oversmoothing</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 23 — The Computational Problem                        -->
+<!-- ============================================================ -->
+<section id="sec23">
+  <h2><span class="sec-num">23</span>The Computational Problem</h2>
+
+  <p>
+    The spectral convolution $y = U \operatorname{diag}(\hat{h})\, U^T x$ from Chapter 5 is mathematically clean, but computationally disastrous. Three operations dominate the cost:
+  </p>
+
+  <ol>
+    <li><strong>Computing $U$:</strong> eigendecomposition of $L$ costs $O(N^3)$ &mdash; this must be done once, but for a graph with millions of nodes it is prohibitive.</li>
+    <li><strong>Multiplying by $U^T$:</strong> a dense $N \times N$ matrix-vector product costs $O(N^2)$.</li>
+    <li><strong>Multiplying by $U$:</strong> another $O(N^2)$ dense product.</li>
+  </ol>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 37 &mdash; Spectral cost</div>
+    $$
+    \text{Spectral: } O(N^3) \text{ setup} + O(N^2) \text{ per signal}
+    \tag{37}
+    $$
+  </div>
+
+  <p>
+    For a social network with $N = 10^6$ nodes, the eigendecomposition alone would require $\sim 10^{18}$ operations. Even storing $U$ as a dense matrix would need $10^{12}$ floating-point numbers ($\sim$8 TB at double precision). This is completely impractical.
+  </p>
+
+  <p>
+    Polynomial filters $p_\theta(L)\, x = \sum_{k=0}^d \theta_k L^k x$ avoid all of this. The Laplacian $L$ is a <strong>sparse</strong> matrix: it has at most $2|E| + N$ nonzeros (two per edge, plus the diagonal). The key insight is that we never need to form $L^k$ explicitly. Instead, we compute the sequence of matrix-vector products iteratively:
+  </p>
+
+  <ul>
+    <li>$z_0 = x$ (cost: free)</li>
+    <li>$z_1 = Lx$ (cost: $O(|E|)$ &mdash; one sparse matrix-vector multiply)</li>
+    <li>$z_2 = L z_1 = L^2 x$ (cost: $O(|E|)$)</li>
+    <li>$\vdots$</li>
+    <li>$z_d = L z_{d-1} = L^d x$ (cost: $O(|E|)$)</li>
+  </ul>
+
+  <p>
+    The output is $y = \theta_0 z_0 + \theta_1 z_1 + \cdots + \theta_d z_d$, which requires $O(dN)$ additional operations for the weighted sum. The total cost:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 38 &mdash; Polynomial cost</div>
+    $$
+    \text{Polynomial: } O(d|E|) \text{ per signal, no eigendecomposition}
+    \tag{38}
+    $$
+  </div>
+
+  <p>
+    For a sparse graph where $|E| = O(N)$ (e.g., bounded-degree graphs, which are the norm in practice), this becomes $O(dN)$ &mdash; linear in the number of nodes, compared to the spectral approach's $O(N^2)$ per signal and $O(N^3)$ setup.
+  </p>
+
+  <p>
+    The remaining question is: how should we choose the polynomial coefficients $\theta_0, \ldots, \theta_d$? One approach would be to hand-design them (e.g., approximate a desired spectral response). The machine learning approach is more powerful: make them <strong>learnable parameters</strong> of a neural network, and let gradient descent find the optimal filter from data.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 24 — ChebNet: Chebyshev Polynomial Filters            -->
+<!-- ============================================================ -->
+<section id="sec24">
+  <h2><span class="sec-num">24</span>ChebNet: Chebyshev Polynomial Filters</h2>
+
+  <p>
+    Defferrard, Bresson, and Vandergheynst (2016) proposed <strong>ChebNet</strong>, the first practical spectral graph neural network. Their key insight: parameterize the polynomial filter not in the monomial basis $\{1, x, x^2, \ldots\}$ but in the <strong>Chebyshev basis</strong> $\{T_0, T_1, T_2, \ldots\}$.
+  </p>
+
+  <p>
+    The Chebyshev polynomials of the first kind are defined by the recurrence:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 39 &mdash; Chebyshev recurrence</div>
+    $$
+    T_0(x) = 1, \quad T_1(x) = x, \quad T_{k+1}(x) = 2x\,T_k(x) - T_{k-1}(x)
+    \tag{39}
+    $$
+  </div>
+
+  <p>
+    The first few: $T_0(x) = 1$, $T_1(x) = x$, $T_2(x) = 2x^2 - 1$, $T_3(x) = 4x^3 - 3x$. These polynomials oscillate between $-1$ and $+1$ on the interval $[-1, 1]$, and they are orthogonal with respect to the weight $(1 - x^2)^{-1/2}$.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 500 280" width="500" height="280">
+      <!-- Axes -->
+      <line x1="50" y1="140" x2="450" y2="140" stroke="#6b6560" stroke-width="1"/>
+      <line x1="250" y1="30" x2="250" y2="250" stroke="#6b6560" stroke-width="1"/>
+      <!-- Axis labels -->
+      <text x="50" y="158" text-anchor="middle" class="label-sm" fill="#6b6560">-1</text>
+      <text x="450" y="158" text-anchor="middle" class="label-sm" fill="#6b6560">1</text>
+      <text x="258" y="268" text-anchor="start" class="label-sm" fill="#6b6560">x</text>
+      <!-- Grid lines -->
+      <line x1="50" y1="140" x2="450" y2="140" stroke="#e0dcd8" stroke-width="0.5"/>
+      <line x1="50" y1="40" x2="450" y2="40" stroke="#e0dcd8" stroke-width="0.5" stroke-dasharray="4,3"/>
+      <line x1="50" y1="240" x2="450" y2="240" stroke="#e0dcd8" stroke-width="0.5" stroke-dasharray="4,3"/>
+      <text x="42" y="44" text-anchor="end" class="label-sm" fill="#6b6560">1</text>
+      <text x="42" y="144" text-anchor="end" class="label-sm" fill="#6b6560">0</text>
+      <text x="42" y="244" text-anchor="end" class="label-sm" fill="#6b6560">-1</text>
+
+      <!-- T0(x) = 1 : horizontal line at y=1 -->
+      <line x1="50" y1="40" x2="450" y2="40" stroke="#b44a2f" stroke-width="2" opacity="0.7"/>
+      <text x="460" y="44" class="label-sm" fill="#b44a2f" font-weight="bold">T&#x2080;</text>
+
+      <!-- T1(x) = x : diagonal line from (-1,-1) to (1,1) -->
+      <line x1="50" y1="240" x2="450" y2="40" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="460" y="44" class="label-sm" fill="#2a6b5a" font-weight="bold" dy="14">T&#x2081;</text>
+
+      <!-- T2(x) = 2x^2 - 1 : parabola-like, value at x=-1: 1, x=0: -1, x=1: 1 -->
+      <path d="M 50,40 Q 150,340 250,240 Q 350,140 450,40" fill="none" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="460" y="44" class="label-sm" fill="#3a5a8c" font-weight="bold" dy="28">T&#x2082;</text>
+
+      <!-- T3(x) = 4x^3 - 3x : S-shaped, value at x=-1: -1, x=-0.5: 1, x=0.5: -1, x=1: 1 -->
+      <path d="M 50,240 C 110,240 130,-40 250,140 C 370,320 390,-40 450,40" fill="none" stroke="#8b5a8c" stroke-width="2"/>
+      <text x="460" y="44" class="label-sm" fill="#8b5a8c" font-weight="bold" dy="42">T&#x2083;</text>
+
+      <!-- Title -->
+      <text x="250" y="275" text-anchor="middle" class="label-text" fill="#2a2520" font-style="italic">Chebyshev polynomials on [-1, 1]</text>
+    </svg>
+    <div class="caption"><strong>Figure 6.1.</strong> Chebyshev polynomials $T_0$ through $T_3$ on $[-1,1]$. All oscillate between $-1$ and $+1$, providing a numerically stable basis for polynomial approximation. Compare with the monomial basis $\{1, x, x^2, x^3\}$, where $x^k$ grows unboundedly for $|x| > 1$.</div>
+  </div>
+
+  <p>
+    <strong>Why Chebyshev?</strong> The monomial basis $\{I, L, L^2, \ldots\}$ is numerically unstable: the entries of $L^k$ grow exponentially with $k$ (roughly as $\lambda_{\max}^k$), leading to catastrophic cancellation when forming the weighted sum. Chebyshev polynomials, by contrast, stay bounded on $[-1, 1]$, so if we first rescale the eigenvalues to $[-1, 1]$, the computation is numerically stable.
+  </p>
+
+  <p>
+    The rescaling maps eigenvalues from $[0, \lambda_{\max}]$ to $[-1, 1]$:
+  </p>
+
+  $$
+  \tilde{L} = \frac{2L}{\lambda_{\max}} - I
+  $$
+
+  <p>
+    The eigenvalues of $\tilde{L}$ are $\tilde{\lambda}_k = 2\lambda_k / \lambda_{\max} - 1 \in [-1, 1]$. The ChebNet filter is then:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 40 &mdash; ChebNet filter</div>
+    $$
+    p_\theta(\tilde{L}) = \sum_{k=0}^{K} \theta_k\, T_k(\tilde{L}), \qquad \tilde{L} = \frac{2L}{\lambda_{\max}} - I
+    \tag{40}
+    $$
+  </div>
+
+  <p>
+    The Chebyshev recurrence translates directly to matrices: $T_0(\tilde{L}) = I$, $T_1(\tilde{L}) = \tilde{L}$, and $T_{k+1}(\tilde{L}) = 2\tilde{L}\, T_k(\tilde{L}) - T_{k-1}(\tilde{L})$. Each step requires one sparse matrix-vector multiply (by $\tilde{L}$), so computing $p_\theta(\tilde{L})\, x$ costs $O(K|E|)$ &mdash; the same as the monomial basis, but with much better numerical behavior.
+  </p>
+
+  <p>
+    The ChebNet architecture stacks these polynomial filters with nonlinearities. Each layer applies a Chebyshev polynomial filter of degree $K$ to each input channel, sums across channels, and applies a pointwise nonlinearity (ReLU). The filter coefficients $\theta_k$ are the learnable parameters, trained by backpropagation. The degree $K$ controls the receptive field: a $K$-degree polynomial mixes information within $K$-hop neighborhoods.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 25 — GCN: The Degree-1 Simplification                 -->
+<!-- ============================================================ -->
+<section id="sec25">
+  <h2><span class="sec-num">25</span>GCN: The Degree-1 Simplification</h2>
+
+  <p>
+    Kipf and Welling (2017) made a bold simplification: take ChebNet with $K = 1$ (a degree-1 polynomial) and stack multiple layers instead of using a single high-degree polynomial. This trades filter expressiveness per layer for depth.
+  </p>
+
+  <p>
+    With $K = 1$, the filter has only two parameters:
+  </p>
+
+  $$
+  p_\theta(\tilde{L}) = \theta_0\, T_0(\tilde{L}) + \theta_1\, T_1(\tilde{L}) = \theta_0\, I + \theta_1\, \tilde{L}
+  $$
+
+  <p>
+    Substituting $\tilde{L} = 2L/\lambda_{\max} - I$:
+  </p>
+
+  $$
+  p_\theta = \theta_0 I + \theta_1 \left(\frac{2L}{\lambda_{\max}} - I\right) = (\theta_0 - \theta_1) I + \frac{2\theta_1}{\lambda_{\max}} L
+  $$
+
+  <p>
+    Kipf and Welling apply a series of further simplifications. First, they approximate $\lambda_{\max} \approx 2$ (a reasonable approximation for many graphs, and exact for bipartite graphs). This gives:
+  </p>
+
+  $$
+  p_\theta \approx (\theta_0 - \theta_1) I + \theta_1 L = (\theta_0 - \theta_1) I + \theta_1 (D - A) = \theta_0 I - \theta_1 A + \theta_1 D
+  $$
+
+  <p>
+    Since $L = D - A$, we have $I - L = I - D + A$. They further reduce to a single parameter by setting $\theta_0 = -\theta_1 = \theta$, giving:
+  </p>
+
+  $$
+  y = \theta(I + D^{-1/2} A D^{-1/2})\, x
+  $$
+
+  <p>
+    where $D^{-1/2} A D^{-1/2}$ is the <strong>symmetrically normalized</strong> adjacency matrix (entry $(i,j)$ is $1/\sqrt{d_i d_j}$ if $i \sim j$, and 0 otherwise). Its eigenvalues lie in $[-1, 1]$, and $I + D^{-1/2} A D^{-1/2}$ has eigenvalues in $[0, 2]$.
+  </p>
+
+  <p>
+    The final ingredient is the <strong>renormalization trick</strong>: replace $I + D^{-1/2} A D^{-1/2}$ with the normalized adjacency of the graph-with-self-loops:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 41 &mdash; Renormalization trick</div>
+    $$
+    \tilde{A} = A + I_N, \quad \tilde{D}_{ii} = \sum_j \tilde{A}_{ij}
+    \tag{41}
+    $$
+  </div>
+
+  <p>
+    Adding self-loops to every vertex ($\tilde{A} = A + I_N$) means each vertex is now connected to itself. The updated degree matrix is $\tilde{D} = D + I_N$. The renormalized propagation matrix $\tilde{D}^{-1/2} \tilde{A}\, \tilde{D}^{-1/2}$ has better spectral properties than $I + D^{-1/2} A D^{-1/2}$ (eigenvalues in $[0, 1]$ for connected graphs, avoiding the problematic eigenvalue at 2).
+  </p>
+
+  <p>
+    The full <strong>GCN layer</strong>, operating on multi-channel node features $H^{(\ell)} \in \R^{N \times F}$ (where $F$ is the number of features per node), is:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 42 &mdash; GCN layer</div>
+    $$
+    H^{(\ell+1)} = \sigma\!\left(\tilde{D}^{-1/2}\tilde{A}\tilde{D}^{-1/2}\, H^{(\ell)}\, W^{(\ell)}\right)
+    \tag{42}
+    $$
+  </div>
+
+  <p>
+    Here $W^{(\ell)} \in \R^{F_\ell \times F_{\ell+1}}$ is a learnable weight matrix that mixes the $F_\ell$ input features into $F_{\ell+1}$ output features, and $\sigma$ is a pointwise nonlinearity (typically ReLU). The graph-dependent part $\tilde{D}^{-1/2}\tilde{A}\tilde{D}^{-1/2}$ is fixed (computed once from the graph); only $W^{(\ell)}$ is learned.
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">GCN Layer (Kipf &amp; Welling 2017)</div>
+    <p>$\tilde{A} = A + I$, $\tilde{D}$ = degree matrix of $\tilde{A}$, then $H^{(\ell+1)} = \sigma(\tilde{D}^{-1/2}\tilde{A}\tilde{D}^{-1/2}\, H^{(\ell)}\, W^{(\ell)})$. This is a degree-1 polynomial in the normalized Laplacian with self-loops. Each layer aggregates 1-hop neighbor features, transforms with a learnable weight, and applies a nonlinearity. Stacking $K$ layers gives a $K$-hop receptive field.</p>
+  </div>
+
+  <p>
+    The progression from theory to practice follows a clear chain of simplifications: general spectral filter ($N$ parameters, $O(N^3)$ cost) $\to$ polynomial filter ($d+1$ parameters, $O(d|E|)$ cost) $\to$ Chebyshev polynomial ($K+1$ parameters, numerically stable) $\to$ degree-1 Chebyshev with renormalization (weight matrix $W$ parameters, $O(|E|)$ per layer).
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 26 — Message Passing as a Consequence                 -->
+<!-- ============================================================ -->
+<section id="sec26">
+  <h2><span class="sec-num">26</span>Message Passing as a Consequence</h2>
+
+  <p>
+    Let us unpack what the GCN layer actually computes for each individual node. Writing out row $i$ of the matrix equation $H^{(\ell+1)} = \sigma(\tilde{D}^{-1/2}\tilde{A}\tilde{D}^{-1/2} H^{(\ell)} W^{(\ell)})$:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 43 &mdash; GCN per-node update</div>
+    $$
+    h_i^{(\ell+1)} = \sigma\!\left(\sum_{j \in \mathcal{N}(i) \cup \{i\}} \frac{1}{\sqrt{\tilde{d}_i\, \tilde{d}_j}}\, h_j^{(\ell)}\, W^{(\ell)}\right)
+    \tag{43}
+    $$
+  </div>
+
+  <p>
+    Here $\mathcal{N}(i)$ is the set of neighbors of $i$ in the original graph, $\tilde{d}_i = d_i + 1$ is the degree in the self-loop-augmented graph, and $h_j^{(\ell)} \in \R^{F_\ell}$ is the feature vector of node $j$ at layer $\ell$. The sum includes $j = i$ because of the self-loops.
+  </p>
+
+  <p>
+    This computation has a natural interpretation as <strong>message passing</strong>:
+  </p>
+
+  <ol>
+    <li><strong>AGGREGATE:</strong> Each node $i$ collects ("receives messages from") the features of its neighbors and itself. The weighting $1/\sqrt{\tilde{d}_i \tilde{d}_j}$ normalizes by the geometric mean of the degrees &mdash; high-degree nodes send weaker messages to prevent them from dominating.</li>
+    <li><strong>TRANSFORM:</strong> The aggregated features are multiplied by the learnable weight matrix $W^{(\ell)}$, which mixes and transforms the feature channels.</li>
+    <li><strong>ACTIVATE:</strong> A pointwise nonlinearity $\sigma$ (e.g., ReLU) is applied, introducing the non-linearity needed for the network to learn complex functions.</li>
+  </ol>
+
+  <div class="figure">
+    <svg viewBox="0 0 520 280" width="520" height="280">
+      <!-- Central node (target) -->
+      <circle cx="260" cy="140" r="22" fill="#e07040" stroke="#b44a2f" stroke-width="2.5"/>
+      <text x="260" y="145" text-anchor="middle" class="label-text" font-weight="bold" fill="#fff">i</text>
+
+      <!-- Neighbor nodes -->
+      <!-- j1 (top-left) -->
+      <circle cx="120" cy="60" r="18" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="120" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">j&#x2081;</text>
+      <!-- j2 (top-right) -->
+      <circle cx="400" cy="60" r="18" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="400" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">j&#x2082;</text>
+      <!-- j3 (bottom-left) -->
+      <circle cx="120" cy="220" r="18" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="120" y="225" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">j&#x2083;</text>
+      <!-- j4 (bottom-right) -->
+      <circle cx="400" cy="220" r="18" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="400" y="225" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">j&#x2084;</text>
+
+      <!-- Arrows from neighbors to central node -->
+      <defs>
+        <marker id="arrowMsg" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#2a6b5a"/>
+        </marker>
+        <marker id="arrowOut" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#3a5a8c"/>
+        </marker>
+      </defs>
+      <line x1="138" y1="72" x2="242" y2="128" stroke="#2a6b5a" stroke-width="2" marker-end="url(#arrowMsg)"/>
+      <line x1="382" y1="72" x2="278" y2="128" stroke="#2a6b5a" stroke-width="2" marker-end="url(#arrowMsg)"/>
+      <line x1="138" y1="208" x2="242" y2="152" stroke="#2a6b5a" stroke-width="2" marker-end="url(#arrowMsg)"/>
+      <line x1="382" y1="208" x2="278" y2="152" stroke="#2a6b5a" stroke-width="2" marker-end="url(#arrowMsg)"/>
+      <!-- Self-loop arrow (circular) -->
+      <path d="M 248,120 C 220,80 300,80 272,120" fill="none" stroke="#2a6b5a" stroke-width="2" marker-end="url(#arrowMsg)"/>
+
+      <!-- Message labels -->
+      <text x="170" y="82" text-anchor="middle" class="label-sm" fill="#2a6b5a">h&#x2C7C;&#x2081;/&#x221A;d&#x0303;</text>
+      <text x="350" y="82" text-anchor="middle" class="label-sm" fill="#2a6b5a">h&#x2C7C;&#x2082;/&#x221A;d&#x0303;</text>
+      <text x="170" y="200" text-anchor="middle" class="label-sm" fill="#2a6b5a">h&#x2C7C;&#x2083;/&#x221A;d&#x0303;</text>
+      <text x="350" y="200" text-anchor="middle" class="label-sm" fill="#2a6b5a">h&#x2C7C;&#x2084;/&#x221A;d&#x0303;</text>
+
+      <!-- Pipeline labels below -->
+      <text x="260" y="185" text-anchor="middle" class="label-sm" fill="#6b6560" font-style="italic">1. AGGREGATE</text>
+
+      <!-- Transform + Activate -->
+      <rect x="170" y="230" width="80" height="30" rx="4" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/>
+      <text x="210" y="250" text-anchor="middle" class="label-sm" fill="#2a2520" font-weight="bold">&times; W</text>
+      <text x="210" y="270" text-anchor="middle" class="label-sm" fill="#6b6560">2. TRANSFORM</text>
+
+      <rect x="290" y="230" width="80" height="30" rx="4" fill="#dab8db" stroke="#8b5a8c" stroke-width="1.5"/>
+      <text x="330" y="250" text-anchor="middle" class="label-sm" fill="#2a2520" font-weight="bold">&#963;(&#183;)</text>
+      <text x="330" y="270" text-anchor="middle" class="label-sm" fill="#6b6560">3. ACTIVATE</text>
+
+      <line x1="250" y1="245" x2="288" y2="245" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowOut)"/>
+    </svg>
+    <div class="caption"><strong>Figure 6.2.</strong> The GCN update for a single node $i$: (1) aggregate degree-normalized features from neighbors and self, (2) transform by the learned weight matrix $W$, (3) apply a pointwise nonlinearity $\sigma$. This is message passing &mdash; but it was derived from spectral theory, not postulated.</div>
+  </div>
+
+  <div class="insight key">
+    <p><strong>Key idea:</strong> Message passing was derived, not assumed. The logical chain is: spectral theory $\to$ polynomial filters $\to$ degree-1 Chebyshev $\to$ GCN $\to$ message passing. The spatial interpretation (aggregate, transform, activate) is a <em>consequence</em> of the spectral one, not a separate axiom.</p>
+  </div>
+
+  <p>
+    This derivation matters because it grounds the message-passing framework in mathematics rather than intuition. Many papers present message passing as a starting axiom ("nodes should aggregate information from their neighbors"). The spectral derivation shows <em>why</em> this recipe works: it is the vertex-domain implementation of spectral filtering with a degree-1 polynomial in the Laplacian.
+  </p>
+
+  <h3>Worked Example: A Full GCN Layer on the Running Graph</h3>
+
+  <p>
+    Let us trace a complete forward pass through one GCN layer on our 6-vertex graph. This is the "two-triangles-with-bridge" graph with edges $\{0,1\}$, $\{0,2\}$, $\{1,2\}$, $\{2,3\}$, $\{3,4\}$, $\{3,5\}$, $\{4,5\}$.
+  </p>
+
+  <p>
+    <strong>Step 1: Input features.</strong> Suppose each node has a 2-dimensional feature vector. The input feature matrix $H^{(0)} \in \R^{6 \times 2}$:
+  </p>
+
+  $$
+  H^{(0)} = \begin{pmatrix} 1.0 & 0.0 \\ 0.5 & 0.5 \\ 0.0 & 1.0 \\ 1.0 & 1.0 \\ 0.0 & 0.5 \\ 0.5 & 0.0 \end{pmatrix}
+  $$
+
+  <p>
+    <strong>Step 2: Compute $\tilde{A} = A + I$.</strong> Add self-loops to the adjacency matrix:
+  </p>
+
+  $$
+  A = \begin{pmatrix} 0&1&1&0&0&0 \\ 1&0&1&0&0&0 \\ 1&1&0&1&0&0 \\ 0&0&1&0&1&1 \\ 0&0&0&1&0&1 \\ 0&0&0&1&1&0 \end{pmatrix}
+  \quad \Rightarrow \quad
+  \tilde{A} = \begin{pmatrix} 1&1&1&0&0&0 \\ 1&1&1&0&0&0 \\ 1&1&1&1&0&0 \\ 0&0&1&1&1&1 \\ 0&0&0&1&1&1 \\ 0&0&0&1&1&1 \end{pmatrix}
+  $$
+
+  <p>
+    <strong>Step 3: Compute $\tilde{D}$.</strong> The degree matrix of $\tilde{A}$: each diagonal entry is the original degree plus 1 (from the self-loop).
+  </p>
+
+  $$
+  \tilde{D} = \operatorname{diag}(3, 3, 4, 4, 3, 3)
+  $$
+
+  <p>
+    <strong>Step 4: Compute $\hat{A} = \tilde{D}^{-1/2}\tilde{A}\tilde{D}^{-1/2}$.</strong> We have $\tilde{D}^{-1/2} = \operatorname{diag}(1/\sqrt{3},\, 1/\sqrt{3},\, 1/2,\, 1/2,\, 1/\sqrt{3},\, 1/\sqrt{3})$. The normalized matrix entries are:
+  </p>
+
+  <ul>
+    <li>Self-loops: $\hat{A}_{ii} = \tilde{A}_{ii} / \tilde{d}_i = 1/\tilde{d}_i$. So $\hat{A}_{00} = 1/3$, $\hat{A}_{22} = 1/4$, etc.</li>
+    <li>Off-diagonal: $\hat{A}_{ij} = 1/\sqrt{\tilde{d}_i \tilde{d}_j}$ if $i \sim j$. For example, $\hat{A}_{01} = 1/\sqrt{3 \cdot 3} = 1/3$, and $\hat{A}_{23} = 1/\sqrt{4 \cdot 4} = 1/4$.</li>
+  </ul>
+
+  $$
+  \hat{A} = \begin{pmatrix}
+  \frac{1}{3} & \frac{1}{3} & \frac{1}{2\sqrt{3}} & 0 & 0 & 0 \\[4pt]
+  \frac{1}{3} & \frac{1}{3} & \frac{1}{2\sqrt{3}} & 0 & 0 & 0 \\[4pt]
+  \frac{1}{2\sqrt{3}} & \frac{1}{2\sqrt{3}} & \frac{1}{4} & \frac{1}{4} & 0 & 0 \\[4pt]
+  0 & 0 & \frac{1}{4} & \frac{1}{4} & \frac{1}{2\sqrt{3}} & \frac{1}{2\sqrt{3}} \\[4pt]
+  0 & 0 & 0 & \frac{1}{2\sqrt{3}} & \frac{1}{3} & \frac{1}{3} \\[4pt]
+  0 & 0 & 0 & \frac{1}{2\sqrt{3}} & \frac{1}{3} & \frac{1}{3}
+  \end{pmatrix}
+  $$
+
+  <p>
+    where $1/(2\sqrt{3}) \approx 0.2887$.
+  </p>
+
+  <p>
+    <strong>Step 5: Aggregate.</strong> Compute $Z = \hat{A}\, H^{(0)}$. For node 0, this is:
+  </p>
+
+  $$
+  z_0 = \frac{1}{3}\, h_0 + \frac{1}{3}\, h_1 + \frac{1}{2\sqrt{3}}\, h_2
+  = \frac{1}{3}(1.0, 0.0) + \frac{1}{3}(0.5, 0.5) + \frac{1}{2\sqrt{3}}(0.0, 1.0)
+  $$
+  $$
+  = (0.333 + 0.167 + 0,\; 0 + 0.167 + 0.289) = (0.500,\; 0.456)
+  $$
+
+  <p>
+    Computing all rows:
+  </p>
+
+  $$
+  Z = \hat{A}\, H^{(0)} \approx \begin{pmatrix}
+  0.500 & 0.456 \\
+  0.500 & 0.456 \\
+  0.433 & 0.644 \\
+  0.625 & 0.644 \\
+  0.456 & 0.500 \\
+  0.456 & 0.500
+  \end{pmatrix}
+  $$
+
+  <p>
+    Notice the smoothing effect: the features are now more similar across neighboring vertices than the original $H^{(0)}$.
+  </p>
+
+  <p>
+    <strong>Step 6: Transform.</strong> Choose a weight matrix $W^{(0)} \in \R^{2 \times 3}$ (mapping 2 input features to 3 output features):
+  </p>
+
+  $$
+  W^{(0)} = \begin{pmatrix} 1.0 & 0.5 & -0.5 \\ -0.5 & 1.0 & 0.5 \end{pmatrix}
+  $$
+
+  <p>
+    Compute $Z W^{(0)}$. For node 0:
+  </p>
+
+  $$
+  z_0 W^{(0)} = (0.500, 0.456) \begin{pmatrix} 1.0 & 0.5 & -0.5 \\ -0.5 & 1.0 & 0.5 \end{pmatrix}
+  = (0.500 - 0.228,\; 0.250 + 0.456,\; -0.250 + 0.228)
+  = (0.272,\; 0.706,\; -0.022)
+  $$
+
+  <p>
+    The full pre-activation matrix:
+  </p>
+
+  $$
+  Z W^{(0)} \approx \begin{pmatrix}
+  0.272 & 0.706 & -0.022 \\
+  0.272 & 0.706 & -0.022 \\
+  0.111 & 0.861 & -0.105 \\
+  0.303 & 0.957 & -0.009 \\
+  0.206 & 0.728 & 0.022 \\
+  0.206 & 0.728 & 0.022
+  \end{pmatrix}
+  $$
+
+  <p>
+    <strong>Step 7: Activate.</strong> Apply ReLU (set negative values to zero):
+  </p>
+
+  $$
+  H^{(1)} = \operatorname{ReLU}(Z W^{(0)}) \approx \begin{pmatrix}
+  0.272 & 0.706 & 0.000 \\
+  0.272 & 0.706 & 0.000 \\
+  0.111 & 0.861 & 0.000 \\
+  0.303 & 0.957 & 0.000 \\
+  0.206 & 0.728 & 0.022 \\
+  0.206 & 0.728 & 0.022
+  \end{pmatrix}
+  $$
+
+  <p>
+    This is the output of one GCN layer: each node now has a 3-dimensional feature vector that incorporates information from its 1-hop neighborhood. The third feature channel is nearly zero everywhere (the filter learned to suppress it in this direction), while the first two channels carry meaningful information.
+  </p>
+
+  <p>
+    Notice that nodes 0 and 1 have identical output features (they have the same neighborhood structure and the same aggregated input). Similarly, nodes 4 and 5 share the same output. This reflects the graph's symmetry &mdash; the GCN respects the automorphisms of the graph.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 27 — Receptive Fields and Oversmoothing               -->
+<!-- ============================================================ -->
+<section id="sec27">
+  <h2><span class="sec-num">27</span>Receptive Fields and Oversmoothing</h2>
+
+  <p>
+    Each GCN layer aggregates features from 1-hop neighbors (and self). Stacking $K$ layers gives each node access to its $K$-hop neighborhood &mdash; analogous to how a degree-$K$ polynomial in $L$ reaches $K$ hops. This is the <strong>receptive field</strong> of the network.
+  </p>
+
+  <p>
+    In our running example, vertex 0 is at distance 3 from vertex 5 (path: 0$\to$2$\to$3$\to$5). So after 3 GCN layers, vertex 0's feature incorporates information from vertex 5. After 2 layers, it does not. For a 6-vertex graph, 3 layers suffice to give every node a global view (the diameter is 3).
+  </p>
+
+  <p>
+    But there is a problem. The aggregation step applies the normalized adjacency matrix $\hat{A} = \tilde{D}^{-1/2} \tilde{A} \tilde{D}^{-1/2}$, which is a <strong>smoothing operator</strong>: it replaces each node's features with a weighted average of its neighbors' features. Iterated application of a smoothing operator converges to a uniform state:
+  </p>
+
+  <p>
+    Mathematically, the eigenvalues of $\hat{A}$ lie in $[0, 1]$ for connected graphs with self-loops. The largest eigenvalue is $\lambda = 1$ with eigenvector proportional to $(\sqrt{\tilde{d}_0}, \sqrt{\tilde{d}_1}, \ldots, \sqrt{\tilde{d}_{N-1}})^T$. All other eigenvalues have $|\lambda| < 1$. Therefore:
+  </p>
+
+  $$
+  \hat{A}^k \xrightarrow{k \to \infty} \text{projection onto the dominant eigenvector}
+  $$
+
+  <p>
+    After many layers of aggregation, <em>all</em> node features converge to (approximately) the same vector. This is <strong>oversmoothing</strong> &mdash; the fundamental limitation of deep GNNs.
+  </p>
+
+  <p>
+    In our worked example, notice how after just one layer, nodes 0 and 1 already had identical features, and nodes 4 and 5 were identical. After two or three more layers, all six nodes would have nearly the same feature vector &mdash; at which point the node features contain no useful information for distinguishing vertices.
+  </p>
+
+  <p>
+    Oversmoothing means that simply stacking more GCN layers does not always improve performance. Beyond a certain depth (typically 2-4 layers for many benchmarks), additional layers actually <em>hurt</em> because they wash out node-level information. This is in stark contrast to CNNs on images, where dozens or hundreds of layers are standard.
+  </p>
+
+  <p>
+    The most direct remedy is <strong>skip connections</strong>, inspired by ResNet. Instead of the standard GCN update, add a residual path:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 44 &mdash; Skip connection</div>
+    $$
+    h_i^{(\ell+1)} = h_i^{(\ell)} + \sigma\!\left(\tilde{D}^{-1/2}\tilde{A}\tilde{D}^{-1/2}\, H^{(\ell)}\, W^{(\ell)}\right)_i
+    \tag{44}
+    $$
+  </div>
+
+  <p>
+    The additive $h_i^{(\ell)}$ ensures that the original features are always accessible, preventing them from being completely averaged away. Other approaches to oversmoothing include:
+  </p>
+
+  <ul>
+    <li><strong>JK-Net (Xu et al. 2018):</strong> concatenate features from all layers and let the model learn which layer's representation is most useful for each node.</li>
+    <li><strong>GCNII (Chen et al. 2020):</strong> skip connections to the <em>initial</em> features $H^{(0)}$ (not just the previous layer), plus identity mapping: $H^{(\ell+1)} = \sigma(((1-\alpha)\hat{A}H^{(\ell)} + \alpha H^{(0)})((1-\beta)I + \beta W^{(\ell)}))$.</li>
+    <li><strong>DropEdge (Rong et al. 2020):</strong> randomly remove edges during training, slowing down the convergence to the uniform state.</li>
+    <li><strong>PairNorm (Zhao & Akoglu 2020):</strong> normalize node features at each layer to maintain variance.</li>
+  </ul>
+
+  <p>
+    The oversmoothing phenomenon has a clean spectral interpretation. The GCN propagation is a low-pass filter (it preserves the low-frequency components and attenuates the high-frequency ones). Stacking layers applies this low-pass filter repeatedly, progressively killing off all frequencies except the DC component. The remedy is to either (a) preserve high-frequency information through skip connections, or (b) limit the depth of the network and compensate with wider layers.
+  </p>
+
+  <p>
+    This completes the journey from spectral theory to practical neural networks. We began with the graph Laplacian's eigendecomposition, defined spectral convolutions, discovered that polynomial filters are computationally tractable, specialized to Chebyshev and then degree-1 polynomials, and arrived at the GCN layer &mdash; which, unpacked, is simply message passing. Along the way, we saw the fundamental tradeoff: depth gives larger receptive fields, but too much depth destroys information through oversmoothing.
+  </p>
+
+  <p>
+    In the next chapter, we will step back and survey the complete chain of analogies between $\ZN$ and general graphs, assess what was preserved and what was lost in the transition, and preview the modern landscape of graph neural networks that has grown from these foundations.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- FOOTER NAV                                                   -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="gcn-05-graph-convolutions.html"><span class="dir">&larr; Previous</span><span class="title">Graph Convolutions</span></a><a class="next" href="gcn-07-analogies.html"><span class="dir">Next &rarr;</span><span class="title">The Chain of Analogies</span></a></div>
+</main>
+<footer><p><a href="gcn-index.html">&larr; Course Home</a> &middot; <a href="../index.html">All Notes</a></p></footer>
+<a href="#" class="back-to-top" aria-label="Back to top">&#8593;</a>
+<script>
+const fill = document.querySelector('.progress-fill');
+const main = document.querySelector('main');
+function updateProgress() {
+  const top = main.getBoundingClientRect().top;
+  const height = main.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (-top / height) * 100));
+  fill.style.width = pct + '%';
+}
+const btn = document.querySelector('.back-to-top');
+function updateBtn() {
+  btn.classList.toggle('visible', window.scrollY > 600);
+}
+window.addEventListener('scroll', function() { updateProgress(); updateBtn(); }, { passive: true });
+updateProgress();
+</script>
+</body>
+</html>

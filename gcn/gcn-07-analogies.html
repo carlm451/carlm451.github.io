@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Chain of Analogies — GCN Course</title>
+<script>
+window.MathJax={
+  tex:{
+    inlineMath:[['$','$'],['\\(','\\)']],
+    displayMath:[['$$','$$'],['\\[','\\]']],
+    macros:{
+      R:'\\mathbb{R}',
+      C:'\\mathbb{C}',
+      Z:'\\mathbb{Z}',
+      ZN:'{\\mathbb{Z}_N}',
+      Ft:'\\mathcal{F}',
+      Fti:'\\mathcal{F}^{-1}'
+    }
+  },
+  svg:{fontCache:'global'}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-chapter">
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / <a href="gcn-index.html">GCN</a> / Chapter 7</div>
+    <span class="ch-num">Chapter 7</span>
+    <h1>The Chain of <strong>Analogies</strong></h1>
+    <p class="subtitle">The complete analogy table, what we discovered, modern GNN variants, and further reading.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="gcn-06-spectral-to-nn.html">&larr; Spectral to NNs</a><span class="ch-title">Chapter 7</span><a href="gcn-index.html">Course Home &rarr;</a></div></nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<!-- Table of Contents -->
+<div class="toc">
+  <div class="toc-label">In this chapter</div>
+  <ol>
+    <li><a href="#sec28"><span class="toc-num">28</span>The Complete Analogy Table</a></li>
+    <li><a href="#sec29"><span class="toc-num">29</span>What We Discovered</a></li>
+    <li><a href="#sec30"><span class="toc-num">30</span>Modern GNN Variants in Spectral Context</a></li>
+    <li><a href="#sec31"><span class="toc-num">31</span>Beyond Graphs</a></li>
+    <li><a href="#sec32"><span class="toc-num">32</span>Further Reading</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 28 — The Complete Analogy Table                        -->
+<!-- ============================================================ -->
+<section id="sec28">
+  <h2><span class="sec-num">28</span>The Complete Analogy Table</h2>
+
+  <p>
+    We have spent six chapters building two parallel stories: convolution on the cyclic group $\ZN$, and convolution on general graphs. Now we lay them side by side. The following table is the definitive reference for the entire course &mdash; every row records a concept from the $\ZN$ setting and its graph counterpart.
+  </p>
+
+  <p>
+    Read this table slowly. Each row condenses an argument that took us paragraphs (sometimes entire sections) to develop. The power of the analogy is that once you internalize one column, the other column follows by pattern-matching &mdash; except in the rows where the analogy <em>breaks</em>, which are precisely the rows that reveal the deeper mathematics.
+  </p>
+
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Concept</th>
+        <th>Z<sub>N</sub> (ring)</th>
+        <th>General Graph</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Domain</strong></td>
+        <td>$N$ points equally spaced on a circle</td>
+        <td>$N$ vertices, arbitrary topology</td>
+      </tr>
+      <tr>
+        <td><strong>Shift / adjacency</strong></td>
+        <td>$S$ (directed cyclic shift)</td>
+        <td>$A$ (adjacency matrix)</td>
+      </tr>
+      <tr>
+        <td><strong>Symmetric shift</strong></td>
+        <td>$A = S + S^*$ (forward + backward shift)</td>
+        <td>$A$ (already symmetric for undirected graphs)</td>
+      </tr>
+      <tr>
+        <td><strong>Smoothness operator</strong></td>
+        <td>$L = 2I - (S + S^*)$</td>
+        <td>$L = D - A$</td>
+      </tr>
+      <tr>
+        <td><strong>Fourier basis</strong></td>
+        <td>DFT vectors $w^{(m)}_k = \frac{1}{\sqrt{N}}\rho_m^k$, where $\rho_m = e^{i2\pi m/N}$</td>
+        <td>Eigenvectors $u_k$ of $L$</td>
+      </tr>
+      <tr>
+        <td><strong>Forward transform</strong></td>
+        <td>$\hat{x} = Wx$ (DFT)</td>
+        <td>$\hat{x} = U^T x$ (GFT)</td>
+      </tr>
+      <tr>
+        <td><strong>Inverse transform</strong></td>
+        <td>$x = W^{-1}\hat{x}$ (IDFT)</td>
+        <td>$x = U\hat{x}$ (IGFT)</td>
+      </tr>
+      <tr>
+        <td><strong>Convolution (algebraic)</strong></td>
+        <td>Polynomial in $S$: $\sum_k h_k S^k$</td>
+        <td>Polynomial in $L$: $\sum_k \theta_k L^k$</td>
+      </tr>
+      <tr>
+        <td><strong>Convolution (spectral)</strong></td>
+        <td>Diagonal in the DFT basis</td>
+        <td>Diagonal in the $L$-eigenbasis</td>
+      </tr>
+      <tr>
+        <td><strong>Convolution (group-theoretic)</strong></td>
+        <td>Commutes with all shifts $S^k$</td>
+        <td style="color:#b44a2f;">&mdash; (no analog: no transitive group)</td>
+      </tr>
+      <tr>
+        <td><strong>Frequency</strong></td>
+        <td>DFT index $k$ (or $m$)</td>
+        <td>Eigenvalue $\lambda_k$ of $L$</td>
+      </tr>
+      <tr>
+        <td><strong>Low frequency</strong></td>
+        <td>$k \approx 0$ (smooth, slowly varying)</td>
+        <td>Small $\lambda$ (smooth on graph)</td>
+      </tr>
+      <tr>
+        <td><strong>High frequency</strong></td>
+        <td>$k \approx N/2$ (oscillatory)</td>
+        <td>Large $\lambda$ (oscillatory on graph)</td>
+      </tr>
+      <tr>
+        <td><strong>Spectral filtering</strong></td>
+        <td>$\hat{y}_k = \hat{h}_k \cdot \hat{x}_k$</td>
+        <td>$\hat{y}_k = \hat{h}_k \cdot \hat{x}_k$</td>
+      </tr>
+      <tr>
+        <td><strong>Filter locality</strong></td>
+        <td>Kernel width (number of terms in polynomial)</td>
+        <td>Polynomial degree (number of hops)</td>
+      </tr>
+      <tr>
+        <td><strong>Eigenvalue structure</strong></td>
+        <td>All distinct (roots of unity)</td>
+        <td>May repeat (real symmetric matrix)</td>
+      </tr>
+      <tr>
+        <td><strong>Eigenbasis uniqueness</strong></td>
+        <td>Unique (forced by distinct eigenvalues)</td>
+        <td>Non-unique when eigenvalues repeat</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    The table has a remarkable feature: the spectral filtering row is <em>identical</em> on both sides. This is the beating heart of the analogy. Regardless of whether the underlying domain is a ring or an arbitrary graph, the filtering recipe is the same &mdash; transform to the eigenbasis, multiply pointwise, transform back.
+  </p>
+
+  <p>
+    We can express this parallel in a single equation that captures the entire course:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 45 &mdash; The Grand Parallel</div>
+    $$
+    \underbrace{y = W^{-1}\operatorname{diag}(\hat{h})\,W\,x}_{\text{DFT filtering on }\ZN}
+    \quad \longleftrightarrow \quad
+    \underbrace{y = U\,\operatorname{diag}(\hat{h})\,U^T\,x}_{\text{Graph filtering}} \tag{45}
+    $$
+  </div>
+
+  <p>
+    In both cases, the eigenbasis plays the role of a "frequency domain" in which convolution becomes pointwise multiplication. On $\ZN$, the eigenbasis is the DFT matrix $W$, forced into existence by the group structure and distinct eigenvalues. On a graph, the eigenbasis is the matrix $U$ of Laplacian eigenvectors &mdash; the graph Fourier transform. The formula is the same; only the basis changes.
+  </p>
+
+  <div class="insight key">
+    <p><strong>The rows where the analogy breaks are the most informative.</strong> The "group-theoretic convolution" row has no graph analog. The "eigenvalue structure" row differs (distinct vs. possibly repeated). The "eigenbasis uniqueness" row differs. These three breakdowns are not accidents &mdash; they are logically connected, and they trace a single thread: the absence of group structure on general graphs.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 29 — What We Discovered                               -->
+<!-- ============================================================ -->
+<section id="sec29">
+  <h2><span class="sec-num">29</span>What We Discovered</h2>
+
+  <p>
+    Let us step back and state the central thesis of this course in a single sentence: <strong>The DFT and graph convolutions are instances of the same mathematical idea.</strong>
+  </p>
+
+  <p>
+    That idea can be stated precisely. Given a "shift-like" operator &mdash; $S$ on $\ZN$, or the Laplacian $L$ on a graph &mdash; find its eigenbasis, and define convolution as operators that are diagonal in that basis. Equivalently, define convolution as polynomials in the operator. These two characterizations (spectral and algebraic) agree whenever the operator has all distinct eigenvalues, and they still agree for polynomial filters even when eigenvalues repeat.
+  </p>
+
+  <p>
+    The course traced two parallel paths that converged on this single idea:
+  </p>
+
+  <p>
+    <strong>Path 1: The $\ZN$ story (Chapters 1&ndash;3).</strong> We started with signals on a ring and the cyclic shift operator $S$. Because $\ZN$ is a group, three characterizations of convolution coincide: (i) operators that commute with all shifts (group-theoretic), (ii) polynomials in $S$ (algebraic), and (iii) operators diagonal in the DFT basis (spectral). The key result, following Bamieh (2018), was that the DFT is not a clever guess &mdash; it is <em>forced</em> by the simultaneous diagonalization theorem. The distinct eigenvalues of $S$ (the $N$th roots of unity) guarantee a unique eigenbasis, and that eigenbasis is the DFT.
+  </p>
+
+  <p>
+    <strong>Path 2: The graph story (Chapters 4&ndash;6).</strong> We moved from the ring to general graphs, replacing $S$ with the graph Laplacian $L$. The group structure was lost &mdash; an irregular graph has no translation symmetry. With it, the group-theoretic characterization died. But the algebraic and spectral characterizations survived: we can still form polynomials in $L$, and we can still diagonalize $L$ to define spectral filtering. The graph Fourier transform (GFT) is the eigenbasis of $L$, and graph convolution is multiplication in that basis.
+  </p>
+
+  <p>
+    The logical structure is this:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 46 &mdash; The Core Correspondence</div>
+    $$
+    \underbrace{C_h = W^{-1}\hat{H}W}_{\text{Circulant = DFT-diagonal (on }\ZN\text{)}}
+    \quad \longleftrightarrow \quad
+    \underbrace{C_h = U\hat{H}U^T}_{\text{Graph convolution = GFT-diagonal}} \tag{46}
+    $$
+  </div>
+
+  <p>
+    where $\hat{H} = \operatorname{diag}(\hat{h}_0, \ldots, \hat{h}_{N-1})$ in both cases. The left side is a theorem about commutative algebras of circulant matrices. The right side is the definition that generalizes it to graphs. The DFT matrix $W$ and the graph eigenvector matrix $U$ play exactly the same structural role.
+  </p>
+
+  <p>
+    <strong>What was gained by starting from $\ZN$?</strong> Understanding. Most treatments of graph convolutions begin with the graph Laplacian and simply <em>define</em> convolution as $U\operatorname{diag}(\hat{h})U^T x$, without explaining why. By starting from $\ZN$ and following Bamieh's discovery approach, we saw that this definition is not arbitrary &mdash; it is the unique generalization of a structure that is <em>forced</em> in the classical setting. The DFT is forced by simultaneous diagonalization. Graph convolution is the same operation, applied to a different operator. The definition becomes inevitable rather than imposed.
+  </p>
+
+  <p>
+    <strong>What was lost on graphs?</strong> Three things, all connected:
+  </p>
+
+  <ol>
+    <li><strong>Group structure.</strong> No transitive group acts on the vertices of an irregular graph. The notion of "translation" does not apply.</li>
+    <li><strong>Eigenbasis uniqueness.</strong> When the Laplacian has repeated eigenvalues, the eigenbasis is not unique &mdash; any rotation within a repeated eigenspace gives an equally valid "graph Fourier transform."</li>
+    <li><strong>The third characterization.</strong> On $\ZN$, the group-theoretic, algebraic, and spectral characterizations all define the same set of operators. On graphs, only the algebraic and spectral characterizations survive. The group-theoretic characterization has no analog.</li>
+  </ol>
+
+  <p>
+    These losses are not bugs; they are features of the richer topology that graphs can represent. A ring is one of the simplest possible graph structures. General graphs can model molecules, social networks, meshes, and brain connectomes &mdash; structures with irregular, non-homogeneous connectivity. The price of this expressivity is the loss of the canonical symmetries that made $\ZN$ so clean.
+  </p>
+
+  <div class="insight key">
+    <p><strong>The DFT and graph convolutions are the same idea: simultaneous diagonalization of a commuting algebra, applied to two different settings. One has a group, one doesn't. But the core mathematics is identical.</strong></p>
+  </div>
+
+  <!-- Course Arc Concept Map -->
+  <div class="figure">
+    <svg viewBox="0 0 820 340" width="820" height="340">
+      <defs>
+        <marker id="arrowArc" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="#6b6560" stroke-width="1"/>
+        </marker>
+        <marker id="arrowGen" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto">
+          <path d="M0,0 L10,4 L0,8" fill="none" stroke="#b44a2f" stroke-width="1.5"/>
+        </marker>
+      </defs>
+
+      <!-- Title -->
+      <text x="410" y="22" font-family="Source Sans 3, sans-serif" font-size="13" fill="#6b6560" text-anchor="middle" font-style="italic">The mathematical arc of the course</text>
+
+      <!-- === TOP ROW: Z_N path === -->
+      <!-- Z_N -->
+      <rect x="10" y="50" width="80" height="44" rx="6" fill="#e8a88a" fill-opacity="0.25" stroke="#b44a2f" stroke-width="2"/>
+      <text x="50" y="68" font-family="JetBrains Mono, monospace" font-size="13" fill="#b44a2f" text-anchor="middle" font-weight="700">Z<tspan baseline-shift="sub" font-size="10">N</tspan></text>
+      <text x="50" y="84" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">cyclic group</text>
+
+      <!-- Arrow Z_N -> S -->
+      <line x1="94" y1="72" x2="128" y2="72" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowArc)"/>
+
+      <!-- S -->
+      <rect x="132" y="50" width="80" height="44" rx="6" fill="#e8a88a" fill-opacity="0.25" stroke="#b44a2f" stroke-width="2"/>
+      <text x="172" y="68" font-family="JetBrains Mono, monospace" font-size="13" fill="#b44a2f" text-anchor="middle" font-weight="700">S</text>
+      <text x="172" y="84" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">shift operator</text>
+
+      <!-- Arrow S -> Sim Diag -->
+      <line x1="216" y1="72" x2="250" y2="72" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowArc)"/>
+
+      <!-- Simultaneous Diagonalization -->
+      <rect x="254" y="42" width="130" height="56" rx="6" fill="#a8c0e0" fill-opacity="0.25" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="319" y="64" font-family="Source Sans 3, sans-serif" font-size="11" fill="#3a5a8c" text-anchor="middle" font-weight="700">Simultaneous</text>
+      <text x="319" y="80" font-family="Source Sans 3, sans-serif" font-size="11" fill="#3a5a8c" text-anchor="middle" font-weight="700">Diagonalization</text>
+      <text x="319" y="93" font-family="Source Sans 3, sans-serif" font-size="8" fill="#6b6560" text-anchor="middle">Bamieh (2018)</text>
+
+      <!-- Arrow Sim Diag -> DFT -->
+      <line x1="388" y1="72" x2="422" y2="72" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowArc)"/>
+
+      <!-- DFT -->
+      <rect x="426" y="50" width="80" height="44" rx="6" fill="#8ec5b6" fill-opacity="0.3" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="466" y="68" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a6b5a" text-anchor="middle" font-weight="700">DFT</text>
+      <text x="466" y="84" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">W = eigenbasis</text>
+
+      <!-- === GENERALIZE arrow (diagonal, from DFT down to Graph) === -->
+      <line x1="506" y1="94" x2="556" y2="164" stroke="#b44a2f" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#arrowGen)"/>
+      <text x="555" y="128" font-family="Source Sans 3, sans-serif" font-size="11" fill="#b44a2f" font-weight="700" transform="rotate(40,555,128)">generalize</text>
+
+      <!-- === BOTTOM ROW: Graph path === -->
+      <!-- Graph -->
+      <rect x="10" y="170" width="80" height="44" rx="6" fill="#8ec5b6" fill-opacity="0.25" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="50" y="188" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a6b5a" text-anchor="middle" font-weight="700">Graph</text>
+      <text x="50" y="204" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">arbitrary topology</text>
+
+      <!-- Arrow Graph -> L -->
+      <line x1="94" y1="192" x2="128" y2="192" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowArc)"/>
+
+      <!-- L -->
+      <rect x="132" y="170" width="80" height="44" rx="6" fill="#8ec5b6" fill-opacity="0.25" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="172" y="188" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a6b5a" text-anchor="middle" font-weight="700">L</text>
+      <text x="172" y="204" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">Laplacian</text>
+
+      <!-- Arrow L -> GFT -->
+      <line x1="216" y1="192" x2="250" y2="192" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowArc)"/>
+
+      <!-- GFT -->
+      <rect x="254" y="170" width="80" height="44" rx="6" fill="#8ec5b6" fill-opacity="0.3" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="294" y="188" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a6b5a" text-anchor="middle" font-weight="700">GFT</text>
+      <text x="294" y="204" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">U = eigenbasis</text>
+
+      <!-- Arrow GFT -> Spectral Conv -->
+      <line x1="338" y1="192" x2="372" y2="192" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowArc)"/>
+
+      <!-- Polynomial / Spectral Convolutions -->
+      <rect x="376" y="162" width="140" height="56" rx="6" fill="#a8c0e0" fill-opacity="0.25" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="446" y="184" font-family="Source Sans 3, sans-serif" font-size="11" fill="#3a5a8c" text-anchor="middle" font-weight="700">Polynomial /</text>
+      <text x="446" y="200" font-family="Source Sans 3, sans-serif" font-size="11" fill="#3a5a8c" text-anchor="middle" font-weight="700">Spectral Conv.</text>
+      <text x="446" y="213" font-family="Source Sans 3, sans-serif" font-size="8" fill="#6b6560" text-anchor="middle">p(L) = U diag(h&#x0302;) U&#x1D40;</text>
+
+      <!-- Arrow Spectral Conv -> GNN -->
+      <line x1="520" y1="192" x2="554" y2="192" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowArc)"/>
+
+      <!-- GNN -->
+      <rect x="558" y="162" width="120" height="56" rx="6" fill="#e8a88a" fill-opacity="0.15" stroke="#8b5a8c" stroke-width="2.5"/>
+      <text x="618" y="184" font-family="JetBrains Mono, monospace" font-size="14" fill="#8b5a8c" text-anchor="middle" font-weight="700">GNN</text>
+      <text x="618" y="200" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">learnable filters</text>
+      <text x="618" y="213" font-family="Source Sans 3, sans-serif" font-size="8" fill="#6b6560" text-anchor="middle">+ nonlinearity</text>
+
+      <!-- === Connecting line: DFT Spectral filtering row (top) to GFT (bottom) === -->
+      <!-- vertical dotted line from DFT down to GFT showing "same idea" -->
+      <line x1="319" y1="98" x2="319" y2="166" stroke="#3a5a8c" stroke-width="1.2" stroke-dasharray="3,3"/>
+      <text x="319" y="140" font-family="Source Sans 3, sans-serif" font-size="9" fill="#3a5a8c" text-anchor="middle" font-style="italic">same logic</text>
+
+      <!-- === BOTTOM: Beyond Graphs === -->
+      <!-- Arrow GNN -> Beyond -->
+      <line x1="618" y1="222" x2="618" y2="260" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowArc)"/>
+
+      <!-- Beyond Graphs -->
+      <rect x="548" y="266" width="140" height="50" rx="6" fill="#f0e8f4" fill-opacity="0.5" stroke="#8b5a8c" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="618" y="286" font-family="Source Sans 3, sans-serif" font-size="11" fill="#8b5a8c" text-anchor="middle" font-weight="700">Beyond Graphs</text>
+      <text x="618" y="302" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">simplicial / cell complexes</text>
+      <text x="618" y="313" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">Hodge Laplacian L<tspan baseline-shift="sub" font-size="7">k</tspan></text>
+
+      <!-- Chapter labels along the top and bottom -->
+      <text x="50" y="118" font-family="Source Sans 3, sans-serif" font-size="9" fill="#b44a2f" text-anchor="middle">Ch 1</text>
+      <text x="172" y="118" font-family="Source Sans 3, sans-serif" font-size="9" fill="#b44a2f" text-anchor="middle">Ch 1&ndash;2</text>
+      <text x="319" y="36" font-family="Source Sans 3, sans-serif" font-size="9" fill="#3a5a8c" text-anchor="middle">Ch 2</text>
+      <text x="466" y="118" font-family="Source Sans 3, sans-serif" font-size="9" fill="#2a6b5a" text-anchor="middle">Ch 3</text>
+      <text x="50" y="230" font-family="Source Sans 3, sans-serif" font-size="9" fill="#2a6b5a" text-anchor="middle">Ch 4</text>
+      <text x="172" y="230" font-family="Source Sans 3, sans-serif" font-size="9" fill="#2a6b5a" text-anchor="middle">Ch 4</text>
+      <text x="294" y="230" font-family="Source Sans 3, sans-serif" font-size="9" fill="#2a6b5a" text-anchor="middle">Ch 5</text>
+      <text x="446" y="230" font-family="Source Sans 3, sans-serif" font-size="9" fill="#3a5a8c" text-anchor="middle">Ch 5&ndash;6</text>
+      <text x="618" y="230" font-family="Source Sans 3, sans-serif" font-size="9" fill="#8b5a8c" text-anchor="middle">Ch 6</text>
+    </svg>
+    <div class="caption"><strong>Figure 7.1.</strong> The mathematical arc of the course. The top row traces the $\ZN$ path: from the cyclic group to the shift operator $S$, through simultaneous diagonalization to the DFT. The bottom row traces the graph path: from arbitrary graphs to the Laplacian $L$, through the GFT to polynomial/spectral convolutions and GNNs. The diagonal "generalize" arrow is the key conceptual leap &mdash; replacing $W$ (the DFT) with $U$ (the graph eigenbasis) in the spectral filtering formula.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 30 — Modern GNN Variants in Spectral Context          -->
+<!-- ============================================================ -->
+<section id="sec30">
+  <h2><span class="sec-num">30</span>Modern GNN Variants in Spectral Context</h2>
+
+  <p>
+    With the spectral framework firmly in hand, we can now place the major GNN architectures along a spectrum from "purely spectral" to "non-spectral." This is not a survey &mdash; it is a guide to reading the literature through the lens of what we have learned. For each architecture, we ask: what does the filter look like in spectral terms?
+  </p>
+
+  <p>
+    <strong>GCN</strong> (Kipf &amp; Welling, 2017). The Graph Convolutional Network uses a degree-1 polynomial in the renormalized Laplacian $\tilde{L} = I - \tilde{D}^{-1/2}\tilde{A}\tilde{D}^{-1/2}$, where $\tilde{A} = A + I$ adds self-loops. The layer update is:
+  </p>
+
+  $$
+  H^{(\ell+1)} = \sigma\!\left(\tilde{D}^{-1/2}\tilde{A}\tilde{D}^{-1/2}\, H^{(\ell)}\, W^{(\ell)}\right)
+  $$
+
+  <p>
+    In spectral terms, this is a very restrictive filter. A degree-1 polynomial has only two free spectral values (the filter is constrained to be a linear function of $\lambda$), so the GCN can only learn filters that vary linearly across the spectrum. It cannot distinguish between two frequencies with the same spectral distance from either endpoint. Despite this limitation, the GCN launched the modern GNN era &mdash; the simplicity of a single-hop aggregation with shared weights proved remarkably effective for semi-supervised node classification.
+  </p>
+
+  <p>
+    <strong>ChebNet</strong> (Defferrard, Bresson &amp; Vandergheynst, 2016). ChebNet is historically the first practical spectral GNN. It uses a degree-$K$ Chebyshev polynomial approximation:
+  </p>
+
+  $$
+  g_\theta(\Lambda) \approx \sum_{k=0}^{K} \theta_k\, T_k(\tilde{\Lambda})
+  $$
+
+  <p>
+    where $T_k$ are Chebyshev polynomials and $\tilde{\Lambda} = 2\Lambda/\lambda_{\max} - I$ rescales the eigenvalues to $[-1, 1]$. In spectral terms, ChebNet has $K+1$ free parameters controlling a polynomial fit to the spectrum. Unlike GCN, it can learn localized filters with arbitrary spectral shape (up to degree $K$). The Chebyshev basis is chosen for numerical stability &mdash; it avoids the ill-conditioning of the monomial basis $\{I, L, L^2, \ldots\}$ at high degrees. Crucially, a degree-$K$ polynomial in $L$ corresponds to a filter with $K$-hop spatial support: the output at vertex $i$ depends only on vertices within $K$ graph hops.
+  </p>
+
+  <p>
+    <strong>GAT</strong> (Velickovic et al., 2018). The Graph Attention Network computes attention-weighted aggregation:
+  </p>
+
+  $$
+  h_i^{(\ell+1)} = \sigma\!\left(\sum_{j \in \mathcal{N}(i)} \alpha_{ij}\, W h_j^{(\ell)}\right)
+  $$
+
+  <p>
+    where the attention weights $\alpha_{ij}$ are computed from the features of both vertices $i$ and $j$. In spectral terms, GAT is <em>not</em> a spectral method. The key difference is that the attention weights are <strong>data-dependent</strong> &mdash; the "filter" changes for every input signal. In our framework, a spectral filter $\hat{h}$ is fixed (or learned once and applied to all inputs). GAT breaks this by making the effective filter a function of the input features. This is analogous to the difference between a linear time-invariant (LTI) filter and a nonlinear, time-varying one. GAT is more expressive precisely because it abandons the LTI constraint.
+  </p>
+
+  <p>
+    <strong>GraphSAGE</strong> (Hamilton, Inui &amp; Leskovec, 2017). GraphSAGE addresses scalability by <strong>sampling</strong> a fixed-size neighborhood at each hop, rather than aggregating over the full neighborhood. The aggregation step is:
+  </p>
+
+  $$
+  h_i^{(\ell+1)} = \sigma\!\left(W \cdot \text{CONCAT}\!\left(h_i^{(\ell)},\; \text{AGG}\!\left(\{h_j^{(\ell)} : j \in \mathcal{S}(i)\}\right)\right)\right)
+  $$
+
+  <p>
+    where $\mathcal{S}(i)$ is a sampled subset of the neighbors, and AGG can be mean, LSTM, or max-pooling. Spectrally, the mean aggregator is a 1-hop polynomial filter (like GCN), but the sampling introduces a stochastic approximation. The LSTM and max-pool aggregators are non-spectral &mdash; they are nonlinear functions of the neighbor features.
+  </p>
+
+  <p>
+    <strong>GIN</strong> (Xu, Hu, Leskovec &amp; Jegelka, 2019). The Graph Isomorphism Network is designed to be maximally expressive within the message-passing framework. Its update rule is:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 47 &mdash; GIN Update Rule</div>
+    $$
+    h_i^{(k+1)} = \text{MLP}^{(k)}\!\left((1 + \varepsilon^{(k)})\, h_i^{(k)} + \sum_{j \in \mathcal{N}(i)} h_j^{(k)}\right) \tag{47}
+    $$
+  </div>
+
+  <p>
+    The term $(1+\varepsilon)\, h_i + \sum_{j \in \mathcal{N}(i)} h_j$ is a special case of the message-passing framework. In matrix form, the linear part (before the MLP) is $(1+\varepsilon)I + A$ applied to the feature matrix &mdash; a degree-1 polynomial in $A$. The parameter $\varepsilon$ (learnable or fixed) controls the relative weight of the self-signal versus the neighbor aggregate. GIN proves that this update, followed by a sufficiently expressive MLP, is as powerful as the Weisfeiler-Leman graph isomorphism test for distinguishing non-isomorphic graphs.
+  </p>
+
+  <div class="def-box blue">
+    <div class="def-label">Spectral Classification of GNN Architectures</div>
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th>Architecture</th>
+          <th>Filter type</th>
+          <th>Spectral freedom</th>
+          <th>Spatial locality</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>ChebNet</td>
+          <td>Degree-$K$ polynomial in $L$</td>
+          <td>$K+1$ parameters</td>
+          <td>$K$ hops</td>
+        </tr>
+        <tr>
+          <td>GCN</td>
+          <td>Degree-1 polynomial in $\tilde{L}$</td>
+          <td>2 parameters (linear in $\lambda$)</td>
+          <td>1 hop</td>
+        </tr>
+        <tr>
+          <td>GIN</td>
+          <td>Degree-1 polynomial in $A$ + MLP</td>
+          <td>2 spectral + nonlinear MLP</td>
+          <td>1 hop per layer</td>
+        </tr>
+        <tr>
+          <td>GAT</td>
+          <td>Data-dependent (attention)</td>
+          <td>Input-dependent (not LTI)</td>
+          <td>1 hop per layer</td>
+        </tr>
+        <tr>
+          <td>GraphSAGE</td>
+          <td>1-hop + sampling</td>
+          <td>Stochastic approximation</td>
+          <td>1 hop (sampled)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    The table reveals a clear pattern. The earliest spectral methods (ChebNet) offered the most control over the spectral response but required computing Laplacian eigenvectors or Chebyshev recurrences. Later architectures (GCN, GIN, GraphSAGE, GAT) traded spectral precision for simplicity and scalability, using only 1-hop operations that avoid any eigendecomposition. The field has largely moved from spectral to spatial, but the spectral viewpoint remains essential for understanding <em>why</em> these architectures work &mdash; and where they are limited.
+  </p>
+
+  <div class="insight warning">
+    <p><strong>A common misconception:</strong> "Stacking $K$ layers of a 1-hop GCN gives a degree-$K$ polynomial filter." This is only true if there are no nonlinearities between layers. With ReLU activations between layers, the composition is a <em>nonlinear</em> function of $L$, not a polynomial. Each layer is a degree-1 polynomial, but the composition through nonlinearities creates a much richer function class &mdash; one that cannot be described by any single polynomial in $L$.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 31 — Beyond Graphs                                    -->
+<!-- ============================================================ -->
+<section id="sec31">
+  <h2><span class="sec-num">31</span>Beyond Graphs</h2>
+
+  <p>
+    Graphs model <strong>pairwise</strong> relationships: an edge connects two vertices. But many real-world systems have higher-order structure that pairwise edges cannot capture. Three friends who always appear together at meetings form a <em>three-way</em> relationship that is more than the sum of three pairwise friendships. A triangular face in a mesh carries geometric information (orientation, area) beyond what its three edges encode. To model such systems, we need mathematical objects that go beyond graphs.
+  </p>
+
+  <p>
+    <strong>Simplicial complexes</strong> extend graphs by adding higher-dimensional cells. A 0-simplex is a vertex, a 1-simplex is an edge, a 2-simplex is a filled triangle, a 3-simplex is a filled tetrahedron, and so on. The crucial additional structure is the <strong>boundary operator</strong> $\partial_k$, which maps each $k$-simplex to its oriented $(k-1)$-boundary. For a triangle with vertices $(v_0, v_1, v_2)$, the boundary is the oriented sum of its three edges: $\partial_2[v_0, v_1, v_2] = [v_1, v_2] - [v_0, v_2] + [v_0, v_1]$.
+  </p>
+
+  <p>
+    <strong>Cell complexes</strong> relax the simplicial constraint. In a simplicial complex, every face of a simplex must also belong to the complex (a filled triangle forces all three edges and all three vertices to be present). Cell complexes allow more flexible topology &mdash; cells of arbitrary shape, without the inclusion constraint on faces.
+  </p>
+
+  <p>
+    The connection to our spectral framework is through the <strong>Hodge Laplacian</strong>. Just as the graph Laplacian $L_0 = D - A$ operates on signals living on <em>vertices</em> (0-cells), the Hodge Laplacian $L_k$ operates on signals living on <em>$k$-cells</em> (edges, faces, and higher). It is defined using the boundary operators, represented as matrices $B_k$:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Eq. 48 &mdash; Hodge Laplacian</div>
+    $$
+    L_k = B_k^T B_k + B_{k+1} B_{k+1}^T \tag{48}
+    $$
+  </div>
+
+  <p>
+    This decomposition has a beautiful structure. The first term $B_k^T B_k$ is the <strong>lower Laplacian</strong> (or "gradient" component) &mdash; it measures how a $k$-signal varies relative to the $(k-1)$-cells below it. The second term $B_{k+1} B_{k+1}^T$ is the <strong>upper Laplacian</strong> (or "curl" component) &mdash; it measures how a $k$-signal circulates around the $(k+1)$-cells above it.
+  </p>
+
+  <p>
+    For $k=0$ (vertex signals), the boundary matrix $B_0$ does not exist (or is zero), and $B_1$ is the vertex-edge incidence matrix. So $L_0 = B_1 B_1^T$, which is exactly the graph Laplacian $L = D - A$. The Hodge Laplacian at rank 0 reduces to the familiar graph Laplacian.
+  </p>
+
+  <p>
+    For $k=1$ (edge signals), $L_1 = B_1^T B_1 + B_2 B_2^T$. The eigenvectors of $L_1$ define a "Fourier transform for edge signals" &mdash; they are the natural frequency decomposition for flows on a network. Low-frequency edge signals are smooth flows; high-frequency edge signals are rapidly oscillating.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 680 230" width="680" height="230">
+      <defs>
+        <marker id="arrowHodge" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="#6b6560" stroke-width="1"/>
+        </marker>
+      </defs>
+      <!-- Rank 0: Vertices -->
+      <rect x="20" y="80" width="120" height="60" rx="8" fill="#e8a88a" fill-opacity="0.2" stroke="#b44a2f" stroke-width="2"/>
+      <text x="80" y="100" font-family="Source Sans 3, sans-serif" font-size="13" fill="#b44a2f" text-anchor="middle" font-weight="700">Vertices (0-cells)</text>
+      <text x="80" y="118" font-family="JetBrains Mono, monospace" font-size="11" fill="#b44a2f" text-anchor="middle">L<tspan baseline-shift="sub" font-size="9">0</tspan> = B<tspan baseline-shift="sub" font-size="9">1</tspan>B<tspan baseline-shift="sub" font-size="9">1</tspan><tspan baseline-shift="sup" font-size="9">T</tspan></text>
+      <text x="80" y="133" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">= graph Laplacian</text>
+
+      <!-- Arrow Vertices -> Edges -->
+      <line x1="144" y1="110" x2="188" y2="110" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowHodge)"/>
+      <text x="166" y="100" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560" text-anchor="middle">B<tspan baseline-shift="sub" font-size="8">1</tspan></text>
+
+      <!-- Rank 1: Edges -->
+      <rect x="192" y="70" width="140" height="80" rx="8" fill="#8ec5b6" fill-opacity="0.2" stroke="#2a6b5a" stroke-width="2"/>
+      <text x="262" y="95" font-family="Source Sans 3, sans-serif" font-size="13" fill="#2a6b5a" text-anchor="middle" font-weight="700">Edges (1-cells)</text>
+      <text x="262" y="115" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a6b5a" text-anchor="middle">L<tspan baseline-shift="sub" font-size="8">1</tspan> = B<tspan baseline-shift="sub" font-size="8">1</tspan><tspan baseline-shift="sup" font-size="8">T</tspan>B<tspan baseline-shift="sub" font-size="8">1</tspan> + B<tspan baseline-shift="sub" font-size="8">2</tspan>B<tspan baseline-shift="sub" font-size="8">2</tspan><tspan baseline-shift="sup" font-size="8">T</tspan></text>
+      <text x="262" y="133" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">gradient + curl</text>
+
+      <!-- Arrow Edges -> Faces -->
+      <line x1="336" y1="110" x2="380" y2="110" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowHodge)"/>
+      <text x="358" y="100" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560" text-anchor="middle">B<tspan baseline-shift="sub" font-size="8">2</tspan></text>
+
+      <!-- Rank 2: Faces -->
+      <rect x="384" y="70" width="140" height="80" rx="8" fill="#a8c0e0" fill-opacity="0.2" stroke="#3a5a8c" stroke-width="2"/>
+      <text x="454" y="95" font-family="Source Sans 3, sans-serif" font-size="13" fill="#3a5a8c" text-anchor="middle" font-weight="700">Faces (2-cells)</text>
+      <text x="454" y="115" font-family="JetBrains Mono, monospace" font-size="10" fill="#3a5a8c" text-anchor="middle">L<tspan baseline-shift="sub" font-size="8">2</tspan> = B<tspan baseline-shift="sub" font-size="8">2</tspan><tspan baseline-shift="sup" font-size="8">T</tspan>B<tspan baseline-shift="sub" font-size="8">2</tspan> + B<tspan baseline-shift="sub" font-size="8">3</tspan>B<tspan baseline-shift="sub" font-size="8">3</tspan><tspan baseline-shift="sup" font-size="8">T</tspan></text>
+      <text x="454" y="133" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">higher-order</text>
+
+      <!-- Arrow Faces -> ... -->
+      <line x1="528" y1="110" x2="562" y2="110" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowHodge)"/>
+      <text x="545" y="100" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560" text-anchor="middle">B<tspan baseline-shift="sub" font-size="8">3</tspan></text>
+
+      <!-- ... -->
+      <text x="590" y="115" font-family="Source Sans 3, sans-serif" font-size="18" fill="#6b6560" text-anchor="middle">&#8943;</text>
+
+      <!-- Bottom labels -->
+      <text x="80" y="165" font-family="Source Sans 3, sans-serif" font-size="10" fill="#b44a2f" text-anchor="middle">signals on nodes</text>
+      <text x="262" y="170" font-family="Source Sans 3, sans-serif" font-size="10" fill="#2a6b5a" text-anchor="middle">signals on edges</text>
+      <text x="262" y="185" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">(flows, currents)</text>
+      <text x="454" y="170" font-family="Source Sans 3, sans-serif" font-size="10" fill="#3a5a8c" text-anchor="middle">signals on faces</text>
+      <text x="454" y="185" font-family="Source Sans 3, sans-serif" font-size="9" fill="#6b6560" text-anchor="middle">(flux, vorticity)</text>
+
+      <!-- Title -->
+      <text x="340" y="40" font-family="Source Sans 3, sans-serif" font-size="12" fill="#6b6560" text-anchor="middle" font-style="italic">The Hodge Laplacian hierarchy: one Laplacian per rank</text>
+    </svg>
+    <div class="caption"><strong>Figure 7.2.</strong> The Hodge Laplacian hierarchy. Each rank of cells (vertices, edges, faces, ...) has its own Laplacian $L_k$, defined in terms of the boundary operators $B_k$ connecting adjacent ranks. The graph Laplacian $L_0$ is the special case for vertex signals. The spectral theory generalizes: eigenvectors of $L_k$ define a "Fourier transform" for $k$-cell signals.</div>
+  </div>
+
+  <p>
+    The spectral theory carries over to every rank. The eigenvectors of $L_k$ form an orthonormal basis for $k$-cell signals, and filtering can be defined as polynomial operations in $L_k$ or as spectral multipliers in the $L_k$-eigenbasis. The entire framework we developed for graphs &mdash; polynomial filters, spectral convolutions, the trade-off between spectral freedom and spatial locality &mdash; applies to signals on edges, faces, and higher-dimensional cells.
+  </p>
+
+  <p>
+    A deep result from algebraic topology, the <strong>Hodge decomposition</strong>, states that the kernel of $L_k$ (the "harmonic" $k$-signals) captures the $k$th homology of the complex &mdash; its $k$-dimensional "holes." Harmonic 0-signals correspond to connected components. Harmonic 1-signals correspond to independent cycles. Harmonic 2-signals correspond to enclosed cavities. This topological information is invisible to standard graph neural networks, which operate only on vertex signals with $L_0$.
+  </p>
+
+  <div class="insight physics">
+    <p><strong>For a full treatment of simplicial and cell complexes, Hodge theory, and higher-order message passing, see the <a href="../tdl/tdl-index.html">Topological Deep Learning</a> course on this site.</strong> That course builds the boundary operators, constructs all the Hodge Laplacians, proves the Hodge decomposition, and develops the higher-order message-passing architectures (SNN, CWN, CAN) that generalize GNNs to simplicial and cell complexes.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 32 — Further Reading                                  -->
+<!-- ============================================================ -->
+<section id="sec32">
+  <h2><span class="sec-num">32</span>Further Reading</h2>
+
+  <p>
+    This course traced a single thread: from circular convolution on $\ZN$ to spectral convolution on graphs. The following works are the primary sources for the ideas developed here, along with the key papers that extend them. Each entry includes a note on how it connects to our narrative.
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">Primary References</div>
+    <ol>
+      <li>
+        <p><strong>Bamieh (2018)</strong> &mdash; <em>"A Tutorial on Matrix Functions and their use in the Discovery of the DFT."</em></p>
+        <p>The foundation of Part I of this course. Bamieh shows that the DFT is not a clever guess but an <em>inevitable consequence</em> of simultaneous diagonalization. Read this in full for the complete proofs of the commutant theorem, the three characterizations, and the forced emergence of the DFT from algebraic structure. Our Chapters 1&ndash;3 follow this paper closely.</p>
+      </li>
+      <li>
+        <p><strong>Hammond, Vandergheynst &amp; Gribonval (2011)</strong> &mdash; <em>"Wavelets on Graphs via Spectral Graph Theory."</em></p>
+        <p>The foundational paper for graph signal processing. Introduces spectral graph wavelets using polynomial approximation of spectral multipliers &mdash; the direct mathematical ancestor of ChebNet. This paper established the principle that graph filters should be defined spectrally and approximated by polynomials, which is the central idea of our Chapters 5&ndash;6.</p>
+      </li>
+      <li>
+        <p><strong>Defferrard, Bresson &amp; Vandergheynst (2016)</strong> &mdash; <em>"Convolutional Neural Networks on Graphs with Fast Localized Spectral Filtering."</em></p>
+        <p>ChebNet: the bridge from spectral graph theory to practical neural networks. Combines Hammond et al.'s polynomial spectral filters with learnable parameters and neural network training. The Chebyshev polynomial basis avoids eigendecomposition entirely, making spectral filtering scalable. This is the key paper for understanding how spectral theory becomes computational practice.</p>
+      </li>
+      <li>
+        <p><strong>Kipf &amp; Welling (2017)</strong> &mdash; <em>"Semi-Supervised Classification with Graph Convolutional Networks."</em></p>
+        <p>The GCN &mdash; a degree-1 simplification of ChebNet that launched the modern GNN era. By restricting to a single Chebyshev polynomial and adding the renormalization trick ($\tilde{A} = A + I$, symmetric normalization), Kipf and Welling produced a model simple enough for widespread adoption. The paper demonstrates that even the crudest spectral filter (linear in $\lambda$) can achieve strong results when stacked with nonlinearities.</p>
+      </li>
+      <li>
+        <p><strong>Bronstein, Bruna, Cohen &amp; Velickovic (2021)</strong> &mdash; <em>"Geometric Deep Learning: Grids, Groups, Graphs, Geodesics, and Gauges."</em></p>
+        <p>The "5G" blueprint paper. Places everything in this course within a unified framework of symmetry and invariance. Standard CNNs, GNNs, Transformers, and equivariant networks are all instances of a single principle: exploiting the symmetry group of the domain. Our $\ZN$ story is the special case where the symmetry group is cyclic; graphs are the case where symmetry is reduced to the automorphism group. Essential reading for the big picture.</p>
+      </li>
+      <li>
+        <p><strong>Distill.pub (2021)</strong> &mdash; <em>"Understanding Convolutions on Graphs."</em></p>
+        <p>An excellent visual introduction to graph convolutions, with interactive diagrams. This course goes deeper mathematically &mdash; Bamieh's discovery approach, the three characterizations, the role of repeated eigenvalues, the lost group-theoretic characterization &mdash; but the Distill article is an outstanding complement for building geometric intuition. Particularly recommended for the spectral filtering visualizations.</p>
+      </li>
+      <li>
+        <p><strong>Hajij et al. (2022)</strong> &mdash; <em>"Topological Deep Learning: Going Beyond Graph Data."</em></p>
+        <p>The paper that our <a href="../tdl/tdl-index.html">Topological Deep Learning</a> course provides background for. Takes the Hodge Laplacian from Section 31 further, defining message passing on simplicial and cell complexes. If the spectral framework of this course felt natural on graphs, Hajij et al. show how to push it to higher-order structures where boundary operators replace the adjacency matrix.</p>
+      </li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Additional references by topic:</strong>
+  </p>
+
+  <p>
+    <em>On graph signal processing foundations:</em> Shuman, Narang, Frossard, Ortega &amp; Vandergheynst (2013), "The Emerging Field of Signal Processing on Graphs," provides a comprehensive survey of spectral graph theory for signal processing, including windowed graph Fourier transforms and uncertainty principles on graphs.
+  </p>
+
+  <p>
+    <em>On the expressivity of GNNs:</em> Xu, Hu, Leskovec &amp; Jegelka (2019), "How Powerful are Graph Neural Networks?" (the GIN paper) proves that message-passing GNNs are at most as powerful as the Weisfeiler-Leman isomorphism test, and designs GIN to achieve this upper bound. Morris et al. (2019), "Weisfeiler and Leman Go Neural," independently reach similar conclusions.
+  </p>
+
+  <p>
+    <em>On attention mechanisms for graphs:</em> Velickovic et al. (2018), "Graph Attention Networks," introduces data-dependent edge weights via attention. Brody, Alon &amp; Yahav (2022), "How Attentive are Graph Attention Networks?" identifies a subtle issue in the original GAT attention mechanism and proposes GATv2 with strictly more expressive dynamic attention.
+  </p>
+
+  <p>
+    <em>On scalable graph learning:</em> Hamilton, Ying &amp; Leskovec (2017), "Inductive Representation Learning on Large Graphs" (GraphSAGE), introduces neighborhood sampling for mini-batch training on graphs with millions of nodes. Cluster-GCN (Chiang et al., 2019) and GraphSAINT (Zeng et al., 2020) offer alternative scalable training strategies.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- FOOTER NAV                                                   -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="gcn-06-spectral-to-nn.html"><span class="dir">&larr; Previous</span><span class="title">From Spectral Theory to Neural Networks</span></a><a class="next" href="gcn-index.html"><span class="dir">Next &rarr;</span><span class="title">Course Home</span></a></div>
+</main>
+<footer><p><a href="gcn-index.html">&larr; Course Home</a> &middot; <a href="../index.html">All Notes</a></p></footer>
+<a href="#" class="back-to-top" aria-label="Back to top">&#8593;</a>
+<script>
+const fill = document.querySelector('.progress-fill');
+const main = document.querySelector('main');
+function updateProgress() {
+  const top = main.getBoundingClientRect().top;
+  const height = main.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (-top / height) * 100));
+  fill.style.width = pct + '%';
+}
+const btn = document.querySelector('.back-to-top');
+function updateBtn() {
+  btn.classList.toggle('visible', window.scrollY > 600);
+}
+window.addEventListener('scroll', function() { updateProgress(); updateBtn(); }, { passive: true });
+updateProgress();
+</script>
+</body>
+</html>

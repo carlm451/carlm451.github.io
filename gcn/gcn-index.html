@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discovering Graph Convolutions — Course Home</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-index">
+
+<header>
+  <div class="container">
+    <a class="back" href="../index.html">&larr; All Courses</a>
+    <h1>Discovering Graph Convolutions: From Circulant Matrices to the Graph Laplacian</h1>
+    <p class="subtitle">
+      How the DFT and graph convolutions emerge from the same idea &mdash; simultaneous diagonalization of a commuting algebra &mdash; applied to two different settings.
+      Following Bamieh (2018), with deeper graph-spectral theory than the Distill.pub treatment.
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <div class="prereq">
+    <strong>Prerequisites:</strong> Linear algebra (eigenvalues, diagonalization, matrix polynomials), complex exponentials, basic group theory (cyclic groups). No graph theory or signal processing background assumed &mdash; everything is built from scratch.
+  </div>
+
+  <!-- PART I -->
+  <div class="section-label">Part I &mdash; Discovering the DFT</div>
+
+  <a class="ch-card" href="gcn-01-circulants.html">
+    <div class="ch-num">01</div>
+    <div class="ch-body">
+      <h3>Circulant Matrices and the Shift Operator</h3>
+      <p>Signals on a ring, the shift operator S as a matrix, circulant matrices as polynomials in S, and the algebraic characterization of circular convolution. Running example: Z&#x2088; with kernel h&nbsp;=&nbsp;[3,1,0,0,0,0,0,2].</p>
+      <div class="topics">Sections 1&ndash;4 &middot; Eq. 1&ndash;6 &middot; Bamieh &sect;3&ndash;4 &middot; Z&#x2088; running example</div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="gcn-02-discovering-dft.html">
+    <div class="ch-num">02</div>
+    <div class="ch-body">
+      <h3>Discovering the DFT</h3>
+      <p>Shift invariance as commutativity, the simultaneous diagonalization theorem, constructive derivation of the eigenvectors of S*, and the DFT as a forced consequence &mdash; not a postulate. Includes interactive eigenvisual app.</p>
+      <div class="topics">Sections 5&ndash;8 &middot; Eq. 7&ndash;14 &middot; Bamieh &sect;2&ndash;4 &middot; Eigenvisual interactive</div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="gcn-03-big-picture-zn.html">
+    <div class="ch-num">03</div>
+    <div class="ch-body">
+      <h3>The Big Picture for Z<sub>N</sub></h3>
+      <p>The DFT matrix and spectral filtering recipe, three isomorphic algebras (Bamieh Theorem 5.1), why everything worked (three pillars), and a preview of what will break on graphs.</p>
+      <div class="topics">Sections 9&ndash;12 &middot; Eq. 15&ndash;20 &middot; Bamieh &sect;5 &middot; Transition to Part II</div>
+    </div>
+  </a>
+
+  <!-- PART II -->
+  <div class="section-label">Part II &mdash; Discovering Graph Convolutions</div>
+
+  <a class="ch-card" href="gcn-04-ring-to-graph.html">
+    <div class="ch-num">04</div>
+    <div class="ch-body">
+      <h3>From the Ring to General Graphs</h3>
+      <p>Symmetrizing the shift (A&nbsp;=&nbsp;S&nbsp;+&nbsp;S*), eigenvalue collapse and degenerate eigenspaces, the adjacency and Laplacian of a general graph, and the three characterizations revisited &mdash; which survive?</p>
+      <div class="topics">Sections 13&ndash;17 &middot; Eq. 21&ndash;28 &middot; 6-vertex running example &middot; What generalizes table</div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="gcn-05-graph-convolutions.html">
+    <div class="ch-num">05</div>
+    <div class="ch-body">
+      <h3>Graph Convolutions &mdash; The Two Surviving Characterizations</h3>
+      <p>The graph Fourier transform, spectral graph convolutions, polynomial graph convolutions, connecting spectral and polynomial views, and why the group-theoretic characterization is genuinely lost.</p>
+      <div class="topics">Sections 18&ndash;22 &middot; Eq. 29&ndash;36 &middot; GFT worked example &middot; Locality of L<sup>k</sup></div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="gcn-06-spectral-to-nn.html">
+    <div class="ch-num">06</div>
+    <div class="ch-body">
+      <h3>From Spectral Theory to Neural Networks</h3>
+      <p>The computational bottleneck of spectral filtering, ChebNet and Chebyshev polynomial filters, the GCN degree-1 simplification, message passing as a consequence of spectral theory, and oversmoothing.</p>
+      <div class="topics">Sections 23&ndash;27 &middot; Eq. 37&ndash;44 &middot; Full GCN layer walkthrough &middot; Renormalization trick</div>
+    </div>
+  </a>
+
+  <a class="ch-card" href="gcn-07-analogies.html">
+    <div class="ch-num">07</div>
+    <div class="ch-body">
+      <h3>The Chain of Analogies</h3>
+      <p>The complete Z<sub>N</sub>&nbsp;&harr;&nbsp;graph analogy table, what we discovered, modern GNN variants in spectral context, pointers to higher-order structures (Hodge Laplacian, TDL course), and further reading.</p>
+      <div class="topics">Sections 28&ndash;32 &middot; Eq. 45&ndash;48 &middot; Analogy table &middot; Concept map</div>
+    </div>
+  </a>
+
+</main>
+
+<footer>
+  <p><a href="../index.html">&larr; All Courses</a> &middot; <a href="https://github.com/carlm451/carlm451.github.io">Source on GitHub</a></p>
+</footer>
+
+</body>
+</html>

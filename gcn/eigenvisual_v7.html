@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eigenvectors & Eigenvalues of S* — Shift Operator Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f2ec;
+    --bg2: #ffffff;
+    --fg: #2c3e50;
+    --fg-dim: #6b7c8f;
+    --accent: #2563eb;
+    --red: #c0392b;
+    --red-bright: #d63031;
+    --blue: #2471a3;
+    --blue-bright: #2e86c1;
+    --gold: #b7791f;
+    --border: #d5d0c4;
+    --panel: rgba(255, 255, 253, 0.92);
+    --canvas-bg: #faf9f6;
+    --canvas-grid: rgba(80, 90, 100, 0.18);
+    --canvas-grid-light: rgba(80, 90, 100, 0.08);
+    --canvas-label: rgba(70, 80, 90, 0.6);
+    --canvas-label-dim: rgba(70, 80, 90, 0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'EB Garamond', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(36,113,163,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(192,57,43,0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 2rem 2rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+  header h1 span {
+    color: var(--red-bright);
+    font-style: italic;
+  }
+
+  header .subtitle {
+    font-size: 0.95rem;
+    color: var(--fg-dim);
+    font-style: italic;
+  }
+
+  .controls {
+    position: relative;
+    z-index: 1;
+    padding: 1.2rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1.8rem;
+    flex-wrap: wrap;
+    background: var(--panel);
+    backdrop-filter: blur(12px);
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .control-group label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .n-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--gold);
+    min-width: 2ch;
+    text-align: center;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 180px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    cursor: pointer;
+  }
+
+  .toggle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.75rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-dim);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+  .toggle-btn:hover {
+    border-color: #94a3b8;
+    color: var(--fg);
+  }
+  .toggle-btn.active {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--fg-dim);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .legend-swatch.eigenvalue { background: var(--red); }
+  .legend-swatch.eigenvector { background: var(--blue); }
+  .legend-line {
+    width: 16px;
+    height: 2px;
+    background: var(--red);
+  }
+
+  #grid-container {
+    position: relative;
+    z-index: 1;
+    padding: 1.5rem;
+    display: grid;
+    gap: 1.2rem;
+    justify-content: center;
+  }
+  #grid-container::-webkit-scrollbar {
+    height: 6px;
+  }
+  #grid-container::-webkit-scrollbar-track {
+    background: #e8e8e3;
+    border-radius: 3px;
+  }
+  #grid-container::-webkit-scrollbar-thumb {
+    background: #c4c4bc;
+    border-radius: 3px;
+  }
+  #grid-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  .diagram-cell {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .diagram-cell:hover {
+    border-color: rgba(37, 99, 235, 0.35);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  }
+
+  .diagram-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--fg-dim);
+    padding: 0.5rem 0.7rem 0.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .diagram-label .m-val {
+    color: var(--gold);
+    font-weight: 500;
+  }
+  .diagram-label .eigenval-text {
+    color: var(--red-bright);
+    font-size: 0.62rem;
+  }
+
+  canvas {
+    display: block;
+  }
+
+  .info-bar {
+    position: relative;
+    z-index: 1;
+    padding: 1rem 2rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+    font-style: italic;
+    background: var(--panel);
+    line-height: 1.6;
+  }
+  .info-bar .math {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-style: normal;
+    color: var(--blue);
+  }
+
+  /* Detail panel for Tier C (N=41..101) */
+  #detail-container {
+    display: none;
+    position: relative;
+    z-index: 1;
+    padding: 1rem 1.5rem;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  #detail-container.active {
+    display: flex;
+  }
+  #detail-container.active.centered-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+  .detail-panel {
+    flex-shrink: 0;
+    background: var(--bg2);
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.10);
+    overflow: hidden;
+  }
+  .detail-panel .diagram-label {
+    padding: 0.6rem 0.8rem 0.2rem;
+    font-size: 0.75rem;
+  }
+  .detail-nav {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem 0.5rem;
+  }
+  .detail-nav button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-dim);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .detail-nav button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  #detail-info {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--fg-dim);
+    padding: 0 0.5rem 0.4rem;
+    text-align: center;
+  }
+
+  /* Thumbnail grid for Tier C */
+  #thumbnail-grid {
+    display: grid;
+    gap: 4px;
+    overflow-y: auto;
+    max-height: 420px;
+    padding: 2px;
+  }
+  .centered-layout #thumbnail-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: none;
+    gap: 4px;
+    padding: 0.5rem 0;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .diagram-cell.thumbnail {
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    border-radius: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .diagram-cell.thumbnail:hover {
+    transform: scale(1.05);
+    border-color: rgba(37,99,235,0.4);
+    box-shadow: 0 2px 6px rgba(37,99,235,0.12);
+    z-index: 2;
+  }
+  .diagram-cell.thumbnail.selected {
+    border-color: var(--accent);
+    border-width: 2px;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.18);
+  }
+  .diagram-cell.thumbnail .diagram-label {
+    padding: 0.15rem 0.25rem 0;
+    font-size: 0.5rem;
+  }
+  .conjugate-highlight {
+    border-color: #7c3aed !important;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.15) !important;
+  }
+
+  @media (max-width: 700px) {
+    header { padding: 1.2rem 1rem 0.8rem; }
+    .controls { padding: 0.8rem 1rem; gap: 1rem; }
+    #grid-container { padding: 0.8rem; gap: 0.8rem; }
+    .legend { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Eigenvalues &amp; Eigenvectors of <span>S*</span></h1>
+  <div class="subtitle">Circular left-shift operator — after Bamieh (2018), Fig. 4.1</div>
+</header>
+
+<div class="controls">
+  <div class="control-group">
+    <label>n =</label>
+    <span class="n-display" id="n-display">8</span>
+    <input type="range" id="n-slider" min="3" max="101" value="8">
+  </div>
+  <div class="control-group">
+    <button class="toggle-btn active" id="btn-arrows" onclick="toggleArrows()">Arrows</button>
+    <button class="toggle-btn active" id="btn-labels" onclick="toggleLabels()">Labels</button>
+    <button class="toggle-btn" id="btn-connect" onclick="toggleConnect()">Connect dots</button>
+    <button class="toggle-btn" id="btn-view" onclick="toggleView()" style="border-color:#b45309;color:#b45309;">Re/Im plot</button>
+    <button class="toggle-btn" id="btn-center" onclick="toggleCenter()" style="border-color:#7c3aed;color:#7c3aed;">Center freqs</button>
+  </div>
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-line"></div>
+      <span>eigenvalue ρ<sup>m</sup></span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch eigenvector"></div>
+      <span>eigenvector entries</span>
+    </div>
+  </div>
+</div>
+
+<div id="detail-container">
+  <div class="detail-panel" id="detail-panel">
+    <div class="diagram-label" id="detail-label"></div>
+    <canvas id="detail-canvas"></canvas>
+    <div id="detail-info"></div>
+    <div class="detail-nav">
+      <button onclick="stepM(-1)">&larr; prev</button>
+      <span id="detail-m-indicator" style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--fg-dim);padding:0 0.3rem;"></span>
+      <button onclick="stepM(1)">next &rarr;</button>
+    </div>
+  </div>
+  <div id="thumbnail-grid"></div>
+</div>
+
+<div id="grid-container"></div>
+
+<div class="info-bar" id="info-bar">
+  For dimension <span class="math" id="info-n">n = 8</span>, the eigenvalues of <span class="math">S*</span>
+  are the <span class="math" id="info-nth">8th</span> roots of unity
+  <span class="math">ρ<sub>m</sub> = e<sup>i·2π·m/n</sup></span>, and each eigenvector is
+  <span class="math">w<sup>(m)</sup> = (1, ρ<sub>m</sub>, ρ<sub>m</sub><sup>2</sup>, …, ρ<sub>m</sub><sup>n−1</sup>)</span>.
+  <span id="info-center"></span>
+</div>
+
+<script>
+const gridContainer = document.getElementById('grid-container');
+const detailContainer = document.getElementById('detail-container');
+const thumbnailGrid = document.getElementById('thumbnail-grid');
+const detailCanvas = document.getElementById('detail-canvas');
+const detailLabel = document.getElementById('detail-label');
+const detailInfo = document.getElementById('detail-info');
+const detailMIndicator = document.getElementById('detail-m-indicator');
+const nSlider = document.getElementById('n-slider');
+const nDisplay = document.getElementById('n-display');
+
+let showArrows = true;
+let showLabels = true;
+let showConnect = false;
+let viewMode = 'circle';
+let centerFreqs = false;
+let selectedM = 0;
+let lastRenderedN = null;
+let renderTimer = null;
+
+function getTier(n) {
+  if (n <= 20) return 'A';
+  if (n <= 40) return 'B';
+  return 'C';
+}
+
+function toggleArrows() {
+  showArrows = !showArrows;
+  document.getElementById('btn-arrows').classList.toggle('active', showArrows);
+  render();
+}
+function toggleLabels() {
+  showLabels = !showLabels;
+  document.getElementById('btn-labels').classList.toggle('active', showLabels);
+  render();
+}
+function toggleConnect() {
+  showConnect = !showConnect;
+  document.getElementById('btn-connect').classList.toggle('active', showConnect);
+  render();
+}
+function toggleView() {
+  viewMode = viewMode === 'circle' ? 'waveform' : 'circle';
+  document.getElementById('btn-view').classList.toggle('active', viewMode === 'waveform');
+  document.getElementById('btn-view').textContent = viewMode === 'circle' ? 'Re/Im plot' : 'Circle view';
+  document.getElementById('btn-arrows').style.display = viewMode === 'circle' ? '' : 'none';
+  document.getElementById('btn-connect').style.display = viewMode === 'circle' ? '' : 'none';
+  render();
+}
+function toggleCenter() {
+  centerFreqs = !centerFreqs;
+  document.getElementById('btn-center').classList.toggle('active', centerFreqs);
+  render();
+}
+
+function getMOrder(n) {
+  if (!centerFreqs) {
+    return Array.from({length: n}, (_, i) => ({ m: i, label: `m = ${i}` }));
+  }
+  const order = [];
+  if (n % 2 === 1) {
+    const half = (n - 1) / 2;
+    for (let f = -half; f <= half; f++) {
+      const m = ((f % n) + n) % n;
+      order.push({ m, label: `m = ${f}` });
+    }
+  } else {
+    const half = n / 2;
+    for (let f = -(half - 1); f <= half - 1; f++) {
+      const m = ((f % n) + n) % n;
+      order.push({ m, label: `m = ${f}` });
+    }
+    order.push({ m: half, label: `m = ±${half}` });
+  }
+  return order;
+}
+
+function getGridCols(n) {
+  if (n <= 4) return 2;
+  if (n <= 6) return 3;
+  if (n <= 12) return 4;
+  if (n <= 16) return 4;
+  if (n <= 20) return 5;
+  // Tier B
+  if (n <= 30) return 6;
+  return 7;
+}
+
+function getCellSize(n) {
+  if (centerFreqs) {
+    if (viewMode === 'waveform') {
+      const w = Math.max(80, Math.min(220, Math.floor(1200 / n)));
+      return { w, h: Math.floor(w * 0.6) };
+    }
+    const s = Math.max(60, Math.min(180, Math.floor(1200 / n)));
+    return { w: s, h: s };
+  }
+  if (viewMode === 'waveform') {
+    if (n <= 4) return { w: 340, h: 160 };
+    if (n <= 6) return { w: 300, h: 150 };
+    if (n <= 10) return { w: 280, h: 140 };
+    if (n <= 16) return { w: 260, h: 130 };
+    if (n <= 20) return { w: 240, h: 120 };
+    if (n <= 30) return { w: 200, h: 100 };
+    return { w: 180, h: 90 };
+  }
+  if (n <= 6) return { w: 220, h: 220 };
+  if (n <= 10) return { w: 200, h: 200 };
+  if (n <= 16) return { w: 180, h: 180 };
+  if (n <= 20) return { w: 165, h: 165 };
+  // Tier B
+  if (n <= 25) return { w: 145, h: 145 };
+  if (n <= 30) return { w: 130, h: 130 };
+  return { w: 120, h: 120 };
+}
+
+function getThumbnailSize(n) {
+  if (n <= 60) return 65;
+  if (n <= 80) return 60;
+  return 55;
+}
+
+function getThumbnailCols(n) {
+  const ts = getThumbnailSize(n);
+  if (ts >= 65) return 8;
+  if (ts >= 60) return 9;
+  return 10;
+}
+
+function getGridCols_wf(n) {
+  if (n <= 4) return 2;
+  if (n <= 8) return 2;
+  if (n <= 12) return 3;
+  if (n <= 20) return 3;
+  if (n <= 30) return 4;
+  return 5;
+}
+
+// Build opts for progressive detail reduction based on cell size
+function getOpts(cellSize, tier, isHovered) {
+  if (tier === 'A') {
+    return {
+      arrows: showArrows,
+      labels: showLabels,
+      connect: showConnect,
+      notation: true,
+      glow: true,
+      tickMarks: true
+    };
+  }
+  // Tier B
+  const s = typeof cellSize === 'number' ? cellSize : cellSize.w;
+  return {
+    arrows: isHovered && showArrows,
+    labels: showLabels && s >= 140,
+    connect: false,
+    notation: s >= 150,
+    glow: s >= 140,
+    tickMarks: true
+  };
+}
+
+function superscript(num) {
+  const superMap = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+                     '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+  return String(num).split('').map(c => superMap[c] || c).join('');
+}
+
+function getEigenvalLabel(n, m) {
+  if (centerFreqs) {
+    const f = m <= n / 2 ? m : m - n;
+    if (f === 0) return 'ρ⁰ = 1';
+    if (n % 2 === 0 && m === n / 2) return `ρ±${superscript(n/2)} = −1`;
+    if (f === 1) return 'ρ';
+    if (f === -1) return 'ρ⁻¹';
+    return f > 0 ? `ρ${superscript(f)}` : `ρ⁻${superscript(Math.abs(f))}`;
+  }
+  if (m === 0) return 'ρ⁰ = 1';
+  if (m === 1) return 'ρ';
+  return `ρ${superscript(m)}`;
+}
+
+// ─── Drawing Functions ───
+
+function drawCurvedArrow(ctx, cx, cy, rStart, rEnd, startAngle, m, n, kIndex, totalArrows) {
+  const step = m * (2 * Math.PI / n);
+  const numPts = 30;
+  const pts = [];
+  for (let i = 0; i <= numPts; i++) {
+    const t = i / numPts;
+    const a = startAngle + t * step;
+    const r = rStart + t * (rEnd - rStart);
+    pts.push({ x: cx + r * Math.cos(a), y: cy - r * Math.sin(a) });
+  }
+  const alpha = 0.12 + 0.35 * (1 - kIndex / totalArrows);
+  ctx.strokeStyle = `rgba(192,57,43,${alpha})`;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.stroke();
+  if (pts.length >= 3) {
+    const last = pts[pts.length - 1];
+    const prev = pts[pts.length - 4] || pts[pts.length - 2];
+    const angle = Math.atan2(last.y - prev.y, last.x - prev.x);
+    const headLen = 5;
+    ctx.fillStyle = `rgba(192,57,43,${alpha + 0.1})`;
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(last.x - headLen * Math.cos(angle - 0.4), last.y - headLen * Math.sin(angle - 0.4));
+    ctx.lineTo(last.x - headLen * Math.cos(angle + 0.4), last.y - headLen * Math.sin(angle + 0.4));
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function drawCircleCell(ctx, cw, ch, n, m, rho_angle, opts) {
+  const cx = cw / 2;
+  const cy = ch / 2;
+  const R = Math.min(cw, ch) * 0.38;
+
+  // Axes
+  ctx.strokeStyle = 'rgba(100,116,139,0.2)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(cx - R - 8, cy);
+  ctx.lineTo(cx + R + 8, cy);
+  ctx.moveTo(cx, cy - R - 8);
+  ctx.lineTo(cx, cy + R + 8);
+  ctx.stroke();
+
+  // Unit circle
+  ctx.strokeStyle = 'rgba(100,116,139,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+  ctx.stroke();
+
+  // Tick marks
+  if (opts.tickMarks) {
+    ctx.fillStyle = 'rgba(100,116,139,0.3)';
+    for (let k = 0; k < n; k++) {
+      const angle = k * rho_angle;
+      ctx.beginPath();
+      ctx.arc(cx + R * Math.cos(angle), cy - R * Math.sin(angle), 1.2, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+
+  // Eigenvalue line + dot
+  const eigenAngle = m * rho_angle;
+  const evx = cx + R * Math.cos(eigenAngle);
+  const evy = cy - R * Math.sin(eigenAngle);
+  ctx.strokeStyle = '#c0392b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(evx, evy);
+  ctx.stroke();
+  ctx.fillStyle = '#c0392b';
+  ctx.beginPath();
+  ctx.arc(evx, evy, 4, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // Eigenvector entry points
+  const entryPoints = [];
+  for (let k = 0; k < n; k++) {
+    const exactAngle = m * k * rho_angle;
+    entryPoints.push({
+      x: cx + R * Math.cos(exactAngle),
+      y: cy - R * Math.sin(exactAngle),
+      k, power: (m * k) % n, angle: exactAngle
+    });
+  }
+
+  // Connect dots
+  if (opts.connect && n <= 16) {
+    ctx.strokeStyle = 'rgba(37,99,235,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(entryPoints[0].x, entryPoints[0].y);
+    for (let k = 1; k < n; k++) ctx.lineTo(entryPoints[k].x, entryPoints[k].y);
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Arrows
+  if (opts.arrows && m !== 0) {
+    const arrowCount = n - 1;
+    const rOuter = R * 0.92;
+    const rInner = R * 0.25;
+    for (let k = 0; k < arrowCount; k++) {
+      const rStart = rOuter - (rOuter - rInner) * (k / arrowCount);
+      const rEnd = rOuter - (rOuter - rInner) * ((k + 1) / arrowCount);
+      drawCurvedArrow(ctx, cx, cy, rStart, rEnd, entryPoints[k].angle, m, n, k, arrowCount);
+    }
+  }
+
+  // Blue dots grouped by position
+  const dotGroups = {};
+  for (let k = 0; k < n; k++) {
+    const pos = (m * k) % n;
+    if (!dotGroups[pos]) dotGroups[pos] = { angle: entryPoints[k].angle, count: 0 };
+    dotGroups[pos].count++;
+  }
+
+  const baseDotR = Math.min(4.5, Math.max(2.5, cw / 45));
+  for (const pos in dotGroups) {
+    const { angle, count } = dotGroups[pos];
+    const px = cx + R * Math.cos(angle);
+    const py = cy - R * Math.sin(angle);
+    const dotR = baseDotR + (count > 1 ? Math.min(count * 0.8, 4) : 0);
+
+    if (opts.glow) {
+      ctx.fillStyle = `rgba(36,113,163,${0.08 + 0.04 * count})`;
+      ctx.beginPath();
+      ctx.arc(px, py, dotR + 3 + (count > 1 ? 2 : 0), 0, 2 * Math.PI);
+      ctx.fill();
+    }
+    if (count > 1) {
+      ctx.strokeStyle = 'rgba(36,113,163,0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(px, py, dotR + 1, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#2471a3';
+    ctx.beginPath();
+    ctx.arc(px, py, dotR, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = '#85c1e9';
+    ctx.beginPath();
+    ctx.arc(px, py, 1.8, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  // Labels
+  if (opts.labels) {
+    const fontSize = Math.max(7, 11 - Math.floor(n / 4));
+    ctx.font = `${fontSize}px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const groups = {};
+    for (let k = 0; k < n; k++) {
+      const pos = (m * k) % n;
+      if (!groups[pos]) groups[pos] = [];
+      groups[pos].push(k);
+    }
+
+    // For Tier B below 140px, only show labels for collision groups
+    const collisionOnly = cw < 140;
+    const labelR = R + 12;
+    for (const pos in groups) {
+      const kList = groups[pos];
+      if (collisionOnly && kList.length === 1) continue;
+      const angle = parseInt(pos) * rho_angle;
+      const lx = cx + labelR * Math.cos(angle);
+      const ly = cy - labelR * Math.sin(angle);
+      if (kList.length === 1) {
+        ctx.fillStyle = 'rgba(71,85,105,0.8)';
+        ctx.fillText(kList[0].toString(), lx, ly);
+      } else {
+        const lineH = fontSize + 1;
+        const totalH = kList.length * lineH;
+        const startY = ly - totalH / 2 + lineH / 2;
+        for (let i = 0; i < kList.length; i++) {
+          ctx.fillStyle = `rgba(71,85,105,${0.6 + 0.2 * ((i % 2 === 0) ? 1 : 0)})`;
+          ctx.fillText(kList[i].toString(), lx, startY + i * lineH);
+        }
+      }
+    }
+  }
+
+  // Notation at bottom
+  if (opts.notation) {
+    const powers = [];
+    for (let k = 0; k < n; k++) powers.push((m * k) % n);
+    const notationY = ch - 6;
+    ctx.font = `${Math.max(7, centerFreqs ? 7 : 9)}px 'JetBrains Mono', monospace`;
+    ctx.fillStyle = 'rgba(71,85,105,0.6)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    const powStr = powers.length <= 10
+      ? '(' + powers.join(',') + ')'
+      : '(' + powers.slice(0, 8).join(',') + ',…)';
+    const mNotation = centerFreqs ? (m <= n/2 ? m : m - n) : m;
+    ctx.fillText(`w⁽${mNotation}⁾ = ${powStr}`, cx, notationY);
+  }
+}
+
+function drawWaveformCell(ctx, cw, ch, n, m, rho_angle, opts) {
+  const compact = (centerFreqs && n > 8) || cw < 200;
+  const pad = compact
+    ? { l: 18, r: 6, t: 6, b: 14 }
+    : { l: 30, r: 12, t: 10, b: 20 };
+  const pw = cw - pad.l - pad.r;
+  const ph = ch - pad.t - pad.b;
+  const midY = pad.t + ph / 2;
+
+  ctx.strokeStyle = 'rgba(71,85,105,0.3)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, midY);
+  ctx.lineTo(pad.l + pw, midY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t);
+  ctx.lineTo(pad.l, pad.t + ph);
+  ctx.stroke();
+
+  const axisFont = compact ? '6px' : '8px';
+  ctx.font = `${axisFont} "JetBrains Mono", monospace`;
+  ctx.fillStyle = 'rgba(71,85,105,0.6)';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  if (!compact) {
+    ctx.fillText('+1', pad.l - 4, pad.t + 2);
+    ctx.fillText(' 0', pad.l - 4, midY);
+    ctx.fillText('−1', pad.l - 4, pad.t + ph - 2);
+  }
+
+  ctx.strokeStyle = 'rgba(71,85,105,0.12)';
+  ctx.setLineDash([2, 3]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t + 2);
+  ctx.lineTo(pad.l + pw, pad.t + 2);
+  ctx.moveTo(pad.l, pad.t + ph - 2);
+  ctx.lineTo(pad.l + pw, pad.t + ph - 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const reVals = [], imVals = [];
+  for (let k = 0; k <= n; k++) {
+    const angle = m * k * rho_angle;
+    reVals.push(Math.cos(angle));
+    imVals.push(Math.sin(angle));
+  }
+
+  function kToX(k) { return pad.l + (k / n) * pw; }
+  function valToY(v) { return midY - v * (ph / 2 - 4); }
+
+  const tickFont = compact ? '5px' : '7px';
+  ctx.font = `${tickFont} "JetBrains Mono", monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const tickStep = compact ? (n <= 8 ? 2 : n <= 20 ? 4 : n <= 50 ? 10 : 20) : (n <= 10 ? 1 : n <= 16 ? 2 : 4);
+  for (let k = 0; k <= n; k += tickStep) {
+    const x = kToX(k);
+    const lbl = k === n ? `${n}≡0` : k.toString();
+    ctx.fillStyle = k === n ? 'rgba(180,83,9,0.7)' : 'rgba(71,85,105,0.55)';
+    ctx.fillText(lbl, x, pad.t + ph + 3);
+    ctx.strokeStyle = k === n ? 'rgba(180,83,9,0.4)' : 'rgba(71,85,105,0.25)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(x, midY - 2);
+    ctx.lineTo(x, midY + 2);
+    ctx.stroke();
+  }
+  if (n % tickStep !== 0) {
+    const x = kToX(n);
+    ctx.fillStyle = 'rgba(180,83,9,0.7)';
+    ctx.font = `${tickFont} "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`${n}≡0`, x, pad.t + ph + 3);
+    ctx.strokeStyle = 'rgba(180,83,9,0.4)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(x, midY - 2);
+    ctx.lineTo(x, midY + 2);
+    ctx.stroke();
+  }
+
+  function drawLine(vals, color, alpha) {
+    ctx.strokeStyle = color.replace('1)', `${alpha})`);
+    ctx.lineWidth = compact ? 1 : 1.5;
+    ctx.beginPath();
+    for (let k = 0; k <= n; k++) {
+      const x = kToX(k);
+      const y = valToY(vals[k]);
+      if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  drawLine(reVals, 'rgba(37,99,235,1)', 0.65);
+  drawLine(imVals, 'rgba(220,38,38,1)', 0.65);
+
+  const baseDot = compact ? 2 : 3;
+  const baseGlow = compact ? 2.8 : 5;
+  // Skip individual dots for very large N in compact mode
+  const dotStep = (compact && n > 40) ? Math.ceil(n / 40) : 1;
+  for (let k = 0; k <= n; k += (k === 0 ? 1 : dotStep)) {
+    // Always draw k=0 and k=n
+    if (k > 0 && k < n && dotStep > 1 && k % dotStep !== 0) continue;
+    const x = kToX(k);
+    const isWrap = (k === n);
+    const dotR = isWrap ? baseDot * 0.7 : baseDot;
+    const glowR = isWrap ? baseGlow * 0.7 : baseGlow;
+
+    const ry = valToY(reVals[k]);
+    ctx.fillStyle = `rgba(37,99,235,${isWrap ? 0.08 : 0.12})`;
+    ctx.beginPath(); ctx.arc(x, ry, glowR, 0, 2 * Math.PI); ctx.fill();
+    ctx.fillStyle = isWrap ? 'rgba(37,99,235,0.4)' : '#2563eb';
+    ctx.beginPath(); ctx.arc(x, ry, dotR, 0, 2 * Math.PI); ctx.fill();
+
+    const iy = valToY(imVals[k]);
+    ctx.fillStyle = `rgba(220,38,38,${isWrap ? 0.08 : 0.12})`;
+    ctx.beginPath(); ctx.arc(x, iy, glowR, 0, 2 * Math.PI); ctx.fill();
+    ctx.fillStyle = isWrap ? 'rgba(220,38,38,0.4)' : '#dc2626';
+    ctx.beginPath(); ctx.arc(x, iy, dotR, 0, 2 * Math.PI); ctx.fill();
+  }
+
+  if (!compact) {
+    const legX = pad.l + pw - 5;
+    const legY = pad.t + 8;
+    ctx.font = '7px "JetBrains Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#2563eb';
+    ctx.fillText('● Re', legX, legY);
+    ctx.fillStyle = '#dc2626';
+    ctx.fillText('● Im', legX, legY + 10);
+  }
+}
+
+function drawThumbnail(ctx, w, h, n, m, rho_angle) {
+  const cx = w / 2;
+  const cy = h / 2;
+  const R = Math.min(w, h) * 0.40;
+
+  // Circle outline
+  ctx.strokeStyle = 'rgba(100,116,139,0.30)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+  ctx.stroke();
+
+  // Eigenvalue dot (red, no line)
+  const eigenAngle = m * rho_angle;
+  ctx.fillStyle = '#c0392b';
+  ctx.beginPath();
+  ctx.arc(cx + R * Math.cos(eigenAngle), cy - R * Math.sin(eigenAngle), 2.5, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // Eigenvector dots (blue, 2px, no glow/labels)
+  const seen = new Set();
+  for (let k = 0; k < n; k++) {
+    const pos = (m * k) % n;
+    if (seen.has(pos)) continue;
+    seen.add(pos);
+    const angle = m * k * rho_angle;
+    ctx.fillStyle = '#2471a3';
+    ctx.beginPath();
+    ctx.arc(cx + R * Math.cos(angle), cy - R * Math.sin(angle), 2, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+}
+
+function drawWaveformThumbnail(ctx, w, h, n, m, rho_angle) {
+  const pad = { l: 4, r: 4, t: 4, b: 4 };
+  const pw = w - pad.l - pad.r;
+  const ph = h - pad.t - pad.b;
+  const midY = pad.t + ph / 2;
+
+  // Zero line
+  ctx.strokeStyle = 'rgba(71,85,105,0.2)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, midY);
+  ctx.lineTo(pad.l + pw, midY);
+  ctx.stroke();
+
+  // Re line
+  ctx.strokeStyle = 'rgba(37,99,235,0.5)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let k = 0; k <= n; k++) {
+    const x = pad.l + (k / n) * pw;
+    const y = midY - Math.cos(m * k * rho_angle) * (ph / 2 - 2);
+    if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Im line
+  ctx.strokeStyle = 'rgba(220,38,38,0.5)';
+  ctx.beginPath();
+  for (let k = 0; k <= n; k++) {
+    const x = pad.l + (k / n) * pw;
+    const y = midY - Math.sin(m * k * rho_angle) * (ph / 2 - 2);
+    if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+// ─── Detail Panel (Tier C) ───
+
+function drawDetailPanel(n, m) {
+  const dpr = window.devicePixelRatio || 1;
+  const size = 380;
+  detailCanvas.width = size * dpr;
+  detailCanvas.height = (viewMode === 'waveform' ? Math.floor(size * 0.55) : size) * dpr;
+  detailCanvas.style.width = size + 'px';
+  detailCanvas.style.height = (viewMode === 'waveform' ? Math.floor(size * 0.55) : size) + 'px';
+  const ctx = detailCanvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const cw = size;
+  const ch = viewMode === 'waveform' ? Math.floor(size * 0.55) : size;
+  ctx.fillStyle = '#faf9f6';
+  ctx.fillRect(0, 0, cw, ch);
+
+  const rho_angle = 2 * Math.PI / n;
+  const fullOpts = {
+    arrows: showArrows,
+    labels: showLabels,
+    connect: showConnect,
+    notation: true,
+    glow: true,
+    tickMarks: true
+  };
+
+  if (viewMode === 'waveform') {
+    drawWaveformCell(ctx, cw, ch, n, m, rho_angle, fullOpts);
+  } else {
+    drawCircleCell(ctx, cw, ch, n, m, rho_angle, fullOpts);
+  }
+
+  // Update label
+  const mOrder = getMOrder(n);
+  const entry = mOrder.find(o => o.m === m);
+  const mLabel = entry ? entry.label : `m = ${m}`;
+  detailLabel.innerHTML = `<span class="m-val">${mLabel}</span> <span class="eigenval-text">${getEigenvalLabel(n, m)}</span>`;
+
+  // Update info
+  const powers = [];
+  for (let k = 0; k < n; k++) powers.push((m * k) % n);
+  const powStr = powers.length <= 12
+    ? '(' + powers.join(', ') + ')'
+    : '(' + powers.slice(0, 10).join(', ') + ', …)';
+  const mNotation = centerFreqs ? (m <= n/2 ? m : m - n) : m;
+  detailInfo.textContent = `w⁽${mNotation}⁾ = ${powStr}`;
+
+  // Update indicator
+  const idx = mOrder.findIndex(o => o.m === m);
+  detailMIndicator.textContent = `${idx + 1} / ${n}`;
+}
+
+function selectM(m) {
+  const n = parseInt(nSlider.value);
+  selectedM = m;
+  drawDetailPanel(n, m);
+  // Update thumbnail selection
+  const thumbs = thumbnailGrid.querySelectorAll('.diagram-cell.thumbnail');
+  const mOrder = getMOrder(n);
+  thumbs.forEach((thumb, i) => {
+    thumb.classList.toggle('selected', mOrder[i].m === m);
+  });
+  // Auto-scroll to selected thumbnail in centered mode
+  if (centerFreqs) {
+    const idx = mOrder.findIndex(o => o.m === m);
+    if (idx >= 0 && thumbs[idx]) {
+      thumbs[idx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }
+}
+
+function stepM(delta) {
+  const n = parseInt(nSlider.value);
+  const mOrder = getMOrder(n);
+  const idx = mOrder.findIndex(o => o.m === selectedM);
+  const newIdx = ((idx + delta) % n + n) % n;
+  selectM(mOrder[newIdx].m);
+}
+
+// ─── Tier Renderers ───
+
+function renderTierAB(n) {
+  const tier = getTier(n);
+  detailContainer.classList.remove('active');
+  gridContainer.style.display = '';
+
+  const { w: cellW, h: cellH } = getCellSize(n);
+  const dpr = window.devicePixelRatio || 1;
+  const rho_angle = 2 * Math.PI / n;
+  const mOrder = getMOrder(n);
+
+  gridContainer.innerHTML = '';
+
+  if (centerFreqs) {
+    gridContainer.style.display = 'flex';
+    gridContainer.style.flexWrap = 'nowrap';
+    gridContainer.style.overflowX = 'auto';
+    gridContainer.style.overflowY = 'hidden';
+    gridContainer.style.justifyContent = '';
+    gridContainer.style.gridTemplateColumns = '';
+    gridContainer.style.gap = '0';
+    gridContainer.style.padding = '1.2rem 0';
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'flex';
+    wrapper.style.gap = '0.5rem';
+    wrapper.style.margin = '0 auto';
+    wrapper.style.padding = '0 1rem';
+    wrapper.id = 'center-row-wrapper';
+    gridContainer.appendChild(wrapper);
+  } else {
+    gridContainer.style.display = 'grid';
+    gridContainer.style.flexWrap = '';
+    gridContainer.style.overflowX = '';
+    gridContainer.style.overflowY = '';
+    gridContainer.style.justifyContent = 'center';
+    gridContainer.style.gap = tier === 'B' ? '0.8rem' : '1.2rem';
+    gridContainer.style.padding = '1.5rem';
+    const cols = viewMode === 'waveform' ? getGridCols_wf(n) : getGridCols(n);
+    gridContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellW}px)`;
+  }
+
+  for (let idx = 0; idx < mOrder.length; idx++) {
+    const m = mOrder[idx].m;
+    const mLabel = mOrder[idx].label;
+
+    const cell = document.createElement('div');
+    cell.className = 'diagram-cell';
+    if (centerFreqs) {
+      cell.style.flexShrink = '0';
+      cell.style.width = cellW + 'px';
+    }
+
+    const label = document.createElement('div');
+    label.className = 'diagram-label';
+    if (centerFreqs) {
+      label.style.padding = '0.3rem 0.4rem 0.1rem';
+      label.style.fontSize = n > 10 ? '0.55rem' : '0.62rem';
+    } else if (tier === 'B') {
+      label.style.padding = '0.3rem 0.5rem 0.1rem';
+      label.style.fontSize = '0.6rem';
+    }
+
+    const mSpan = document.createElement('span');
+    mSpan.innerHTML = `<span class="m-val">${mLabel}</span>`;
+    const evSpan = document.createElement('span');
+    evSpan.className = 'eigenval-text';
+    evSpan.textContent = getEigenvalLabel(n, m);
+    label.appendChild(mSpan);
+    label.appendChild(evSpan);
+    cell.appendChild(label);
+
+    // Visual cue for DC/Nyquist in centered mode
+    if (centerFreqs) {
+      if (m === 0) {
+        cell.style.borderColor = 'rgba(183,121,31,0.5)';
+        cell.style.boxShadow = '0 1px 8px rgba(183,121,31,0.12)';
+      } else if (n % 2 === 0 && m === n / 2) {
+        cell.style.borderColor = 'rgba(126,87,194,0.5)';
+        cell.style.boxShadow = '0 1px 8px rgba(126,87,194,0.1)';
+      }
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = cellW * dpr;
+    canvas.height = cellH * dpr;
+    canvas.style.width = cellW + 'px';
+    canvas.style.height = cellH + 'px';
+    cell.appendChild(canvas);
+
+    const parent = centerFreqs
+      ? document.getElementById('center-row-wrapper')
+      : gridContainer;
+    parent.appendChild(cell);
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.fillStyle = '#faf9f6';
+    ctx.fillRect(0, 0, cellW, cellH);
+
+    const opts = getOpts(cellW, tier, false);
+
+    if (viewMode === 'waveform') {
+      drawWaveformCell(ctx, cellW, cellH, n, m, rho_angle, opts);
+    } else {
+      drawCircleCell(ctx, cellW, cellH, n, m, rho_angle, opts);
+    }
+
+    // Tier B: hover to show arrows on single cell
+    if (tier === 'B' && viewMode === 'circle') {
+      cell.addEventListener('mouseenter', () => {
+        const hCtx = canvas.getContext('2d');
+        hCtx.setTransform(1, 0, 0, 1, 0, 0);
+        hCtx.scale(dpr, dpr);
+        hCtx.fillStyle = '#faf9f6';
+        hCtx.fillRect(0, 0, cellW, cellH);
+        const hoverOpts = getOpts(cellW, tier, true);
+        drawCircleCell(hCtx, cellW, cellH, n, m, rho_angle, hoverOpts);
+      });
+      cell.addEventListener('mouseleave', () => {
+        const hCtx = canvas.getContext('2d');
+        hCtx.setTransform(1, 0, 0, 1, 0, 0);
+        hCtx.scale(dpr, dpr);
+        hCtx.fillStyle = '#faf9f6';
+        hCtx.fillRect(0, 0, cellW, cellH);
+        drawCircleCell(hCtx, cellW, cellH, n, m, rho_angle, opts);
+      });
+    }
+  }
+
+  // Scroll to m=0 in centered mode
+  if (centerFreqs) {
+    const wrapper = document.getElementById('center-row-wrapper');
+    if (wrapper) {
+      const dcIdx = mOrder.findIndex(o => o.m === 0);
+      const dcCell = wrapper.children[dcIdx];
+      if (dcCell) {
+        const containerW = gridContainer.clientWidth;
+        const cellCenter = dcCell.offsetLeft + cellW / 2;
+        gridContainer.scrollLeft = Math.max(0, cellCenter - containerW / 2);
+      }
+    }
+  }
+}
+
+function renderTierC(n) {
+  gridContainer.style.display = 'none';
+  gridContainer.innerHTML = '';
+  detailContainer.classList.add('active');
+  detailContainer.classList.toggle('centered-layout', centerFreqs);
+
+  const ts = getThumbnailSize(n);
+  const cols = getThumbnailCols(n);
+  const dpr = window.devicePixelRatio || 1;
+  const rho_angle = 2 * Math.PI / n;
+  const mOrder = getMOrder(n);
+
+  // Ensure selectedM is valid
+  if (!mOrder.find(o => o.m === selectedM)) {
+    selectedM = mOrder[0].m;
+  }
+
+  // Configure thumbnail grid
+  thumbnailGrid.innerHTML = '';
+  if (!centerFreqs) {
+    thumbnailGrid.style.gridTemplateColumns = `repeat(${cols}, ${ts}px)`;
+  }
+
+  for (let idx = 0; idx < mOrder.length; idx++) {
+    const m = mOrder[idx].m;
+    const mLabel = mOrder[idx].label;
+
+    const cell = document.createElement('div');
+    cell.className = 'diagram-cell thumbnail';
+    if (centerFreqs) {
+      cell.style.flexShrink = '0';
+    }
+    cell.style.width = ts + 'px';
+    if (m === selectedM) cell.classList.add('selected');
+
+    const label = document.createElement('div');
+    label.className = 'diagram-label';
+    const mSpan = document.createElement('span');
+    mSpan.innerHTML = `<span class="m-val">${mLabel}</span>`;
+    label.appendChild(mSpan);
+    cell.appendChild(label);
+
+    const canvas = document.createElement('canvas');
+    const canvasH = viewMode === 'waveform' ? Math.floor(ts * 0.6) : ts;
+    canvas.width = ts * dpr;
+    canvas.height = canvasH * dpr;
+    canvas.style.width = ts + 'px';
+    canvas.style.height = canvasH + 'px';
+    cell.appendChild(canvas);
+
+    thumbnailGrid.appendChild(cell);
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.fillStyle = '#faf9f6';
+    ctx.fillRect(0, 0, ts, canvasH);
+
+    if (viewMode === 'waveform') {
+      drawWaveformThumbnail(ctx, ts, canvasH, n, m, rho_angle);
+    } else {
+      drawThumbnail(ctx, ts, canvasH, n, m, rho_angle);
+    }
+
+    // Click to select
+    cell.addEventListener('click', () => selectM(m));
+
+    // Conjugate highlighting on hover
+    cell.addEventListener('mouseenter', () => {
+      const conjM = (n - m) % n;
+      if (conjM !== m) {
+        const conjIdx = mOrder.findIndex(o => o.m === conjM);
+        if (conjIdx >= 0) {
+          thumbnailGrid.children[conjIdx].classList.add('conjugate-highlight');
+        }
+      }
+    });
+    cell.addEventListener('mouseleave', () => {
+      thumbnailGrid.querySelectorAll('.conjugate-highlight').forEach(el =>
+        el.classList.remove('conjugate-highlight'));
+    });
+  }
+
+  drawDetailPanel(n, selectedM);
+
+  // Auto-scroll to selected in centered mode
+  if (centerFreqs) {
+    requestAnimationFrame(() => {
+      const idx = mOrder.findIndex(o => o.m === selectedM);
+      if (idx >= 0 && thumbnailGrid.children[idx]) {
+        thumbnailGrid.children[idx].scrollIntoView({ block: 'nearest', inline: 'center' });
+      }
+    });
+  }
+}
+
+// ─── Main Render ───
+
+function render() {
+  const n = parseInt(nSlider.value);
+  nDisplay.textContent = n;
+  document.getElementById('info-n').textContent = `n = ${n}`;
+  document.getElementById('info-nth').textContent = `${n}th`;
+
+  // Hide info bar notation text for large N
+  const infoBar = document.getElementById('info-bar');
+  infoBar.style.display = n > 40 ? 'none' : '';
+
+  // Update centered info
+  const infoCenter = document.getElementById('info-center');
+  if (centerFreqs) {
+    if (n % 2 === 1) {
+      const h = (n - 1) / 2;
+      infoCenter.innerHTML = ` Centered ordering: <span class="math">m = −${h}, …, 0, …, +${h}</span>. Conjugate pairs <span class="math">w<sup>(m)</sup></span> and <span class="math">w<sup>(−m)</sup></span> share the same waveform shape (reflected).`;
+    } else {
+      const h = n / 2;
+      infoCenter.innerHTML = ` Centered ordering: <span class="math">m = −${h-1}, …, 0, …, +${h-1}, ±${h}</span>. The <span class="math" style="color:#7c3aed;">Nyquist</span> frequency <span class="math">m = ±${h}</span> is its own conjugate (eigenvalue = −1).`;
+    }
+  } else {
+    infoCenter.innerHTML = '';
+  }
+
+  const tier = getTier(n);
+  if (tier === 'C') {
+    renderTierC(n);
+  } else {
+    renderTierAB(n);
+  }
+
+  lastRenderedN = n;
+}
+
+// Debounced slider for smooth dragging
+nSlider.addEventListener('input', () => {
+  nDisplay.textContent = nSlider.value;
+  if (renderTimer) clearTimeout(renderTimer);
+  renderTimer = setTimeout(render, 30);
+});
+
+// Keyboard navigation for Tier C
+document.addEventListener('keydown', (e) => {
+  const n = parseInt(nSlider.value);
+  if (getTier(n) !== 'C') return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); stepM(-1); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); stepM(1); }
+});
+
+window.addEventListener('resize', render);
+render();
+</script>
+</body>
+</html>

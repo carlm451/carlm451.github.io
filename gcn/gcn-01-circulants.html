@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circulant Matrices and the Shift Operator — GCN Course</title>
+<script>
+window.MathJax={
+  tex:{
+    inlineMath:[['$','$'],['\\(','\\)']],
+    displayMath:[['$$','$$'],['\\[','\\]']],
+    macros:{
+      R:'\\mathbb{R}',
+      C:'\\mathbb{C}',
+      Z:'\\mathbb{Z}',
+      ZN:'{\\mathbb{Z}_N}',
+      Ft:'\\mathcal{F}',
+      Fti:'\\mathcal{F}^{-1}'
+    }
+  },
+  svg:{fontCache:'global'}
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="page-chapter">
+<header>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / <a href="gcn-index.html">GCN</a> / Chapter 1</div>
+    <span class="ch-num">Chapter 1</span>
+    <h1>Circulant Matrices and the <strong>Shift Operator</strong></h1>
+    <p class="subtitle">Signals on a ring, the cyclic shift as a matrix, circulant matrices as polynomials in S, and the algebraic characterization of circular convolution &mdash; all on $\ZN$ with running example $\Z_8$.</p>
+  </div>
+</header>
+<nav class="ch-nav"><div class="container"><a href="gcn-index.html">&larr; Course Home</a><span class="ch-title">Chapter 1</span><a href="gcn-02-discovering-dft.html">Discovering the DFT &rarr;</a></div></nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<main class="container" style="padding-top:2rem;padding-bottom:2rem;">
+
+<!-- Table of Contents -->
+<div class="toc">
+  <div class="toc-label">In this chapter</div>
+  <ol>
+    <li><a href="#sec1"><span class="toc-num">1</span>Signals on a Ring</a></li>
+    <li><a href="#sec2"><span class="toc-num">2</span>The Shift Operator</a></li>
+    <li><a href="#sec3"><span class="toc-num">3</span>Circulant Matrices as Polynomials in S</a></li>
+    <li><a href="#sec4"><span class="toc-num">4</span>Circular Convolution</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 1 — Signals on a Ring                                 -->
+<!-- ============================================================ -->
+<section id="sec1">
+  <h2><span class="sec-num">1</span>Signals on a Ring</h2>
+
+  <p>
+    The entire story of the DFT begins with one of the simplest algebraic structures imaginable: the <strong>cyclic group</strong> $\ZN$. This is the group of integers $\{0, 1, 2, \ldots, N-1\}$ with addition modulo $N$. You can think of it as $N$ points arranged equally around a circle, where counting past $N-1$ wraps back to $0$.
+  </p>
+
+  <p>
+    A <strong>signal on $\ZN$</strong> is simply a function $x: \ZN \to \C$ (or $\R$) that assigns a complex (or real) value to each of the $N$ points on the ring. We write $x[n]$ for the value at point $n$, and collect all $N$ values into a column vector:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Signal as vector</div>
+    $$
+    x = \begin{pmatrix} x[0] \\ x[1] \\ \vdots \\ x[N-1] \end{pmatrix} \in \C^N
+    \tag{1}
+    $$
+  </div>
+
+  <p>
+    Throughout this course, our running example will be $\Z_8$ &mdash; eight points equally spaced on a circle. A signal on $\Z_8$ is just a vector in $\C^8$ (or $\R^8$). Here is what the underlying domain looks like:
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 360 360" width="360" height="360">
+      <defs>
+        <marker id="arrowCyc" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#6b6560"/>
+        </marker>
+      </defs>
+      <!-- Circle (ring) -->
+      <circle cx="180" cy="180" r="120" fill="none" stroke="#e0dcd8" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- 8 points on the circle, starting at top (90 deg offset), going clockwise -->
+      <!-- Point 0: top (angle = -90 deg) -->
+      <circle cx="180" cy="60" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="180" y="65" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">0</text>
+      <!-- Point 1: angle = -45 deg from top → 45 deg CW -->
+      <circle cx="264.85" cy="95.15" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="264.85" y="100.15" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">1</text>
+      <!-- Point 2: angle = 0 deg → right -->
+      <circle cx="300" cy="180" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="300" y="185" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">2</text>
+      <!-- Point 3: angle = 45 deg → bottom-right -->
+      <circle cx="264.85" cy="264.85" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="264.85" y="269.85" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">3</text>
+      <!-- Point 4: angle = 90 deg → bottom -->
+      <circle cx="180" cy="300" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="180" y="305" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">4</text>
+      <!-- Point 5: angle = 135 deg → bottom-left -->
+      <circle cx="95.15" cy="264.85" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="95.15" y="269.85" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">5</text>
+      <!-- Point 6: angle = 180 deg → left -->
+      <circle cx="60" cy="180" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="60" y="185" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">6</text>
+      <!-- Point 7: angle = 225 deg → top-left -->
+      <circle cx="95.15" cy="95.15" r="16" fill="#e8a88a" stroke="#b44a2f" stroke-width="2"/>
+      <text x="95.15" y="100.15" text-anchor="middle" class="label-text" font-weight="bold" fill="#2a2520">7</text>
+
+      <!-- Curved arrows showing cyclic ordering (arcs between consecutive points) -->
+      <!-- 0 → 1 -->
+      <path d="M 194,64 Q 230,50 258,82" fill="none" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowCyc)"/>
+      <!-- 1 → 2 -->
+      <path d="M 276,107 Q 300,130 298,162" fill="none" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowCyc)"/>
+      <!-- 2 → 3 -->
+      <path d="M 298,198 Q 300,230 276,253" fill="none" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowCyc)"/>
+      <!-- 3 → 4 -->
+      <path d="M 253,276 Q 230,300 198,298" fill="none" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowCyc)"/>
+      <!-- 4 → 5 -->
+      <path d="M 162,298 Q 130,300 107,276" fill="none" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowCyc)"/>
+      <!-- 5 → 6 -->
+      <path d="M 84,253 Q 60,230 62,198" fill="none" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowCyc)"/>
+      <!-- 6 → 7 -->
+      <path d="M 62,162 Q 60,130 84,107" fill="none" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowCyc)"/>
+      <!-- 7 → 0 -->
+      <path d="M 107,84 Q 130,60 162,62" fill="none" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowCyc)"/>
+
+      <!-- Label -->
+      <text x="180" y="185" text-anchor="middle" class="label-text" fill="#6b6560" font-style="italic">Z&#x2088;</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.1.</strong> The cyclic group $\Z_8$: eight points equally spaced on a circle. Arrows show the cyclic ordering &mdash; the successor of point 7 wraps back to point 0. A signal on $\Z_8$ assigns a value $x[n]$ to each of these eight nodes.</div>
+  </div>
+
+  <p>
+    Why start here? Because $\ZN$ has a beautiful symmetry &mdash; every point looks the same as every other point. There is no "special" node. This translation symmetry is what will force the DFT to exist. Our goal in the next few chapters is to see exactly how this works.
+  </p>
+
+  <p>
+    Note the distinction between the <em>domain</em> ($\ZN$, a finite set of points) and the <em>signal</em> ($x \in \C^N$, a vector of values). The domain is the underlying structure; the signal lives on top of it. This distinction will matter enormously when we move from rings to graphs.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 2 — The Shift Operator                                -->
+<!-- ============================================================ -->
+<section id="sec2">
+  <h2><span class="sec-num">2</span>The Shift Operator</h2>
+
+  <p>
+    The most natural operation on a signal living on a ring is to <strong>shift</strong> it around the ring. Define the <strong>cyclic right-shift operator</strong> $S$ by:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Right-shift definition</div>
+    $$
+    (Sx)[n] = x[(n - 1) \bmod N]
+    \tag{2}
+    $$
+  </div>
+
+  <p>
+    In words: $S$ moves every value one step clockwise around the ring. The value that was at position $n-1$ is now at position $n$. The value at position $0$ wraps around to become the value at position $N-1$ moving to position $0$ &mdash; that is, $(Sx)[0] = x[N-1]$.
+  </p>
+
+  <p>
+    As a matrix, $S$ has a 1 on the subdiagonal and a 1 in the top-right corner (the "wraparound"). For $\Z_8$:
+  </p>
+
+  $$
+  S = \begin{pmatrix}
+  0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+  1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+  0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+  0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+  0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+  0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+  0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+  0 & 0 & 0 & 0 & 0 & 0 & 1 & 0
+  \end{pmatrix}
+  $$
+
+  <p>
+    The matrix entry $S_{ij} = 1$ if and only if $j = (i - 1) \bmod N$. Every row and every column has exactly one 1 &mdash; this is a <strong>permutation matrix</strong>.
+  </p>
+
+  <p>
+    Three fundamental properties of $S$ follow immediately from the definition:
+  </p>
+
+  <p>
+    <strong>1. Periodicity.</strong> Shifting $N$ times brings every value back to its starting position:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Periodicity of S</div>
+    $$
+    S^N = I
+    \tag{3}
+    $$
+  </div>
+
+  <p>
+    This is because $(S^N x)[n] = x[(n - N) \bmod N] = x[n]$ for all $n$. In matrix terms, $S$ is a permutation of order $N$: it cycles through all $N$ positions before returning to the identity.
+  </p>
+
+  <p>
+    <strong>2. The adjoint is the left-shift.</strong> The conjugate transpose $S^* = S^T$ (since $S$ is real) performs the <em>left</em>-shift: $(S^* x)[n] = x[(n+1) \bmod N]$. This moves values one step counterclockwise. You can verify this by transposing the matrix above &mdash; the 1's move from the subdiagonal to the superdiagonal, with a wraparound in the bottom-left corner.
+  </p>
+
+  <p>
+    <strong>3. Unitarity.</strong> $S$ preserves the norm of every signal:
+  </p>
+
+  $$
+  S^* S = S S^* = I
+  $$
+
+  <p>
+    This is immediate: $S^*S = S^{N-1}S = S^N = I$. Physically, shifting a signal around a ring neither creates nor destroys energy &mdash; it just relocates it.
+  </p>
+
+  <div class="insight physics">
+    <p><strong>Physics intuition:</strong> $S$ is the generator of the group $\ZN$ acting on signals. Every element of $\ZN$ is a power of $S$: the identity is $S^0 = I$, a shift by 2 is $S^2$, and so on up to $S^{N-1}$. The equation $S^N = I$ encodes the cyclic structure of the group. This is the single symmetry that will drive everything.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 3 — Circulant Matrices as Polynomials in S            -->
+<!-- ============================================================ -->
+<section id="sec3">
+  <h2><span class="sec-num">3</span>Circulant Matrices as Polynomials in S</h2>
+
+  <p>
+    Now we build something more general than a simple shift. Given a <strong>kernel</strong> (or filter) $h = (h_0, h_1, \ldots, h_{N-1})^T \in \C^N$, define the <strong>circulant matrix</strong>:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Circulant matrix as polynomial in S</div>
+    $$
+    C_h = \sum_{k=0}^{N-1} h_k \, S^k = h_0 I + h_1 S + h_2 S^2 + \cdots + h_{N-1} S^{N-1}
+    \tag{4}
+    $$
+  </div>
+
+  <p>
+    This is a polynomial in $S$ with coefficients given by the kernel $h$. Since $S^k$ shifts by $k$ positions, the matrix $C_h$ combines shifted versions of the input signal with weights $h_k$. The matrix entries are:
+  </p>
+
+  $$
+  (C_h)_{ij} = h_{(i - j) \bmod N}
+  $$
+
+  <p>
+    The key structural property: <strong>every row of $C_h$ is a cyclic shift of the first row</strong>. This is what makes it "circulant" &mdash; the rows circulate.
+  </p>
+
+  <p>
+    <strong>Worked example.</strong> Take $N = 8$ and the kernel $h = (3, 1, 0, 0, 0, 0, 0, 2)^T$. This kernel has three nonzero entries: $h_0 = 3$, $h_1 = 1$, and $h_7 = 2$. The circulant matrix is:
+  </p>
+
+  $$
+  C_h = 3I + 1 \cdot S + 2 \cdot S^7
+  $$
+
+  <p>
+    To build the matrix explicitly, we compute $(C_h)_{ij} = h_{(i-j) \bmod 8}$. Row $0$ (i.e., $i=0$):
+  </p>
+
+  <ul>
+    <li>$j=0$: $h_{0} = 3$</li>
+    <li>$j=1$: $h_{(0-1) \bmod 8} = h_7 = 2$</li>
+    <li>$j=2$: $h_{(0-2) \bmod 8} = h_6 = 0$</li>
+    <li>$j=3$ through $j=6$: $h_5 = h_4 = h_3 = h_2 = 0$</li>
+    <li>$j=7$: $h_{(0-7) \bmod 8} = h_1 = 1$</li>
+  </ul>
+
+  <p>
+    So row 0 is $(3, 2, 0, 0, 0, 0, 0, 1)$. Each subsequent row is the cyclic right-shift of the previous:
+  </p>
+
+  $$
+  C_h = \begin{pmatrix}
+  3 & 2 & 0 & 0 & 0 & 0 & 0 & 1 \\
+  1 & 3 & 2 & 0 & 0 & 0 & 0 & 0 \\
+  0 & 1 & 3 & 2 & 0 & 0 & 0 & 0 \\
+  0 & 0 & 1 & 3 & 2 & 0 & 0 & 0 \\
+  0 & 0 & 0 & 1 & 3 & 2 & 0 & 0 \\
+  0 & 0 & 0 & 0 & 1 & 3 & 2 & 0 \\
+  0 & 0 & 0 & 0 & 0 & 1 & 3 & 2 \\
+  2 & 0 & 0 & 0 & 0 & 0 & 1 & 3
+  \end{pmatrix}
+  $$
+
+  <p>
+    Notice the structure: the diagonal is all 3's (from $h_0 = 3$), the subdiagonal is all 1's (from $h_1 = 1$), and the superdiagonal is all 2's (from $h_7 = 2$, which corresponds to $S^7 = S^{-1}$, the left-shift). The matrix wraps around at the corners &mdash; the 2 in position $(0,1)$ and the 1 in position $(7,6)$ are the cyclic wraparound terms.
+  </p>
+
+  <div class="insight key">
+    <p><strong>Key idea:</strong> Circulant matrices are polynomials in $S$. This algebraic fact &mdash; that all circulants live in the polynomial algebra $\C[S]/(S^N - I)$ &mdash; will drive everything that follows. It means diagonalizing $S$ automatically diagonalizes <em>every</em> circulant simultaneously.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SECTION 4 — Circular Convolution                              -->
+<!-- ============================================================ -->
+<section id="sec4">
+  <h2><span class="sec-num">4</span>Circular Convolution</h2>
+
+  <p>
+    The matrix-vector product $y = C_h x$ computes the <strong>circular convolution</strong> of $h$ with $x$. Writing it out component by component:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Circular convolution</div>
+    $$
+    (h * x)[n] = \sum_{k=0}^{N-1} h[k] \, x[(n - k) \bmod N]
+    \tag{5}
+    $$
+  </div>
+
+  <p>
+    This is the discrete, periodic analogue of continuous convolution. For each output position $n$, we flip the kernel $h$, slide it to position $n$, and take the inner product with the signal $x$ &mdash; all modulo $N$ so that the ends wrap around.
+  </p>
+
+  <p>
+    The connection to matrix multiplication is exact: $(h * x)[n] = \sum_k h_k (S^k x)[n] = (C_h x)[n]$. Circular convolution <em>is</em> multiplication by a circulant matrix. There is no approximation here &mdash; the two are literally the same operation.
+  </p>
+
+  <p>
+    Now comes the fundamental algebraic fact. Since every circulant $C_h$ is a polynomial in $S$, and since polynomials in the same variable always commute:
+  </p>
+
+  <div class="math-block">
+    <div class="math-label">Circulants commute</div>
+    $$
+    C_g \, C_h = C_h \, C_g \quad \text{for all kernels } g, h \in \C^N
+    \tag{6}
+    $$
+  </div>
+
+  <p>
+    This is because $p(S) \cdot q(S) = q(S) \cdot p(S)$ for any polynomials $p$ and $q$ &mdash; polynomial multiplication is commutative. In signal processing language: the order in which you apply two convolution filters does not matter. Filter with $h$ then $g$, or $g$ then $h$ &mdash; you get the same result.
+  </p>
+
+  <p>
+    Moreover, the product of two circulants is itself a circulant. $C_g C_h = C_{g*h}$ where $g * h$ is the circular convolution of the two kernels. The set of all $N \times N$ circulant matrices forms a <strong>commutative algebra</strong> &mdash; a vector space that is closed under multiplication, with all elements commuting.
+  </p>
+
+  <p>
+    <strong>Worked example: the delta signal.</strong> Apply $C_h$ to the delta signal $\delta_0 = (1, 0, 0, 0, 0, 0, 0, 0)^T$ on $\Z_8$:
+  </p>
+
+  $$
+  C_h \, \delta_0 = \begin{pmatrix} 3\\1\\0\\0\\0\\0\\0\\2 \end{pmatrix}
+  $$
+
+  <p>
+    The output is the first <em>column</em> of $C_h$, which is exactly the kernel $h$ itself (since $(C_h)_{i,0} = h_{(i-0) \bmod 8} = h_i$). This is the discrete analogue of convolving with a delta function: you recover the impulse response. It also confirms that $C_h$ encodes the kernel faithfully &mdash; the kernel is the response to a single impulse at position 0.
+  </p>
+
+  <p>
+    We can now state the algebraic characterization precisely:
+  </p>
+
+  <div class="def-box green">
+    <div class="def-label">Algebraic Characterization of Convolution</div>
+    <p>A linear operator $M: \C^N \to \C^N$ is a circular convolution if and only if $M$ is a polynomial in the shift operator $S$. Equivalently, $M$ is a circular convolution if and only if the matrix of $M$ is circulant (every row is a cyclic shift of the first row).</p>
+  </div>
+
+  <p>
+    This characterization is purely algebraic &mdash; no Fourier transform, no frequencies, no complex exponentials. It says: convolution = polynomial in $S$. In the next chapter, we will discover that this algebraic structure, combined with the simultaneous diagonalization theorem, <em>forces</em> the DFT into existence.
+  </p>
+
+  <p>
+    Here is the question that drives the rest of the course: these circulant matrices all commute and are all polynomials in $S$. Linear algebra tells us that commuting diagonalizable matrices can be simultaneously diagonalized &mdash; they share a common eigenbasis. What is that eigenbasis? Finding it will give us the DFT.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- FOOTER NAV                                                   -->
+<!-- ============================================================ -->
+<div class="footer-nav"><a href="gcn-index.html"><span class="dir">&larr; Previous</span><span class="title">Course Home</span></a><a class="next" href="gcn-02-discovering-dft.html"><span class="dir">Next &rarr;</span><span class="title">Discovering the DFT</span></a></div>
+</main>
+<footer><p><a href="gcn-index.html">&larr; Course Home</a> &middot; <a href="../index.html">All Notes</a></p></footer>
+<a href="#" class="back-to-top" aria-label="Back to top">&#8593;</a>
+<script>
+const fill = document.querySelector('.progress-fill');
+const main = document.querySelector('main');
+function updateProgress() {
+  const top = main.getBoundingClientRect().top;
+  const height = main.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (-top / height) * 100));
+  fill.style.width = pct + '%';
+}
+const btn = document.querySelector('.back-to-top');
+function updateBtn() {
+  btn.classList.toggle('visible', window.scrollY > 600);
+}
+window.addEventListener('scroll', function() { updateProgress(); updateBtn(); }, { passive: true });
+updateProgress();
+</script>
+</body>
+</html>
