@@ -224,7 +224,7 @@ window.MathJax={
   </p>
 
   <div class="insight physics">
-    <p><strong>Physics intuition:</strong> $S$ is the generator of the group $\ZN$ acting on signals. Every element of $\ZN$ is a power of $S$: the identity is $S^0 = I$, a shift by 2 is $S^2$, and so on up to $S^{N-1}$. The equation $S^N = I$ encodes the cyclic structure of the group. This is the single symmetry that will drive everything.</p>
+    <p><strong>$S$ and the group $\ZN$.</strong> A <em>generator</em> of a group is an element from which every other element can be built by repeated application. The abstract group $\ZN$ is the integers $\{0, 1, \ldots, N-1\}$ under addition mod $N$, and the element $1$ generates it: $1, 1+1=2, 1+1+1=3, \ldots$ cycles through every element before wrapping back to $0$. The shift operator $S$ lives in a different world &mdash; it is an $N \times N$ matrix, not an integer &mdash; but the group of matrices $\{I, S, S^2, \ldots, S^{N-1}\}$ under matrix multiplication is <em>isomorphic</em> to $\ZN$. The correspondence $k \;\leftrightarrow\; S^k$ maps group element $k$ to the matrix that shifts signals by $k$ positions, and it respects the group operation: $S^j S^k = S^{(j+k) \bmod N}$, mirroring $j + k \pmod{N}$ in $\ZN$. In the language of representation theory, $k \mapsto S^k$ is a faithful <em>representation</em> of $\ZN$ on $\C^N$ &mdash; a way for the abstract group to act concretely on signals. The equation $S^N = I$ encodes the cyclic structure: applying the generator $N$ times returns to the identity, just as adding $1$ to itself $N$ times gives $0 \pmod{N}$. Because a single matrix $S$ generates the entire group action, understanding $S$ alone will be enough to understand every shift-invariant operation.</p>
   </div>
 </section>
 
@@ -304,6 +304,61 @@ window.MathJax={
   <div class="insight key">
     <p><strong>Key idea:</strong> Circulant matrices are polynomials in $S$. This algebraic fact &mdash; that all circulants live in the polynomial algebra $\C[S]/(S^N - I)$ &mdash; will drive everything that follows. It means diagonalizing $S$ automatically diagonalizes <em>every</em> circulant simultaneously.</p>
   </div>
+
+  <h3>Aside: A natural operation that is <em>not</em> circulant</h3>
+
+  <p>
+    Not every linear operation on signals is a polynomial in $S$. Consider <strong>signal reversal</strong> (reflection through position 0): the operator $R$ that sends $x[n]$ to $x[-n \bmod N]$. In vector notation:
+  </p>
+
+  $$
+  Rx = \begin{pmatrix} x[0] \\ x[N-1] \\ x[N-2] \\ \vdots \\ x[2] \\ x[1] \end{pmatrix}
+  $$
+
+  <p>
+    For $N = 8$, the matrix is:
+  </p>
+
+  $$
+  R = \begin{pmatrix}
+  1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+  0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+  0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+  0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+  0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+  0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+  0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+  0 & 1 & 0 & 0 & 0 & 0 & 0 & 0
+  \end{pmatrix}
+  $$
+
+  <p>
+    This is <em>not</em> circulant. Row 0 is $(1, 0, 0, 0, 0, 0, 0, 0)$ and row 1 is $(0, 0, 0, 0, 0, 0, 0, 1)$ &mdash; row 1 is not a cyclic shift of row 0. So $R$ is not a polynomial in $S$, and signal reversal is not a convolution.
+  </p>
+
+  <p>
+    But $R$ is not unrelated to $S$ either. What happens when we compose them? Apply $R$ then $S$: the signal is first reversed, then shifted. Apply $S$ then $R$: the signal is first shifted, then reversed. These give different results &mdash; $RS \neq SR$ &mdash; so $R$ does not commute with $S$ (which is exactly why $R$ cannot be circulant, by the characterization we will prove in &sect;5). But there is a pattern. Working out the action on a signal component:
+  </p>
+
+  $$
+  (RS\,x)[n] = (Sx)[-n] = x[-n - 1], \qquad (S^*R\,x)[n] = (Rx)[n+1] = x[-(n+1)] = x[-n-1]
+  $$
+
+  <p>
+    where all indices are mod $N$. So $RS = S^*R$: composing reversal-then-right-shift is the same as left-shift-then-reversal. Since $R$ is its own inverse ($R^2 = I$ &mdash; reversing twice recovers the original signal), we can conjugate:
+  </p>
+
+  $$
+  RSR = S^*
+  $$
+
+  <p>
+    Reversal <em>conjugates</em> the right-shift $S$ into the left-shift $S^*$. It swaps the direction of propagation around the ring. This is not a coincidence &mdash; $R$ is the geometric reflection of the ring through position 0, and reflecting a clockwise shift produces a counterclockwise shift.
+  </p>
+
+  <div class="insight physics">
+    <p><strong>Why this matters:</strong> The reversal operator $R$ will reappear in &sect;4, where it turns out to be exactly what distinguishes convolution from cross-correlation. Convolving $x$ with a kernel $h$ involves the reversed kernel $Rh$ (the &ldquo;flip&rdquo; in &ldquo;flip and slide&rdquo;); cross-correlating with $h$ uses $h$ without flipping. The algebraic relationship $RSR = S^*$ is the structural reason the flip appears.</p>
+  </div>
 </section>
 
 <hr class="divider">
@@ -315,7 +370,23 @@ window.MathJax={
   <h2><span class="sec-num">4</span>Circular Convolution</h2>
 
   <p>
-    The matrix-vector product $y = C_h x$ computes the <strong>circular convolution</strong> of $h$ with $x$. Writing it out component by component:
+    What happens when we apply $C_h$ to a signal $x$? Let us compute $y = C_h x$ by expanding the polynomial definition (Eq.&nbsp;4):
+  </p>
+
+  $$
+  y = C_h\, x = \sum_{k=0}^{N-1} h_k \, S^k x
+  $$
+
+  <p>
+    The $k$-th power of the shift moves every entry $k$ steps around the ring: $(S^k x)[n] = x[(n - k) \bmod N]$. Substituting and reading off the $n$-th component:
+  </p>
+
+  $$
+  y[n] = \sum_{k=0}^{N-1} h_k \, (S^k x)[n] = \sum_{k=0}^{N-1} h_k \, x[(n - k) \bmod N]
+  $$
+
+  <p>
+    This operation is called <strong>circular convolution</strong>, written $y = h * x$:
   </p>
 
   <div class="math-block">
@@ -327,31 +398,277 @@ window.MathJax={
   </div>
 
   <p>
-    This is the discrete, periodic analogue of continuous convolution. For each output position $n$, we flip the kernel $h$, slide it to position $n$, and take the inner product with the signal $x$ &mdash; all modulo $N$ so that the ends wrap around.
+    To visualize this, fix an output position $n$ and arrange two sequences on concentric rings. The <strong>inner ring</strong> carries the signal values $x[0], x[1], \ldots, x[N-1]$ at their natural positions. The <strong>outer ring</strong> carries the kernel rearranged: position $j$ gets the coefficient $h[(n - j) \bmod N]$. The output $y[n]$ is the sum of products of radially aligned pairs. As $n$ increases by 1, the outer ring rotates one step clockwise.
   </p>
 
   <p>
-    The connection to matrix multiplication is exact: $(h * x)[n] = \sum_k h_k (S^k x)[n] = (C_h x)[n]$. Circular convolution <em>is</em> multiplication by a circulant matrix. There is no approximation here &mdash; the two are literally the same operation.
+    <strong>Worked example.</strong> For our $\Z_8$ kernel $h = (3, 1, 0, 0, 0, 0, 0, 2)^T$, only three coefficients are nonzero: $h_0 = 3$, $h_1 = 1$, $h_7 = 2$. The figure below shows all eight output components. In each panel, the inner ring (gray dots) holds $x[0]$ through $x[7]$ at fixed positions. The three colored dots on the outer ring mark the nonzero kernel coefficients &mdash; watch how they rotate clockwise as $n$ increases:
+  </p>
+
+  <!-- CIRCULAR CONVOLUTION FIGURE — 8 panels showing inner x[k] / outer h[(n-k) mod 8] -->
+  <div class="figure">
+    <svg viewBox="0 0 640 350" width="640" height="350">
+      <!-- === Panel n=0 (cx=80, cy=88) === -->
+      <text x="80" y="25" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12" fill="#2a2520" font-weight="600">n = 0</text>
+      <circle cx="80" cy="88" r="28" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="80" cy="88" r="52" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <!-- Inner dots (x[k]) -->
+      <circle cx="80" cy="60" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="80" y="60" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">0</text>
+      <circle cx="99.8" cy="68.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="99.8" y="68.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">1</text>
+      <circle cx="108" cy="88" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="108" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">2</text>
+      <circle cx="99.8" cy="107.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="99.8" y="107.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">3</text>
+      <circle cx="80" cy="116" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="80" y="116" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">4</text>
+      <circle cx="60.2" cy="107.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="60.2" y="107.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">5</text>
+      <circle cx="52" cy="88" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="52" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">6</text>
+      <circle cx="60.2" cy="68.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="60.2" y="68.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">7</text>
+      <!-- Outer active dots: j=0→3, j=1→2, j=7→1 -->
+      <line x1="80" y1="36" x2="80" y2="55" stroke="#b44a2f" stroke-width="1" opacity="0.4"/>
+      <line x1="116.8" y1="51.2" x2="105" y2="63" stroke="#2a6b5a" stroke-width="1" opacity="0.4"/>
+      <line x1="43.2" y1="51.2" x2="55" y2="63" stroke="#3a5a8c" stroke-width="1" opacity="0.4"/>
+      <circle cx="80" cy="36" r="8" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/><text x="80" y="36" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">3</text>
+      <circle cx="116.8" cy="51.2" r="8" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/><text x="116.8" y="51.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">2</text>
+      <circle cx="43.2" cy="51.2" r="8" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/><text x="43.2" y="51.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">1</text>
+
+      <!-- === Panel n=1 (cx=240, cy=88) === -->
+      <text x="240" y="25" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12" fill="#2a2520" font-weight="600">n = 1</text>
+      <circle cx="240" cy="88" r="28" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="240" cy="88" r="52" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="240" cy="60" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="240" y="60" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">0</text>
+      <circle cx="259.8" cy="68.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="259.8" y="68.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">1</text>
+      <circle cx="268" cy="88" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="268" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">2</text>
+      <circle cx="259.8" cy="107.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="259.8" y="107.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">3</text>
+      <circle cx="240" cy="116" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="240" y="116" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">4</text>
+      <circle cx="220.2" cy="107.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="220.2" y="107.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">5</text>
+      <circle cx="212" cy="88" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="212" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">6</text>
+      <circle cx="220.2" cy="68.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="220.2" y="68.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">7</text>
+      <!-- Outer active: j=0→1, j=1→3, j=2→2 -->
+      <line x1="240" y1="36" x2="240" y2="55" stroke="#3a5a8c" stroke-width="1" opacity="0.4"/>
+      <line x1="276.8" y1="51.2" x2="265" y2="63" stroke="#b44a2f" stroke-width="1" opacity="0.4"/>
+      <line x1="292" y1="88" x2="273" y2="88" stroke="#2a6b5a" stroke-width="1" opacity="0.4"/>
+      <circle cx="240" cy="36" r="8" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/><text x="240" y="36" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">1</text>
+      <circle cx="276.8" cy="51.2" r="8" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/><text x="276.8" y="51.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">3</text>
+      <circle cx="292" cy="88" r="8" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/><text x="292" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">2</text>
+
+      <!-- === Panel n=2 (cx=400, cy=88) === -->
+      <text x="400" y="25" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12" fill="#2a2520" font-weight="600">n = 2</text>
+      <circle cx="400" cy="88" r="28" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="400" cy="88" r="52" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="400" cy="60" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="400" y="60" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">0</text>
+      <circle cx="419.8" cy="68.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="419.8" y="68.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">1</text>
+      <circle cx="428" cy="88" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="428" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">2</text>
+      <circle cx="419.8" cy="107.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="419.8" y="107.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">3</text>
+      <circle cx="400" cy="116" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="400" y="116" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">4</text>
+      <circle cx="380.2" cy="107.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="380.2" y="107.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">5</text>
+      <circle cx="372" cy="88" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="372" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">6</text>
+      <circle cx="380.2" cy="68.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="380.2" y="68.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">7</text>
+      <!-- Outer active: j=1→1, j=2→3, j=3→2 -->
+      <line x1="436.8" y1="51.2" x2="425" y2="63" stroke="#3a5a8c" stroke-width="1" opacity="0.4"/>
+      <line x1="452" y1="88" x2="433" y2="88" stroke="#b44a2f" stroke-width="1" opacity="0.4"/>
+      <line x1="436.8" y1="124.8" x2="425" y2="113" stroke="#2a6b5a" stroke-width="1" opacity="0.4"/>
+      <circle cx="436.8" cy="51.2" r="8" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/><text x="436.8" y="51.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">1</text>
+      <circle cx="452" cy="88" r="8" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/><text x="452" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">3</text>
+      <circle cx="436.8" cy="124.8" r="8" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/><text x="436.8" y="124.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">2</text>
+
+      <!-- === Panel n=3 (cx=560, cy=88) === -->
+      <text x="560" y="25" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12" fill="#2a2520" font-weight="600">n = 3</text>
+      <circle cx="560" cy="88" r="28" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="560" cy="88" r="52" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="560" cy="60" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="560" y="60" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">0</text>
+      <circle cx="579.8" cy="68.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="579.8" y="68.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">1</text>
+      <circle cx="588" cy="88" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="588" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">2</text>
+      <circle cx="579.8" cy="107.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="579.8" y="107.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">3</text>
+      <circle cx="560" cy="116" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="560" y="116" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">4</text>
+      <circle cx="540.2" cy="107.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="540.2" y="107.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">5</text>
+      <circle cx="532" cy="88" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="532" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">6</text>
+      <circle cx="540.2" cy="68.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="540.2" y="68.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">7</text>
+      <!-- Outer active: j=2→1, j=3→3, j=4→2 -->
+      <line x1="612" y1="88" x2="593" y2="88" stroke="#3a5a8c" stroke-width="1" opacity="0.4"/>
+      <line x1="596.8" y1="124.8" x2="585" y2="113" stroke="#b44a2f" stroke-width="1" opacity="0.4"/>
+      <line x1="560" y1="140" x2="560" y2="121" stroke="#2a6b5a" stroke-width="1" opacity="0.4"/>
+      <circle cx="612" cy="88" r="8" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/><text x="612" y="88" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">1</text>
+      <circle cx="596.8" cy="124.8" r="8" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/><text x="596.8" y="124.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">3</text>
+      <circle cx="560" cy="140" r="8" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/><text x="560" y="140" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">2</text>
+
+      <!-- === Panel n=4 (cx=80, cy=253) === -->
+      <text x="80" y="190" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12" fill="#2a2520" font-weight="600">n = 4</text>
+      <circle cx="80" cy="253" r="28" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="80" cy="253" r="52" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="80" cy="225" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="80" y="225" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">0</text>
+      <circle cx="99.8" cy="233.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="99.8" y="233.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">1</text>
+      <circle cx="108" cy="253" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="108" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">2</text>
+      <circle cx="99.8" cy="272.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="99.8" y="272.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">3</text>
+      <circle cx="80" cy="281" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="80" y="281" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">4</text>
+      <circle cx="60.2" cy="272.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="60.2" y="272.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">5</text>
+      <circle cx="52" cy="253" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="52" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">6</text>
+      <circle cx="60.2" cy="233.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="60.2" y="233.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">7</text>
+      <!-- Outer active: j=3→1, j=4→3, j=5→2 -->
+      <line x1="116.8" y1="289.8" x2="105" y2="278" stroke="#3a5a8c" stroke-width="1" opacity="0.4"/>
+      <line x1="80" y1="305" x2="80" y2="286" stroke="#b44a2f" stroke-width="1" opacity="0.4"/>
+      <line x1="43.2" y1="289.8" x2="55" y2="278" stroke="#2a6b5a" stroke-width="1" opacity="0.4"/>
+      <circle cx="116.8" cy="289.8" r="8" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/><text x="116.8" y="289.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">1</text>
+      <circle cx="80" cy="305" r="8" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/><text x="80" y="305" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">3</text>
+      <circle cx="43.2" cy="289.8" r="8" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/><text x="43.2" y="289.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">2</text>
+
+      <!-- === Panel n=5 (cx=240, cy=253) === -->
+      <text x="240" y="190" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12" fill="#2a2520" font-weight="600">n = 5</text>
+      <circle cx="240" cy="253" r="28" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="240" cy="253" r="52" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="240" cy="225" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="240" y="225" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">0</text>
+      <circle cx="259.8" cy="233.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="259.8" y="233.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">1</text>
+      <circle cx="268" cy="253" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="268" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">2</text>
+      <circle cx="259.8" cy="272.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="259.8" y="272.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">3</text>
+      <circle cx="240" cy="281" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="240" y="281" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">4</text>
+      <circle cx="220.2" cy="272.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="220.2" y="272.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">5</text>
+      <circle cx="212" cy="253" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="212" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">6</text>
+      <circle cx="220.2" cy="233.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="220.2" y="233.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">7</text>
+      <!-- Outer active: j=4→1, j=5→3, j=6→2 -->
+      <line x1="240" y1="305" x2="240" y2="286" stroke="#3a5a8c" stroke-width="1" opacity="0.4"/>
+      <line x1="203.2" y1="289.8" x2="215" y2="278" stroke="#b44a2f" stroke-width="1" opacity="0.4"/>
+      <line x1="188" y1="253" x2="207" y2="253" stroke="#2a6b5a" stroke-width="1" opacity="0.4"/>
+      <circle cx="240" cy="305" r="8" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/><text x="240" y="305" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">1</text>
+      <circle cx="203.2" cy="289.8" r="8" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/><text x="203.2" y="289.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">3</text>
+      <circle cx="188" cy="253" r="8" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/><text x="188" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">2</text>
+
+      <!-- === Panel n=6 (cx=400, cy=253) === -->
+      <text x="400" y="190" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12" fill="#2a2520" font-weight="600">n = 6</text>
+      <circle cx="400" cy="253" r="28" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="400" cy="253" r="52" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="400" cy="225" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="400" y="225" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">0</text>
+      <circle cx="419.8" cy="233.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="419.8" y="233.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">1</text>
+      <circle cx="428" cy="253" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="428" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">2</text>
+      <circle cx="419.8" cy="272.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="419.8" y="272.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">3</text>
+      <circle cx="400" cy="281" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="400" y="281" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">4</text>
+      <circle cx="380.2" cy="272.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="380.2" y="272.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">5</text>
+      <circle cx="372" cy="253" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="372" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">6</text>
+      <circle cx="380.2" cy="233.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="380.2" y="233.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">7</text>
+      <!-- Outer active: j=5→1, j=6→3, j=7→2 -->
+      <line x1="363.2" y1="289.8" x2="375" y2="278" stroke="#3a5a8c" stroke-width="1" opacity="0.4"/>
+      <line x1="348" y1="253" x2="367" y2="253" stroke="#b44a2f" stroke-width="1" opacity="0.4"/>
+      <line x1="363.2" y1="216.2" x2="375" y2="228" stroke="#2a6b5a" stroke-width="1" opacity="0.4"/>
+      <circle cx="363.2" cy="289.8" r="8" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/><text x="363.2" y="289.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">1</text>
+      <circle cx="348" cy="253" r="8" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/><text x="348" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">3</text>
+      <circle cx="363.2" cy="216.2" r="8" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/><text x="363.2" y="216.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">2</text>
+
+      <!-- === Panel n=7 (cx=560, cy=253) === -->
+      <text x="560" y="190" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12" fill="#2a2520" font-weight="600">n = 7</text>
+      <circle cx="560" cy="253" r="28" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="560" cy="253" r="52" fill="none" stroke="#e0dcd8" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="560" cy="225" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="560" y="225" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">0</text>
+      <circle cx="579.8" cy="233.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="579.8" y="233.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">1</text>
+      <circle cx="588" cy="253" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="588" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">2</text>
+      <circle cx="579.8" cy="272.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="579.8" y="272.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">3</text>
+      <circle cx="560" cy="281" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="560" y="281" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">4</text>
+      <circle cx="540.2" cy="272.8" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="540.2" y="272.8" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">5</text>
+      <circle cx="532" cy="253" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="532" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">6</text>
+      <circle cx="540.2" cy="233.2" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/><text x="540.2" y="233.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520">7</text>
+      <!-- Outer active: j=0→2, j=6→1, j=7→3 -->
+      <line x1="560" y1="201" x2="560" y2="220" stroke="#2a6b5a" stroke-width="1" opacity="0.4"/>
+      <line x1="508" y1="253" x2="527" y2="253" stroke="#3a5a8c" stroke-width="1" opacity="0.4"/>
+      <line x1="523.2" y1="216.2" x2="535" y2="228" stroke="#b44a2f" stroke-width="1" opacity="0.4"/>
+      <circle cx="560" cy="201" r="8" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/><text x="560" y="201" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">2</text>
+      <circle cx="508" cy="253" r="8" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/><text x="508" y="253" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">1</text>
+      <circle cx="523.2" cy="216.2" r="8" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/><text x="523.2" y="216.2" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520" font-weight="700">3</text>
+
+      <!-- Legend -->
+      <text x="182" y="340" text-anchor="end" font-family="Source Sans 3, sans-serif" font-size="10" fill="#6b6560">Inner ring: x[k]</text>
+      <circle cx="220" cy="337" r="5.5" fill="#f0ece8" stroke="#6b6560" stroke-width="1"/>
+      <text x="255" y="340" text-anchor="start" font-family="Source Sans 3, sans-serif" font-size="10" fill="#6b6560">Outer ring:</text>
+      <circle cx="322" cy="337" r="6" fill="#e8a88a" stroke="#b44a2f" stroke-width="1.5"/><text x="322" y="337" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520" font-weight="700">3</text>
+      <text x="333" y="340" font-family="Source Sans 3, sans-serif" font-size="10" fill="#6b6560">= h&#x2080;</text>
+      <circle cx="382" cy="337" r="6" fill="#8ec5b6" stroke="#2a6b5a" stroke-width="1.5"/><text x="382" y="337" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520" font-weight="700">2</text>
+      <text x="393" y="340" font-family="Source Sans 3, sans-serif" font-size="10" fill="#6b6560">= h&#x2087;</text>
+      <circle cx="442" cy="337" r="6" fill="#a8c0e0" stroke="#3a5a8c" stroke-width="1.5"/><text x="442" y="337" dy="0.35em" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#2a2520" font-weight="700">1</text>
+      <text x="453" y="340" font-family="Source Sans 3, sans-serif" font-size="10" fill="#6b6560">= h&#x2081;</text>
+    </svg>
+    <div class="caption"><strong>Figure 1.2.</strong> Circular convolution on $\Z_8$ with kernel $h = (3,1,0,0,0,0,0,2)^T$. Each panel computes one component $y[n]$ by summing products of radially aligned pairs: inner ring $x[j]$ times outer ring $h[(n-j) \bmod 8]$. The three nonzero kernel coefficients (colored dots) rotate clockwise by one position per step. For instance, $y[0] = 3\,x[0] + 2\,x[1] + 1\cdot x[7]$, while $y[1] = 1\cdot x[0] + 3\,x[1] + 2\,x[2]$. Since each $y[n]$ is just a sum of pairwise products, swapping the roles of the two rings &mdash; putting $h$ on the inner ring and rearranging $x$ on the outer &mdash; gives the same values. This is the symmetry $C_h\,x = C_x\,h$.</div>
+  </div>
+
+  <p>
+    Look at the $n = 0$ panel. The outer ring shows $h[0], h[7], h[6], \ldots, h[1]$ &mdash; the kernel <em>reversed</em> (reflected through position 0). Why the flip? Because the shift operator $S^k$ moves signal values <em>forward</em> by $k$ positions, so the value arriving at output position $n$ <em>came from</em> position $n - k$. The coefficient $h[k]$ multiplies the signal value $k$ steps <em>behind</em> the output, not $k$ steps ahead. You are looking backward along the shift to find the source. This backward look is the origin of the minus sign in $x[(n - k) \bmod N]$, and it is what puts the reversed kernel on the outer ring.
   </p>
 
   <p>
-    Now comes the fundamental algebraic fact. Since every circulant $C_h$ is a polynomial in $S$, and since polynomials in the same variable always commute:
+    A second way to see the reversal: look at the matrix $C_h$ directly. We computed that row 0 has entries $(C_h)_{0,j} = h[-j \bmod N] = (Rh)[j]$. In our example, $h = (3,1,0,0,0,0,0,2)^T$ and row 0 is $(3,2,0,0,0,0,0,1)$ &mdash; which is $Rh$. Since $C_h$ is circulant, every subsequent row is a cyclic shift of this first row: row $n$ is $S^n(Rh)$.
+  </p>
+
+  <p>
+    This means $y[n] = (C_h x)[n]$ is the dot product of $x$ with the $n$-th cyclic shift of $Rh$:
+  </p>
+
+  $$
+  y[n] = \langle S^n(Rh),\, x \rangle
+  $$
+
+  <p>
+    Convolution slides a reversed copy of the kernel across the signal, computing a dot product at each position &mdash; a &ldquo;template matching&rdquo; operation. The template is $Rh$, not $h$ itself.
+  </p>
+
+  <p>
+    We can express this matrix relationship concisely. Recall that $C_{Rh}$ is the circulant built from $Rh$, so $(C_{Rh})_{n,j} = (Rh)[(n-j) \bmod N] = h[(j-n) \bmod N]$. Comparing with $(C_h)_{n,j} = h[(n-j) \bmod N]$, we see that swapping $n$ and $j$ takes one to the other:
+  </p>
+
+  $$
+  C_h = C_{Rh}^T
+  $$
+
+  <p>
+    Transposing a circulant reverses its kernel. Since $C_h$ is built from $h$ and $C_h^T$ is built from $Rh$, applying $C_h$ to $x$ amounts to taking inner products of $x$ against shifted copies of $Rh$ &mdash; which is exactly what the figure shows on the outer ring.
+  </p>
+
+  <p>
+    This reversal is precisely what distinguishes <strong>convolution</strong> from <strong>cross-correlation</strong>. Cross-correlation pairs $h[k]$ with $x[n + k]$ &mdash; no flip. In the ring picture, cross-correlation would place $h$ on the outer ring in its <em>natural</em> order, matching $h[k]$ to the signal value $k$ steps <em>ahead</em>. The two operations are related by the reversal operator $R$ from &sect;3: $(h \star x)[n] = (Rh * x)[n]$, where $Rh$ is the time-reversed kernel $(Rh)[k] = h[-k \bmod N]$ and $\star$ denotes cross-correlation. The algebraic root is the identity $RSR = S^*$: reversal swaps the direction of the shift, turning the backward look of convolution into the forward look of correlation.
+  </p>
+
+  <div class="insight physics">
+    <p><strong>Terminology trap:</strong> In the neural network literature, &ldquo;convolutional layer&rdquo; almost universally means cross-correlation, not convolution. PyTorch&rsquo;s <code>Conv1d</code> and <code>Conv2d</code> documentation explicitly states that the operation is the &ldquo;valid cross-correlation operator&rdquo; &mdash; the learned kernel is applied without flipping. This is harmless in practice: since the kernel weights are learned from data, the network can absorb the reflection into the learned parameters. A kernel that would be $h$ under true convolution is simply learned as $Rh$ under cross-correlation. But it means the &ldquo;convolution theorem&rdquo; as stated above (eigenvalues = DFT of the kernel) applies to the mathematical operation, not directly to what a CNN layer computes. Mathematically honest names like &ldquo;cross-correlation layer&rdquo; never caught on.</p>
+  </div>
+
+  <p>
+    Returning to the figure: it also makes visible the commutativity $h * x = x * h$. Reindexing $j = n - k$ in Eq.&nbsp;5 gives the equivalent form $(h * x)[n] = \sum_j x[(n - j) \bmod N]\, h[j]$, which is the same formula with the roles of $h$ and $x$ swapped. Each $y[n]$ is a sum of pairwise products of radially aligned values &mdash; it does not matter which factor sits on which ring. In matrix language: $C_h\, x = C_x\, h$.
+  </p>
+
+  <p>
+    Now comes the fundamental algebraic fact. What happens when we compose two circulants &mdash; apply $C_h$ first, then $C_g$? Expand both as polynomials in $S$, using index $k$ for $C_h$ and index $l$ for $C_g$:
+  </p>
+
+  $$
+  C_g \, C_h = \left(\sum_{l=0}^{N-1} g_l \, S^l\right)\left(\sum_{k=0}^{N-1} h_k \, S^k\right) = \sum_{l=0}^{N-1}\sum_{k=0}^{N-1} g_l \, h_k \, S^{l+k}
+  $$
+
+  <p>
+    This is a double sum over all pairs $(l, k)$, each contributing a term $g_l h_k$ multiplied by $S^{l+k}$. Since $S^N = I$, we have $S^{l+k} = S^{(l+k) \bmod N}$, so terms with different $(l,k)$ pairs can land on the same power of $S$. Collect all terms whose exponents agree modulo $N$: for each target power $m = 0, 1, \ldots, N-1$, gather every pair $(l, k)$ with $l + k \equiv m \pmod{N}$:
+  </p>
+
+  $$
+  C_g \, C_h = \sum_{m=0}^{N-1} \underbrace{\left(\sum_{l=0}^{N-1} g_l \, h_{(m - l) \bmod N}\right)}_{\text{coefficient of } S^m} S^m
+  $$
+
+  <p>
+    The coefficient of $S^m$ in the product is $\sum_l g_l \, h_{(m-l) \bmod N}$. But this is exactly $(g * h)[m]$ &mdash; the $m$-th component of the circular convolution of $g$ with $h$ (Eq.&nbsp;5). So the product is:
+  </p>
+
+  $$
+  C_g \, C_h = \sum_{m=0}^{N-1} (g * h)[m] \, S^m = C_{g * h}
+  $$
+
+  <p>
+    The product of two circulants is the circulant of the convolved kernels. Composing two convolution filters is itself a convolution, with a kernel given by convolving the individual kernels. The circulant algebra is closed under multiplication.
+  </p>
+
+  <p>
+    Notice that the double sum $\sum_l \sum_k g_l h_k S^{l+k}$ is symmetric in $g$ and $h$ &mdash; swapping the two factors just relabels the dummy indices. Therefore:
   </p>
 
   <div class="math-block">
     <div class="math-label">Circulants commute</div>
     $$
-    C_g \, C_h = C_h \, C_g \quad \text{for all kernels } g, h \in \C^N
+    C_g \, C_h = C_{g*h} = C_{h*g} = C_h \, C_g \quad \text{for all kernels } g, h \in \C^N
     \tag{6}
     $$
   </div>
 
   <p>
-    This is because $p(S) \cdot q(S) = q(S) \cdot p(S)$ for any polynomials $p$ and $q$ &mdash; polynomial multiplication is commutative. In signal processing language: the order in which you apply two convolution filters does not matter. Filter with $h$ then $g$, or $g$ then $h$ &mdash; you get the same result.
-  </p>
-
-  <p>
-    Moreover, the product of two circulants is itself a circulant. $C_g C_h = C_{g*h}$ where $g * h$ is the circular convolution of the two kernels. The set of all $N \times N$ circulant matrices forms a <strong>commutative algebra</strong> &mdash; a vector space that is closed under multiplication, with all elements commuting.
+    The order in which you apply two convolution filters does not matter. This follows directly from the polynomial structure: $p(S) \cdot q(S) = q(S) \cdot p(S)$ for any polynomials $p, q$, because we are multiplying in the ring $\C[S]/(S^N - I)$, which is commutative. The set of all $N \times N$ circulant matrices forms a <strong>commutative algebra</strong> &mdash; a vector space closed under multiplication, with all elements commuting.
   </p>
 
   <p>

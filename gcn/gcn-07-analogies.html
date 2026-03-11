@@ -154,14 +154,14 @@ window.MathJax={
       </tr>
       <tr>
         <td><strong>Eigenbasis uniqueness</strong></td>
-        <td>Unique (forced by distinct eigenvalues)</td>
+        <td>Unique (determined by distinct eigenvalues)</td>
         <td>Non-unique when eigenvalues repeat</td>
       </tr>
     </tbody>
   </table>
 
   <p>
-    The table has a remarkable feature: the spectral filtering row is <em>identical</em> on both sides. This is the beating heart of the analogy. Regardless of whether the underlying domain is a ring or an arbitrary graph, the filtering recipe is the same &mdash; transform to the eigenbasis, multiply pointwise, transform back.
+    The spectral filtering row is <em>identical</em> on both sides. This is the core of the analogy. Regardless of whether the underlying domain is a ring or an arbitrary graph, the filtering recipe is the same &mdash; transform to the eigenbasis, multiply pointwise, transform back.
   </p>
 
   <p>
@@ -178,7 +178,7 @@ window.MathJax={
   </div>
 
   <p>
-    In both cases, the eigenbasis plays the role of a "frequency domain" in which convolution becomes pointwise multiplication. On $\ZN$, the eigenbasis is the DFT matrix $W$, forced into existence by the group structure and distinct eigenvalues. On a graph, the eigenbasis is the matrix $U$ of Laplacian eigenvectors &mdash; the graph Fourier transform. The formula is the same; only the basis changes.
+    In both cases, the eigenbasis plays the role of a "frequency domain" in which convolution becomes pointwise multiplication. On $\ZN$, the eigenbasis is the DFT matrix $W$, determined by the group structure and distinct eigenvalues. On a graph, the eigenbasis is the matrix $U$ of Laplacian eigenvectors &mdash; the graph Fourier transform. The formula is the same; only the basis changes.
   </p>
 
   <div class="insight key">
@@ -207,7 +207,7 @@ window.MathJax={
   </p>
 
   <p>
-    <strong>Path 1: The $\ZN$ story (Chapters 1&ndash;3).</strong> We started with signals on a ring and the cyclic shift operator $S$. Because $\ZN$ is a group, three characterizations of convolution coincide: (i) operators that commute with all shifts (group-theoretic), (ii) polynomials in $S$ (algebraic), and (iii) operators diagonal in the DFT basis (spectral). The key result, following Bamieh (2018), was that the DFT is not a clever guess &mdash; it is <em>forced</em> by the simultaneous diagonalization theorem. The distinct eigenvalues of $S$ (the $N$th roots of unity) guarantee a unique eigenbasis, and that eigenbasis is the DFT.
+    <strong>Path 1: The $\ZN$ story (Chapters 1&ndash;3).</strong> We started with signals on a ring and the cyclic shift operator $S$. Because $\ZN$ is a group, three characterizations of convolution coincide: (i) operators that commute with all shifts (group-theoretic), (ii) polynomials in $S$ (algebraic), and (iii) operators diagonal in the DFT basis (spectral). The key result, following Bamieh (2018), was that the DFT follows from the simultaneous diagonalization theorem. The distinct eigenvalues of $S$ (the $N$th roots of unity) guarantee a unique eigenbasis, and that eigenbasis is the DFT.
   </p>
 
   <p>
@@ -232,7 +232,7 @@ window.MathJax={
   </p>
 
   <p>
-    <strong>What was gained by starting from $\ZN$?</strong> Understanding. Most treatments of graph convolutions begin with the graph Laplacian and simply <em>define</em> convolution as $U\operatorname{diag}(\hat{h})U^T x$, without explaining why. By starting from $\ZN$ and following Bamieh's discovery approach, we saw that this definition is not arbitrary &mdash; it is the unique generalization of a structure that is <em>forced</em> in the classical setting. The DFT is forced by simultaneous diagonalization. Graph convolution is the same operation, applied to a different operator. The definition becomes inevitable rather than imposed.
+    <strong>What was gained by starting from $\ZN$?</strong> Understanding. Most treatments of graph convolutions begin with the graph Laplacian and simply <em>define</em> convolution as $U\operatorname{diag}(\hat{h})U^T x$, without explaining why. By starting from $\ZN$ and following Bamieh's discovery approach, we saw that this definition is not arbitrary &mdash; it is the generalization of a structure that is determined in the classical setting. The DFT follows from simultaneous diagonalization. Graph convolution is the same operation, applied to a different operator. The definition is motivated rather than imposed.
   </p>
 
   <p>
@@ -246,7 +246,7 @@ window.MathJax={
   </ol>
 
   <p>
-    These losses are not bugs; they are features of the richer topology that graphs can represent. A ring is one of the simplest possible graph structures. General graphs can model molecules, social networks, meshes, and brain connectomes &mdash; structures with irregular, non-homogeneous connectivity. The price of this expressivity is the loss of the canonical symmetries that made $\ZN$ so clean.
+    These losses are not bugs; they are features of the richer topology that graphs can represent. A ring is one of the simplest possible graph structures. General graphs can model molecules, social networks, meshes, and brain connectomes &mdash; structures with irregular, non-homogeneous connectivity. The price of this expressivity is the loss of the canonical symmetries that made $\ZN$ so tractable.
   </p>
 
   <div class="insight key">
@@ -535,7 +535,7 @@ window.MathJax={
   </div>
 
   <p>
-    This decomposition has a beautiful structure. The first term $B_k^T B_k$ is the <strong>lower Laplacian</strong> (or "gradient" component) &mdash; it measures how a $k$-signal varies relative to the $(k-1)$-cells below it. The second term $B_{k+1} B_{k+1}^T$ is the <strong>upper Laplacian</strong> (or "curl" component) &mdash; it measures how a $k$-signal circulates around the $(k+1)$-cells above it.
+    This decomposition has the following structure. The first term $B_k^T B_k$ is the <strong>lower Laplacian</strong> (or "gradient" component) &mdash; it measures how a $k$-signal varies relative to the $(k-1)$-cells below it. The second term $B_{k+1} B_{k+1}^T$ is the <strong>upper Laplacian</strong> (or "curl" component) &mdash; it measures how a $k$-signal circulates around the $(k+1)$-cells above it.
   </p>
 
   <p>
@@ -629,7 +629,7 @@ window.MathJax={
     <ol>
       <li>
         <p><strong>Bamieh (2018)</strong> &mdash; <em>"A Tutorial on Matrix Functions and their use in the Discovery of the DFT."</em></p>
-        <p>The foundation of Part I of this course. Bamieh shows that the DFT is not a clever guess but an <em>inevitable consequence</em> of simultaneous diagonalization. Read this in full for the complete proofs of the commutant theorem, the three characterizations, and the forced emergence of the DFT from algebraic structure. Our Chapters 1&ndash;3 follow this paper closely.</p>
+        <p>The foundation of Part I of this course. Bamieh shows that the DFT is a consequence of simultaneous diagonalization. Read this in full for the complete proofs of the commutant theorem, the three characterizations, and the derivation of the DFT from algebraic structure. Our Chapters 1&ndash;3 follow this paper closely.</p>
       </li>
       <li>
         <p><strong>Hammond, Vandergheynst &amp; Gribonval (2011)</strong> &mdash; <em>"Wavelets on Graphs via Spectral Graph Theory."</em></p>

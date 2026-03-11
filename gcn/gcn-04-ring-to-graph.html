@@ -71,13 +71,13 @@ window.MathJax={
   </p>
 
   <p>
-    Since $S$ has eigenvalues $\omega^m = e^{i2\pi m/N}$, and $S^*$ has eigenvalues $\overline{\omega^m} = e^{-i2\pi m/N}$, the eigenvalues of $A = S + S^*$ are:
+    From &sect;7&ndash;8, $S^*$ has eigenvalues $\rho_m = e^{i2\pi m/N}$ (Eq.&nbsp;11) and $S$ has eigenvalues $\rho_m^{-1} = e^{-i2\pi m/N}$ (since $Sw^{(m)} = \rho_m^{-1} w^{(m)}$, as derived in &sect;8). Both share the same eigenvectors $w^{(m)}$, so the eigenvalues of $A = S + S^*$ are simply the sum:
   </p>
 
   <div class="math-block">
     <div class="math-label">Eq. 22 &mdash; Eigenvalues of A</div>
     $$
-    \lambda_m(A) \;=\; \omega^m + \omega^{-m} \;=\; 2\cos\!\left(\frac{2\pi m}{N}\right), \qquad m = 0, 1, \ldots, N-1 \tag{22}
+    \lambda_m(A) \;=\; \rho_m^{-1} + \rho_m \;=\; 2\cos\!\left(\frac{2\pi m}{N}\right), \qquad m = 0, 1, \ldots, N-1 \tag{22}
     $$
   </div>
 
@@ -98,7 +98,7 @@ window.MathJax={
   </p>
 
   <p>
-    What does this cost us? The following table summarizes the damage:
+    What does this cost us? The following table summarizes the consequences:
   </p>
 
   <table class="comp-table">
@@ -386,7 +386,7 @@ window.MathJax={
   </ul>
 
   <p>
-    The <strong>Fiedler eigenvector</strong> $u_1$ (corresponding to $\lambda_1 \approx 0.44$) has a remarkable structure: it is positive on one triangle and negative on the other. This is because the Fiedler value measures the algebraic connectivity &mdash; the bridge between communities. The eigenvector changes sign exactly at the bottleneck, revealing the two-community structure.
+    The <strong>Fiedler eigenvector</strong> $u_1$ (corresponding to $\lambda_1 \approx 0.44$) has a specific geometric structure: it is positive on one triangle and negative on the other. This is because the Fiedler value measures the algebraic connectivity &mdash; the bridge between communities. The eigenvector changes sign exactly at the bottleneck, revealing the two-community structure.
   </p>
 
   <p>

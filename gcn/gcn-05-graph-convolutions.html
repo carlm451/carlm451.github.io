@@ -469,7 +469,7 @@ window.MathJax={
   <h2><span class="sec-num">21</span>Connecting Spectral and Polynomial</h2>
 
   <p>
-    The spectral and polynomial characterizations are not independent &mdash; they are two views of the same object, connected by a beautiful algebraic identity. If the spectral filter values are evaluations of a polynomial at the eigenvalues:
+    The spectral and polynomial characterizations are not independent &mdash; they are two views of the same object, connected by a direct algebraic identity. If the spectral filter values are evaluations of a polynomial at the eigenvalues:
   </p>
 
   <div class="math-block">
@@ -555,7 +555,7 @@ window.MathJax={
   </ol>
 
   <p>
-    The equivalence of (2) and (3) relied on a crucial property of $S$: <strong>all its eigenvalues are distinct</strong> (the $N$-th roots of unity $\omega^0, \omega^1, \ldots, \omega^{N-1}$ are all different). When a matrix has distinct eigenvalues, its commutant &mdash; the set of all matrices commuting with it &mdash; equals its polynomial algebra. This is a standard theorem in linear algebra.
+    The equivalence of (2) and (3) relied on a crucial property of $S$: <strong>all its eigenvalues are distinct</strong> (the $N$-th roots of unity $\rho_0, \rho_1, \ldots, \rho_{N-1}$ (Eq.&nbsp;11) are all different). When a matrix has distinct eigenvalues, its commutant &mdash; the set of all matrices commuting with it &mdash; equals its polynomial algebra. This is a standard theorem in linear algebra.
   </p>
 
   <p>
@@ -601,11 +601,11 @@ window.MathJax={
   </ul>
 
   <div class="insight warning">
-    <p><strong>Warning:</strong> Permutation equivariance is <strong>not</strong> the graph analog of shift commutativity. It is a much weaker condition &mdash; essentially just saying "the computation does not depend on arbitrary vertex labeling." The group-theoretic characterization of convolutions is genuinely gone on graphs. We retain the spectral and polynomial characterizations, but the elegant algebraic closure that made all three equivalent on $\ZN$ is lost when eigenvalues repeat.</p>
+    <p><strong>Warning:</strong> Permutation equivariance is <strong>not</strong> the graph analog of shift commutativity. It is a much weaker condition &mdash; essentially just saying "the computation does not depend on arbitrary vertex labeling." The group-theoretic characterization of convolutions is genuinely gone on graphs. We retain the spectral and polynomial characterizations, but the algebraic correspondence that made all three equivalent on $\ZN$ is lost when eigenvalues repeat.</p>
   </div>
 
   <p>
-    This is the honest state of affairs. On $\ZN$, the rich group structure of the cyclic group gave us three equivalent ways to think about convolution: frequency filtering, polynomial algebra, and symmetry commutation. On general graphs, we keep two of these (and they are still deeply connected, as Section 21 showed). The third &mdash; the most beautiful, the one that said "convolution = the operators respecting the symmetry" &mdash; is the one we lose.
+    On $\ZN$, the rich group structure of the cyclic group gave us three equivalent ways to think about convolution: frequency filtering, polynomial algebra, and symmetry commutation. On general graphs, we keep two of these (and they are still deeply connected, as Section 21 showed). The third &mdash; the one identifying convolutions with symmetry-respecting operators &mdash; is the one we lose.
   </p>
 
   <p>
