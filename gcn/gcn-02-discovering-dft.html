@@ -267,33 +267,55 @@ window.MathJax={
   <h2><span class="sec-num">8</span>The DFT Emerges</h2>
 
   <p>
-    We now have the eigenvectors of $S^*$ (and equivalently of $S$). Since every circulant $C_a = \sum_k a_k S^k$ is a polynomial in $S$, its eigenvectors are the same $w^{(m)}$. What are its eigenvalues?
+    We now have the eigenvectors of $S^*$. But Chapter 1 defined circulants as polynomials in $S$ (the right-shift): $C_a = \sum_k a_k S^k$ (Eq.&nbsp;4). To find eigenvalues, we need to connect $S$ to $S^*$.
   </p>
 
   <p>
-    If $S^* w^{(m)} = \rho_m w^{(m)}$, then $S w^{(m)} = \bar{\rho}_m w^{(m)} = \rho_m^{-1} w^{(m)} = \rho_{N-m} w^{(m)}$. For $S^k$, the eigenvalue is $\bar{\rho}_m^k$. But we can equivalently work out the eigenvalue of $C_a$ directly: since $S^*$ has eigenvalue $\rho_m = e^{i2\pi m/N}$ for eigenvector $w^{(m)}$, the operator $S$ has eigenvalue $e^{-i2\pi m/N}$ for the same eigenvector. Then:
+    The bridge is simple. $S$ and $S^*$ are inverse shifts on $\ZN$: $S \cdot S^* = I$. Since $S^N = I$ (shifting $N$ times is the identity), we have $S = (S^*)^{-1} = (S^*)^{N-1}$, and more generally:
   </p>
 
   $$
-  C_a w^{(m)} = \sum_{k=0}^{N-1} a_k S^k w^{(m)} = \sum_{k=0}^{N-1} a_k e^{-i2\pi mk/N} w^{(m)}
+  S^k = (S^*)^{N-k}
   $$
 
   <p>
-    Wait &mdash; let us be more careful. Following Bamieh's convention, we form $C_a = \sum_k a_k (S^*)^k$ (using the left-shift). Then:
+    Intuition: on a ring of $N$ elements, shifting a signal clockwise by $k$ steps lands on the same position as shifting counterclockwise by $N - k$ steps &mdash; the ring wraps around.
+  </p>
+
+  <p>
+    Now apply $S^k$ to an eigenvector $w^{(m)}$:
   </p>
 
   $$
-  C_a w^{(m)} = \sum_{k=0}^{N-1} a_k (S^*)^k w^{(m)} = \sum_{k=0}^{N-1} a_k \rho_m^k \, w^{(m)} = \left(\sum_{k=0}^{N-1} a_k \, e^{i2\pi mk/N}\right) w^{(m)}
+  S^k w^{(m)} = (S^*)^{N-k} w^{(m)} = \rho_m^{N-k} \, w^{(m)}
   $$
 
   <p>
-    The eigenvalue of $C_a$ for eigenvector $w^{(m)}$ is:
+    The exponent simplifies cleanly: $\rho_m^{N-k} = e^{i2\pi m(N-k)/N} = \underbrace{e^{i2\pi m}}_{=\,1} \cdot e^{-i2\pi mk/N} = e^{-i2\pi mk/N}$. Summing over $k$:
+  </p>
+
+  $$
+  C_a w^{(m)} = \sum_{k=0}^{N-1} a_k S^k w^{(m)} = \sum_{k=0}^{N-1} a_k \, \rho_m^{-k} \, w^{(m)} = \underbrace{\left(\sum_{k=0}^{N-1} a_k \, e^{-i2\pi mk/N}\right)}_{\lambda_m} w^{(m)}
+  $$
+
+  <p>
+    This holds for every $m = 0, 1, \ldots, N-1$. Stacking all $N$ eigenvector equations into a single matrix equation:
+  </p>
+
+  $$
+  C_a \underbrace{\begin{pmatrix} \vert & \vert & & \vert \\ w^{(0)} & w^{(1)} & \cdots & w^{(N-1)} \\ \vert & \vert & & \vert \end{pmatrix}}_{V}
+  = \underbrace{\begin{pmatrix} \vert & \vert & & \vert \\ w^{(0)} & w^{(1)} & \cdots & w^{(N-1)} \\ \vert & \vert & & \vert \end{pmatrix}}_{V}
+  \underbrace{\begin{pmatrix} \lambda_0 & & \\ & \lambda_1 & \\ & & \ddots & \\ & & & \lambda_{N-1} \end{pmatrix}}_{\operatorname{diag}(\lambda_0, \ldots, \lambda_{N-1})}
+  $$
+
+  <p>
+    This is the standard eigendecomposition $C_a V = V \Lambda$. The diagonal entries $\lambda_m$ are the eigenvalues of $C_a$, and they are:
   </p>
 
   <div class="math-block">
     <div class="math-label">Eigenvalue = DFT</div>
     $$
-    \hat{a}_m = \sum_{k=0}^{N-1} a_k \, e^{i 2\pi mk / N} = \text{DFT}(a)_m
+    \hat{a}_m = \lambda_m = \sum_{k=0}^{N-1} a_k \, e^{-i 2\pi mk / N} = \text{DFT}(a)_m
     \tag{13}
     $$
   </div>
@@ -303,7 +325,7 @@ window.MathJax={
   </p>
 
   <p>
-    Assembling all the eigenvectors into a matrix $W$ (whose rows are the conjugate transposes of the eigenvectors, i.e., $W_{mk} = e^{i2\pi mk/N}$, or equivalently whose columns are the eigenvectors), the diagonalization reads:
+    Assembling all the eigenvectors into a matrix $W$ (the DFT matrix, whose precise form we define in the next chapter), the diagonalization reads:
   </p>
 
   <div class="math-block">
@@ -319,22 +341,22 @@ window.MathJax={
   </p>
 
   <p>
-    <strong>Worked example.</strong> For $\Z_8$ with our running kernel $h = (3, 1, 0, 0, 0, 0, 0, 2)^T$, the DFT values are $\hat{h}_m = \sum_{k=0}^{7} h_k e^{i2\pi mk/8}$. Since only $h_0 = 3$, $h_1 = 1$, and $h_7 = 2$ are nonzero:
+    <strong>Worked example.</strong> For $\Z_8$ with our running kernel $h = (3, 1, 0, 0, 0, 0, 0, 2)^T$, the DFT values are $\hat{h}_m = \sum_{k=0}^{7} h_k e^{-i2\pi mk/8}$. Since only $h_0 = 3$, $h_1 = 1$, and $h_7 = 2$ are nonzero:
   </p>
 
   $$
-  \hat{h}_m = 3 + e^{i2\pi m/8} + 2 \, e^{i2\pi m \cdot 7/8} = 3 + e^{i\pi m/4} + 2 \, e^{-i\pi m/4}
+  \hat{h}_m = 3 + e^{-i2\pi m/8} + 2 \, e^{-i2\pi m \cdot 7/8} = 3 + e^{-i\pi m/4} + 2 \, e^{i\pi m/4}
   $$
 
   <p>
-    where we used $e^{i2\pi m \cdot 7/8} = e^{i2\pi m(1 - 1/8)} = e^{-i\pi m/4}$ (discarding the full-revolution factor $e^{i2\pi m} = 1$). Computing a few values:
+    where we used $e^{-i2\pi m \cdot 7/8} = e^{-i 7\pi m/4} = e^{i\pi m/4}$ (discarding full-revolution factors). Computing a few values:
   </p>
 
   <ul>
     <li>$\hat{h}_0 = 3 + 1 + 2 = 6$ (the sum of all kernel entries &mdash; always the DC component)</li>
-    <li>$\hat{h}_1 = 3 + e^{i\pi/4} + 2e^{-i\pi/4} = 3 + \tfrac{\sqrt{2}}{2}(1+i) + 2 \cdot \tfrac{\sqrt{2}}{2}(1-i) = 3 + \tfrac{3\sqrt{2}}{2} - \tfrac{\sqrt{2}}{2}i \approx 5.121 - 0.707i$</li>
-    <li>$\hat{h}_2 = 3 + e^{i\pi/2} + 2e^{-i\pi/2} = 3 + i - 2i = 3 - i$</li>
-    <li>$\hat{h}_4 = 3 + e^{i\pi} + 2e^{-i\pi} = 3 + (-1) + 2(-1) = 0$ (the kernel has a null mode!)</li>
+    <li>$\hat{h}_1 = 3 + e^{-i\pi/4} + 2e^{i\pi/4} = 3 + \tfrac{\sqrt{2}}{2}(1-i) + 2 \cdot \tfrac{\sqrt{2}}{2}(1+i) = 3 + \tfrac{3\sqrt{2}}{2} + \tfrac{\sqrt{2}}{2}i \approx 5.121 + 0.707i$</li>
+    <li>$\hat{h}_2 = 3 + e^{-i\pi/2} + 2e^{i\pi/2} = 3 + (-i) + 2i = 3 + i$</li>
+    <li>$\hat{h}_4 = 3 + e^{-i\pi} + 2e^{i\pi} = 3 + (-1) + 2(-1) = 0$ (the kernel has a null mode!)</li>
   </ul>
 
   <p>
