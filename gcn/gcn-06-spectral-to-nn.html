@@ -449,15 +449,15 @@ A_hat = D_inv_sqrt @ A_tilde @ D_inv_sqrt      <span class="cmt"># fixed, not le
 
       <line x1="250" y1="245" x2="288" y2="245" stroke="#6b6560" stroke-width="1.5" marker-end="url(#arrowOut)"/>
     </svg>
-    <div class="caption"><strong>Figure 6.2.</strong> The GCN update for a single node $i$: (1) aggregate degree-normalized features from neighbors and self, (2) transform by the learned weight matrix $W$, (3) apply a pointwise nonlinearity $\sigma$. This is message passing &mdash; but it was derived from spectral theory, not postulated.</div>
+    <div class="caption"><strong>Figure 6.2.</strong> The GCN update for a single node $i$: (1) aggregate degree-normalized features from neighbors and self, (2) transform by the learned weight matrix $W$, (3) apply a pointwise nonlinearity $\sigma$.</div>
   </div>
 
   <div class="insight key">
-    <p><strong>Key idea:</strong> Message passing was derived, not assumed. The logical chain is: spectral theory $\to$ polynomial filters $\to$ degree-1 Chebyshev $\to$ GCN $\to$ message passing. The spatial interpretation (aggregate, transform, activate) is a <em>consequence</em> of the spectral one, not a separate axiom.</p>
+    <p><strong>Spectral origins, pragmatic arrival.</strong> The path from spectral convolutions to the GCN layer passed through several approximations ($\lambda_{\max} \approx 2$, collapsing two parameters to one, the renormalization trick) that each lack a strong a priori justification. Message passing was not deduced from spectral theory &mdash; it was reached by a chain of simplifications that happen to work well in practice. Still, the spectral starting point is what <em>suggested</em> the form: without polynomial filters in the Laplacian, there would be no reason to expect that "average your neighbors' features and apply a linear map" is a sensible layer design.</p>
   </div>
 
   <p>
-    This derivation matters because it grounds the message-passing framework in mathematics rather than intuition. Many papers present message passing as a starting axiom ("nodes should aggregate information from their neighbors"). The spectral derivation shows <em>why</em> this recipe works: it is the vertex-domain implementation of spectral filtering with a degree-1 polynomial in the Laplacian.
+    Many papers present message passing as a starting axiom ("nodes should aggregate information from their neighbors"). The spectral perspective does not derive this axiom, but it does provide a useful lens: the GCN layer is the vertex-domain implementation of a degree-1 polynomial filter in the Laplacian, and the aggregation weights $1/\sqrt{\tilde{d}_i \tilde{d}_j}$ come from the symmetric normalization, not from an ad hoc design choice.
   </p>
 
   <h3>Worked Example: A Full GCN Layer on the Running Graph</h3>
