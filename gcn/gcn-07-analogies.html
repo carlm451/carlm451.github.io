@@ -56,11 +56,11 @@ window.MathJax={
   <h2><span class="sec-num">28</span>The Complete Analogy Table</h2>
 
   <p>
-    We have spent six chapters building two parallel stories: convolution on the cyclic group $\ZN$, and convolution on general graphs. Now we lay them side by side. The following table is the definitive reference for the entire course &mdash; every row records a concept from the $\ZN$ setting and its graph counterpart.
+    The following table is the main reference for the course &mdash; every row records a concept from the $\ZN$ setting and its graph counterpart.
   </p>
 
   <p>
-    Read this table slowly. Each row condenses an argument that took us paragraphs (sometimes entire sections) to develop. The power of the analogy is that once you internalize one column, the other column follows by pattern-matching &mdash; except in the rows where the analogy <em>breaks</em>, which are precisely the rows that reveal the deeper mathematics.
+    The rows where the analogy <em>breaks</em> are as informative as the rows where it holds.
   </p>
 
   <table class="comp-table">
@@ -169,7 +169,7 @@ window.MathJax={
   </p>
 
   <div class="math-block">
-    <div class="math-label">Eq. 45 &mdash; The Grand Parallel</div>
+    <div class="math-label">Eq. 45 &mdash; Spectral Filtering on Z<sub>N</sub> vs. Graphs</div>
     $$
     \underbrace{y = W^{-1}\operatorname{diag}(\hat{h})\,W\,x}_{\text{DFT filtering on }\ZN}
     \quad \longleftrightarrow \quad
@@ -195,31 +195,21 @@ window.MathJax={
   <h2><span class="sec-num">29</span>What We Discovered</h2>
 
   <p>
-    Let us step back and state the central thesis of this course in a single sentence: <strong>The DFT and graph convolutions are instances of the same mathematical idea.</strong>
+    This course showed that $\ZN$ convolution theory <em>motivates</em> the constructions used on graphs, but the correspondence between them is partial. The spectral and algebraic structures carry over; the group-theoretic underpinning does not. What the graph literature calls "convolution" is modeled on the $\ZN$ case &mdash; it is not a unique, canonical extension of it.
+  </p>
+
+  <h3>What the course covered</h3>
+
+  <p>
+    <strong>Part I: The $\ZN$ story (Chapters 1&ndash;3).</strong> Signals on a ring, the cyclic shift $S$, and three characterizations of convolution that all coincide: (i) operators that commute with all shifts (group-theoretic), (ii) polynomials in $S$ (algebraic), (iii) operators diagonal in the DFT basis (spectral). The DFT emerged as the unique eigenbasis of $S$, forced by the simultaneous diagonalization theorem (Bamieh 2018). The distinct eigenvalues of $S$ (roots of unity) guaranteed uniqueness.
   </p>
 
   <p>
-    That idea can be stated precisely. Given a "shift-like" operator &mdash; $S$ on $\ZN$, or the Laplacian $L$ on a graph &mdash; find its eigenbasis, and define convolution as operators that are diagonal in that basis. Equivalently, define convolution as polynomials in the operator. These two characterizations (spectral and algebraic) agree whenever the operator has all distinct eigenvalues, and they still agree for polynomial filters even when eigenvalues repeat.
-  </p>
-
-  <p>
-    The course traced two parallel paths that converged on this single idea:
-  </p>
-
-  <p>
-    <strong>Path 1: The $\ZN$ story (Chapters 1&ndash;3).</strong> We started with signals on a ring and the cyclic shift operator $S$. Because $\ZN$ is a group, three characterizations of convolution coincide: (i) operators that commute with all shifts (group-theoretic), (ii) polynomials in $S$ (algebraic), and (iii) operators diagonal in the DFT basis (spectral). The key result, following Bamieh (2018), was that the DFT follows from the simultaneous diagonalization theorem. The distinct eigenvalues of $S$ (the $N$th roots of unity) guarantee a unique eigenbasis, and that eigenbasis is the DFT.
-  </p>
-
-  <p>
-    <strong>Path 2: The graph story (Chapters 4&ndash;6).</strong> We moved from the ring to general graphs, replacing $S$ with the graph Laplacian $L$. The group structure was lost &mdash; an irregular graph has no translation symmetry. With it, the group-theoretic characterization died. But the algebraic and spectral characterizations survived: we can still form polynomials in $L$, and we can still diagonalize $L$ to define spectral filtering. The graph Fourier transform (GFT) is the eigenbasis of $L$, and graph convolution is multiplication in that basis.
-  </p>
-
-  <p>
-    The logical structure is this:
+    <strong>Part II: The graph story (Chapters 4&ndash;6).</strong> Replacing $S$ with the graph Laplacian $L$, the group structure was lost &mdash; an irregular graph has no translation symmetry. With it, the group-theoretic characterization died. Two characterizations survived: polynomials in $L$ (algebraic) and operators diagonal in the $L$-eigenbasis (spectral). These were adopted as the <em>definition</em> of graph convolution.
   </p>
 
   <div class="math-block">
-    <div class="math-label">Eq. 46 &mdash; The Core Correspondence</div>
+    <div class="math-label">Eq. 46 &mdash; Circulant vs. Graph Filtering</div>
     $$
     \underbrace{C_h = W^{-1}\hat{H}W}_{\text{Circulant = DFT-diagonal (on }\ZN\text{)}}
     \quad \longleftrightarrow \quad
@@ -228,29 +218,43 @@ window.MathJax={
   </div>
 
   <p>
-    where $\hat{H} = \operatorname{diag}(\hat{h}_0, \ldots, \hat{h}_{N-1})$ in both cases. The left side is a theorem about commutative algebras of circulant matrices. The right side is the definition that generalizes it to graphs. The DFT matrix $W$ and the graph eigenvector matrix $U$ play exactly the same structural role.
+    The left side is a <em>theorem</em> &mdash; circulant matrices are exactly those diagonalized by the DFT. The right side is a <em>definition</em>, chosen because of the structural parallel. $W$ and $U$ play analogous roles, but the right side is not forced by the same algebraic argument that forces the left.
   </p>
 
-  <p>
-    <strong>What was gained by starting from $\ZN$?</strong> Understanding. Most treatments of graph convolutions begin with the graph Laplacian and simply <em>define</em> convolution as $U\operatorname{diag}(\hat{h})U^T x$, without explaining why. By starting from $\ZN$ and following Bamieh's discovery approach, we saw that this definition is not arbitrary &mdash; it is the generalization of a structure that is determined in the classical setting. The DFT follows from simultaneous diagonalization. Graph convolution is the same operation, applied to a different operator. The definition is motivated rather than imposed.
-  </p>
+  <h3>What was gained</h3>
 
   <p>
-    <strong>What was lost on graphs?</strong> Three things, all connected:
+    Most treatments of graph convolutions begin with $L$ and simply define filtering as $U\operatorname{diag}(\hat{h})U^T x$, without explaining where that formula comes from. By starting from $\ZN$, we saw that this definition is not arbitrary &mdash; it is modeled on a structure that <em>is</em> uniquely determined in the classical setting. The definition is motivated rather than imposed.
+  </p>
+
+  <h3>What was lost</h3>
+
+  <p>
+    Three things, all connected:
   </p>
 
   <ol>
-    <li><strong>Group structure.</strong> No transitive group acts on the vertices of an irregular graph. The notion of "translation" does not apply.</li>
-    <li><strong>Eigenbasis uniqueness.</strong> When the Laplacian has repeated eigenvalues, the eigenbasis is not unique &mdash; any rotation within a repeated eigenspace gives an equally valid "graph Fourier transform."</li>
-    <li><strong>The third characterization.</strong> On $\ZN$, the group-theoretic, algebraic, and spectral characterizations all define the same set of operators. On graphs, only the algebraic and spectral characterizations survive. The group-theoretic characterization has no analog.</li>
+    <li><strong>Group structure.</strong> No transitive group acts on the vertices of an irregular graph. "Translation" does not apply.</li>
+    <li><strong>Eigenbasis uniqueness.</strong> When $L$ has repeated eigenvalues, any rotation within a repeated eigenspace gives an equally valid "graph Fourier transform."</li>
+    <li><strong>The third characterization.</strong> On $\ZN$, group-theoretic, algebraic, and spectral characterizations define the same set of operators. On graphs, only the algebraic and spectral characterizations survive.</li>
   </ol>
 
   <p>
-    These losses are not bugs; they are features of the richer topology that graphs can represent. A ring is one of the simplest possible graph structures. General graphs can model molecules, social networks, meshes, and brain connectomes &mdash; structures with irregular, non-homogeneous connectivity. The price of this expressivity is the loss of the canonical symmetries that made $\ZN$ so tractable.
+    These losses are the price of modeling irregular, non-homogeneous connectivity. A ring is one of the simplest possible graph structures. General graphs can model molecules, social networks, meshes, and brain connectomes &mdash; but the canonical symmetries that made $\ZN$ so tractable are gone.
+  </p>
+
+  <h3>A note on the word "convolution"</h3>
+
+  <p>
+    On $\ZN$, "convolution" has a precise group-theoretic meaning: it is the operation that commutes with all group translations. The three characterizations proved that the same set of operators can equivalently be described as polynomials in $S$ or as spectrally diagonal operators. The word "convolution" names all three at once, because they coincide.
+  </p>
+
+  <p>
+    On graphs, we kept the word but the strict definition it refers to is gone. What the literature calls "graph convolution" is really the spectral/polynomial construction &mdash; operators diagonal in the $L$-eigenbasis, or equivalently polynomials in $L$. This construction is genuinely useful and well-motivated by the $\ZN$ parallel. But it is not uniquely determined in the way circular convolution is: the choice of $L$ over $A$ (or a normalized variant) is a modeling decision, not a theorem; and the non-unique eigenbasis means that "the graph Fourier transform" is a convention, not a canonical object. The literature is not always upfront about this.
   </p>
 
   <div class="insight key">
-    <p><strong>The DFT and graph convolutions are the same idea: simultaneous diagonalization of a commuting algebra, applied to two different settings. One has a group, one doesn't. But the core mathematics is identical.</strong></p>
+    <p><strong>The honest summary:</strong> the spectral filtering recipe (Eq. 45) has the same form on $\ZN$ and on graphs. On $\ZN$, this form is <em>derived</em> from group structure. On graphs, it is <em>adopted by analogy</em>. Two of three characterizations survive; one dies; the eigenbasis may not be unique. The analogy is productive &mdash; it motivates all of spectral graph theory and the architectures built on it &mdash; but it is an analogy, not an identity.</p>
   </div>
 
   <!-- Course Arc Concept Map -->
@@ -301,7 +305,7 @@ window.MathJax={
 
       <!-- === GENERALIZE arrow (diagonal, from DFT down to Graph) === -->
       <line x1="506" y1="94" x2="556" y2="164" stroke="#b44a2f" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#arrowGen)"/>
-      <text x="555" y="128" font-family="Source Sans 3, sans-serif" font-size="11" fill="#b44a2f" font-weight="700" transform="rotate(40,555,128)">generalize</text>
+      <text x="555" y="128" font-family="Source Sans 3, sans-serif" font-size="11" fill="#b44a2f" font-weight="700" transform="rotate(40,555,128)">motivates</text>
 
       <!-- === BOTTOM ROW: Graph path === -->
       <!-- Graph -->
@@ -344,9 +348,9 @@ window.MathJax={
       <text x="618" y="213" font-family="Source Sans 3, sans-serif" font-size="8" fill="#6b6560" text-anchor="middle">+ nonlinearity</text>
 
       <!-- === Connecting line: DFT Spectral filtering row (top) to GFT (bottom) === -->
-      <!-- vertical dotted line from DFT down to GFT showing "same idea" -->
+      <!-- vertical dotted line from DFT down to GFT showing "same recipe" -->
       <line x1="319" y1="98" x2="319" y2="166" stroke="#3a5a8c" stroke-width="1.2" stroke-dasharray="3,3"/>
-      <text x="319" y="140" font-family="Source Sans 3, sans-serif" font-size="9" fill="#3a5a8c" text-anchor="middle" font-style="italic">same logic</text>
+      <text x="319" y="140" font-family="Source Sans 3, sans-serif" font-size="9" fill="#3a5a8c" text-anchor="middle" font-style="italic">same recipe</text>
 
       <!-- === BOTTOM: Beyond Graphs === -->
       <!-- Arrow GNN -> Beyond -->
@@ -369,7 +373,7 @@ window.MathJax={
       <text x="446" y="230" font-family="Source Sans 3, sans-serif" font-size="9" fill="#3a5a8c" text-anchor="middle">Ch 5&ndash;6</text>
       <text x="618" y="230" font-family="Source Sans 3, sans-serif" font-size="9" fill="#8b5a8c" text-anchor="middle">Ch 6</text>
     </svg>
-    <div class="caption"><strong>Figure 7.1.</strong> The mathematical arc of the course. The top row traces the $\ZN$ path: from the cyclic group to the shift operator $S$, through simultaneous diagonalization to the DFT. The bottom row traces the graph path: from arbitrary graphs to the Laplacian $L$, through the GFT to polynomial/spectral convolutions and GNNs. The diagonal "generalize" arrow is the key conceptual leap &mdash; replacing $W$ (the DFT) with $U$ (the graph eigenbasis) in the spectral filtering formula.</div>
+    <div class="caption"><strong>Figure 7.1.</strong> The mathematical arc of the course. The top row traces the $\ZN$ path: from the cyclic group to the shift operator $S$, through simultaneous diagonalization to the DFT. The bottom row traces the graph path: from arbitrary graphs to the Laplacian $L$, through the GFT to polynomial/spectral convolutions and GNNs. The diagonal arrow marks the conceptual leap &mdash; adopting the spectral filtering recipe from $\ZN$ as the <em>definition</em> of graph convolution.</div>
   </div>
 </section>
 
@@ -382,7 +386,7 @@ window.MathJax={
   <h2><span class="sec-num">30</span>Modern GNN Variants in Spectral Context</h2>
 
   <p>
-    With the spectral framework firmly in hand, we can now place the major GNN architectures along a spectrum from "purely spectral" to "non-spectral." This is not a survey &mdash; it is a guide to reading the literature through the lens of what we have learned. For each architecture, we ask: what does the filter look like in spectral terms?
+    With the spectral framework, we can place the major GNN architectures along a spectrum from "purely spectral" to "non-spectral." This is not a survey &mdash; it is a guide to reading the literature through the lens of what we have covered. For each architecture, we ask: what does the filter look like in spectral terms?
   </p>
 
   <p>
@@ -629,11 +633,11 @@ window.MathJax={
     <ol>
       <li>
         <p><strong>Bamieh (2018)</strong> &mdash; <em>"A Tutorial on Matrix Functions and their use in the Discovery of the DFT."</em></p>
-        <p>The foundation of Part I of this course. Bamieh shows that the DFT is a consequence of simultaneous diagonalization. Read this in full for the complete proofs of the commutant theorem, the three characterizations, and the derivation of the DFT from algebraic structure. Our Chapters 1&ndash;3 follow this paper closely.</p>
+        <p>The foundation of Part I. Bamieh shows that the DFT is a consequence of simultaneous diagonalization. Contains the complete proofs of the commutant theorem, the three characterizations, and the derivation of the DFT from algebraic structure. Our Chapters 1&ndash;3 follow this paper closely.</p>
       </li>
       <li>
         <p><strong>Hammond, Vandergheynst &amp; Gribonval (2011)</strong> &mdash; <em>"Wavelets on Graphs via Spectral Graph Theory."</em></p>
-        <p>The foundational paper for graph signal processing. Introduces spectral graph wavelets using polynomial approximation of spectral multipliers &mdash; the direct mathematical ancestor of ChebNet. This paper established the principle that graph filters should be defined spectrally and approximated by polynomials, which is the central idea of our Chapters 5&ndash;6.</p>
+        <p>Foundational paper for graph signal processing. Introduces spectral graph wavelets using polynomial approximation of spectral multipliers &mdash; the direct mathematical ancestor of ChebNet. Established the principle that graph filters should be defined spectrally and approximated by polynomials, which is the central idea of our Chapters 5&ndash;6.</p>
       </li>
       <li>
         <p><strong>Defferrard, Bresson &amp; Vandergheynst (2016)</strong> &mdash; <em>"Convolutional Neural Networks on Graphs with Fast Localized Spectral Filtering."</em></p>
@@ -645,11 +649,11 @@ window.MathJax={
       </li>
       <li>
         <p><strong>Bronstein, Bruna, Cohen &amp; Velickovic (2021)</strong> &mdash; <em>"Geometric Deep Learning: Grids, Groups, Graphs, Geodesics, and Gauges."</em></p>
-        <p>The "5G" blueprint paper. Places everything in this course within a unified framework of symmetry and invariance. Standard CNNs, GNNs, Transformers, and equivariant networks are all instances of a single principle: exploiting the symmetry group of the domain. Our $\ZN$ story is the special case where the symmetry group is cyclic; graphs are the case where symmetry is reduced to the automorphism group. Essential reading for the big picture.</p>
+        <p>The "5G" blueprint paper. Places everything in this course within a unified framework of symmetry and invariance. Standard CNNs, GNNs, Transformers, and equivariant networks are all instances of a single principle: exploiting the symmetry group of the domain. Our $\ZN$ story is the special case where the symmetry group is cyclic; graphs are the case where symmetry is reduced to the automorphism group.</p>
       </li>
       <li>
         <p><strong>Distill.pub (2021)</strong> &mdash; <em>"Understanding Convolutions on Graphs."</em></p>
-        <p>An excellent visual introduction to graph convolutions, with interactive diagrams. This course goes deeper mathematically &mdash; Bamieh's discovery approach, the three characterizations, the role of repeated eigenvalues, the lost group-theoretic characterization &mdash; but the Distill article is an outstanding complement for building geometric intuition. Particularly recommended for the spectral filtering visualizations.</p>
+        <p>A visual introduction to graph convolutions with interactive diagrams. This course goes deeper mathematically &mdash; Bamieh's discovery approach, the three characterizations, the role of repeated eigenvalues, the lost group-theoretic characterization &mdash; but the Distill article is a good complement for building geometric intuition, particularly the spectral filtering visualizations.</p>
       </li>
       <li>
         <p><strong>Hajij et al. (2022)</strong> &mdash; <em>"Topological Deep Learning: Going Beyond Graph Data."</em></p>
