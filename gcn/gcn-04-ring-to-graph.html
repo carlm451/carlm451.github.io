@@ -97,8 +97,26 @@ window.MathJax={
     From 8 distinct eigenvalues of $S$, we are down to only 5 distinct eigenvalues of $A$. The three degenerate pairs each form a 2-dimensional eigenspace in which <em>any</em> orthonormal basis works. The DFT basis is one valid choice, but it is no longer the <em>only</em> one.
   </p>
 
+  <h3>Comparing the three polynomial algebras</h3>
+
   <p>
-    What does this cost us? The following table summarizes the consequences:
+    Before leaving the ring, it is instructive to compare what each operator generates.
+  </p>
+
+  <p>
+    <strong>Polynomials in $S$</strong> are exactly the circulant matrices &mdash; i.e., all circular convolutions. Since $S$ has $N$ distinct eigenvalues, degree-$(N{-}1)$ polynomials span the full $N$-dimensional circulant algebra. Every spectral multiplier $\hat{h} \in \C^N$ is realizable.
+  </p>
+
+  <p>
+    <strong>Polynomials in $S^*$</strong> are the cross-correlations. But on $\ZN$, $S^* = S^{N-1}$ (shifting backward by one is the same as shifting forward by $N-1$). So any polynomial in $S^*$ is already a polynomial in $S$, and vice versa. The two algebras are <em>identical</em> &mdash; convolutions and cross-correlations are the same set of operators on the ring.
+  </p>
+
+  <p>
+    <strong>Polynomials in $A = S + S^*$</strong> are a <em>strict subspace</em>. Because $\lambda_m(A) = \lambda_{N-m}(A)$, a polynomial $p(A)$ must assign the same spectral value to frequencies $m$ and $N - m$: the filter is forced to be <strong>symmetric in frequency</strong>, $\hat{h}_m = \hat{h}_{N-m}$. For $N = 8$, there are 5 distinct eigenvalues, so the polynomial algebra is 5-dimensional inside the 8-dimensional circulant algebra. The three &ldquo;missing dimensions&rdquo; are exactly the antisymmetric filters that can distinguish a frequency from its conjugate &mdash; they require the directed shift $S$ to build.
+  </p>
+
+  <p>
+    Physically, this makes sense: $A$ treats left-shifts and right-shifts identically, so it cannot produce filters that favor one direction over the other. Symmetrizing the operator symmetrizes the filter space. The table below summarizes the consequences:
   </p>
 
   <table class="comp-table">

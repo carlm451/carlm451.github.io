@@ -446,6 +446,10 @@ window.MathJax={
   </div>
 
   <p>
+    <strong>How high can $d$ go?</strong> On $\ZN$, the answer was clean: $S^N = I$, so polynomials of degree $N-1$ already span all circulants, and higher powers cycle back. On graphs, $L^k$ never cycles back to $I$ &mdash; but the Cayley&ndash;Hamilton theorem guarantees that $L^N$ is a linear combination of $I, L, \ldots, L^{N-1}$, so degree $N-1$ is a hard ceiling. In practice the effective bound is lower: if $L$ has $r$ distinct eigenvalues, a degree-$(r{-}1)$ polynomial can interpolate any spectral filter exactly (one free parameter per distinct eigenvalue). In our running example, $r = 4$ (eigenvalues $0, 0.44, 3, 4.56$), so degree 3 already exhausts the polynomial filter space &mdash; degrees 4 and 5 add no new expressiveness.
+  </p>
+
+  <p>
     <strong>Running example.</strong> On our 6-vertex graph, take a degree-1 polynomial $p_\theta(L) = \theta_0 I + \theta_1 L$ with $\theta_0 = 0.5$ and $\theta_1 = -0.2$:
   </p>
 

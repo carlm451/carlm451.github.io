@@ -208,6 +208,36 @@ window.MathJax={
   <p>
     The ChebNet architecture stacks these polynomial filters with nonlinearities. Each layer applies a Chebyshev polynomial filter of degree $K$ to each input channel, sums across channels, and applies a pointwise nonlinearity (ReLU). The filter coefficients $\theta_k$ are the learnable parameters, trained by backpropagation. The degree $K$ controls the receptive field: a $K$-degree polynomial mixes information within $K$-hop neighborhoods.
   </p>
+
+  <p>
+    In PyTorch pseudocode, a single ChebNet layer looks like this:
+  </p>
+
+<pre><code><span class="kw">class</span> <span class="fn">ChebNetLayer</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, in_ch, out_ch, K):
+        <span class="cmt"># One set of Chebyshev coefficients per input-output channel pair</span>
+        self.theta = nn.Parameter(torch.randn(K + <span class="num">1</span>, in_ch, out_ch))
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x, L_tilde):
+        <span class="cmt"># x: (N, in_ch)    L_tilde: (N, N) sparse, rescaled to [-1, 1]</span>
+
+        <span class="cmt"># Build Chebyshev basis signals via recurrence</span>
+        T_0 = x                                   <span class="cmt"># T_0(L̃) x = x</span>
+        T_1 = L_tilde @ x                         <span class="cmt"># T_1(L̃) x = L̃ x</span>
+        out = self.theta[<span class="num">0</span>] * T_0 + self.theta[<span class="num">1</span>] * T_1
+
+        T_prev, T_curr = T_0, T_1
+        <span class="kw">for</span> k <span class="kw">in</span> <span class="fn">range</span>(<span class="num">2</span>, self.theta.size(<span class="num">0</span>)):
+            T_next = <span class="num">2</span> * L_tilde @ T_curr - T_prev  <span class="cmt"># Chebyshev recurrence</span>
+            out = out + self.theta[k] * T_next
+            T_prev, T_curr = T_curr, T_next
+
+        <span class="kw">return</span> <span class="fn">relu</span>(out)                          <span class="cmt"># (N, out_ch)</span>
+</code></pre>
+
+  <p>
+    The key feature: the only graph operation is the sparse multiply <code>L_tilde @ T_curr</code>, repeated $K$ times. No eigendecomposition is needed, and the cost is $O(K|E|)$ per layer.
+  </p>
 </section>
 
 <hr class="divider">
@@ -294,6 +324,30 @@ window.MathJax={
     <div class="def-label">GCN Layer (Kipf &amp; Welling 2017)</div>
     <p>$\tilde{A} = A + I$, $\tilde{D}$ = degree matrix of $\tilde{A}$, then $H^{(\ell+1)} = \sigma(\tilde{D}^{-1/2}\tilde{A}\tilde{D}^{-1/2}\, H^{(\ell)}\, W^{(\ell)})$. This is a degree-1 polynomial in the normalized Laplacian with self-loops. Each layer aggregates 1-hop neighbor features, transforms with a learnable weight, and applies a nonlinearity. Stacking $K$ layers gives a $K$-hop receptive field.</p>
   </div>
+
+  <p>
+    In PyTorch pseudocode:
+  </p>
+
+<pre><code><span class="kw">class</span> <span class="fn">GCNLayer</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, in_ch, out_ch):
+        self.W = nn.Parameter(torch.randn(in_ch, out_ch))
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, H, A_hat):
+        <span class="cmt"># H: (N, in_ch)    A_hat: (N, N) sparse, = D̃^{-1/2} Ã D̃^{-1/2}</span>
+        <span class="kw">return</span> <span class="fn">relu</span>(A_hat @ H @ self.W)           <span class="cmt"># (N, out_ch)</span>
+
+
+<span class="cmt"># Precompute the normalized adjacency (done once)</span>
+A_tilde = A + torch.<span class="fn">eye</span>(N)                     <span class="cmt"># add self-loops</span>
+D_tilde = torch.<span class="fn">diag</span>(A_tilde.<span class="fn">sum</span>(<span class="num">1</span>))
+D_inv_sqrt = torch.<span class="fn">diag</span>(<span class="num">1.0</span> / A_tilde.<span class="fn">sum</span>(<span class="num">1</span>).<span class="fn">sqrt</span>())
+A_hat = D_inv_sqrt @ A_tilde @ D_inv_sqrt      <span class="cmt"># fixed, not learned</span>
+</code></pre>
+
+  <p>
+    The entire graph-dependent computation is the single sparse multiply <code>A_hat @ H</code> &mdash; a weighted average of neighbor features. The learnable part is the dense multiply by <code>W</code>, which is graph-independent. Compare with ChebNet: GCN trades the $K$-step Chebyshev recurrence for a single propagation step, relying on depth (stacking layers) instead of filter degree for multi-hop reach.
+  </p>
 
   <p>
     The progression from theory to practice follows a clear chain of simplifications: general spectral filter ($N$ parameters, $O(N^3)$ cost) $\to$ polynomial filter ($d+1$ parameters, $O(d|E|)$ cost) $\to$ Chebyshev polynomial ($K+1$ parameters, numerically stable) $\to$ degree-1 Chebyshev with renormalization (weight matrix $W$ parameters, $O(|E|)$ per layer).
@@ -575,6 +629,10 @@ window.MathJax={
 
   <p>
     After many layers of aggregation, <em>all</em> node features converge to (approximately) the same vector. This is <strong>oversmoothing</strong> &mdash; the fundamental limitation of deep GNNs.
+  </p>
+
+  <p>
+    This is not a new phenomenon &mdash; it is a classical result about <strong>random walks on graphs</strong>. The matrix $\hat{A}$ is (up to the symmetric normalization) the transition matrix of a lazy random walk: at each step, a walker at node $i$ moves to a random neighbor or stays put. The stationary distribution is reached when the walk &ldquo;mixes&rdquo; &mdash; forgets where it started. The rate of mixing is controlled by the <strong>spectral gap</strong> $1 - \lambda_2$, where $\lambda_2$ is the second-largest eigenvalue of $\hat{A}$. A large spectral gap means fast mixing (features homogenize quickly, so even shallow GCNs oversmooth), while a small gap means slow mixing (more layers before information is lost). Oversmoothing in GCNs is, precisely, the Markov chain reaching stationarity.
   </p>
 
   <p>
