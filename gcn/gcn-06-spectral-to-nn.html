@@ -238,6 +238,11 @@ window.MathJax={
   <p>
     The key feature: the only graph operation is the sparse multiply <code>L_tilde @ T_curr</code>, repeated $K$ times. No eigendecomposition is needed, and the cost is $O(K|E|)$ per layer.
   </p>
+
+  <div class="insight">
+    <p><strong>ChebNet in practice.</strong> Defferrard et al. used just <strong>2 ChebNet layers</strong> with a large polynomial degree $K = 25$, followed by graph coarsening and a fully connected layer. On MNIST (reshaped into an 8-nearest-neighbor graph), this achieved $\sim$99.2% accuracy. A single layer of degree $K$ already has a $K$-hop receptive field, so two layers with $K = 25$ can reach 50-hop neighborhoods &mdash; far more than is needed for most graphs. This highlights the tradeoff at the heart of the next section: <strong>polynomial degree $K$ and network depth $L$ both enlarge the receptive field</strong>, with total reach $\sim K \times L$ hops. You can go wide-and-shallow (large $K$, few layers) or narrow-and-deep (small $K$, many layers).</p>
+    <p>Curiously, later benchmarks on node classification tasks (Cora, Citeseer) found that ChebNet's accuracy actually <em>degrades</em> when $K$ increases beyond $\sim$3. He et al. (2022) showed that ChebNet on Cora drops from 80.5% at $K = 2$ to 74.9% at $K = 10$ &mdash; the learned Chebyshev coefficients become unstable at higher orders, a form of spectral overfitting. This finding motivated several fixes (ChebNetII's interpolation reparameterization, Stable-ChebNet's antisymmetric weight constraints), but it also partly explains why Kipf and Welling's radical simplification to $K = 1$ worked so well: for many tasks, a large receptive field per layer is unnecessary, and the instability it introduces can hurt more than the expressiveness helps.</p>
+  </div>
 </section>
 
 <hr class="divider">
