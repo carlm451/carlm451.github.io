@@ -86,7 +86,7 @@
         <span class="tag physics">PDEs</span>
       </div>
       <h3>Physics-Informed Neural Networks (PINNs)</h3>
-      <p>Embedding PDE constraints into loss functions — theory, training dynamics, failure modes, and when they actually work.</p>
+      <p>Embedding PDE constraints into loss functions — theory, training dynamics, failure modes, and when they actually work. See the <a href="helmholtz/" style="pointer-events:auto;color:var(--accent)">Helmholtz PINN project</a> for a worked example.</p>
       <div class="meta"><span class="status planned"></span> Planned</div>
     </div>
 
@@ -170,6 +170,23 @@
       <div class="meta"><span class="status planned"></span> Planned</div>
     </div>
   </div>
+
+  <!-- ====== PROJECTS ====== -->
+  <div class="section-label" style="margin-top:3.5rem">Projects</div>
+
+  <a class="card featured" href="helmholtz/">
+    <span class="live-badge">Live</span>
+    <div class="tags">
+      <span class="tag physics">Acoustics</span>
+      <span class="tag ml">PINNs</span>
+      <span class="tag math">Helmholtz Equation</span>
+    </div>
+    <h3>Physics-Informed Neural Network for 2D Acoustic Scattering</h3>
+    <p>
+      PINN solver for plane-wave scattering off a rigid cylinder, validated against the exact Bessel/Hankel series solution across wavenumbers ka&nbsp;=&nbsp;0.5 to 2&pi;. Includes Fourier feature ablation, BGT2 absorbing boundary conditions, and a multi-scatterer honeycomb extension. Interactive results dashboard with field comparisons, training diagnostics, and error analysis.
+    </p>
+    <div class="meta"><span class="status live"></span> Results dashboard &middot; 15-slide deck &middot; 4 production ka values &middot; March 2026</div>
+  </a>
 
 </main>
 
