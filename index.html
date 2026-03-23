@@ -25,6 +25,38 @@
 
 <main>
 
+  <!-- ====== PROJECTS ====== -->
+  <div class="section-label">Projects</div>
+
+  <div class="card-grid">
+    <a class="card featured" href="helmholtz/">
+      <span class="live-badge">Live</span>
+      <div class="tags">
+        <span class="tag physics">Acoustics</span>
+        <span class="tag ml">PINNs</span>
+        <span class="tag math">Helmholtz Equation</span>
+      </div>
+      <h3>Physics-Informed Neural Network for 2D Acoustic Scattering</h3>
+      <p>
+        PINN solver for plane-wave scattering off a rigid cylinder, validated against the exact Bessel/Hankel series solution across wavenumbers ka&nbsp;=&nbsp;0.5 to 2&pi;. Includes Fourier feature ablation, BGT2 absorbing boundary conditions, and a multi-scatterer honeycomb extension. Interactive results dashboard with field comparisons, training diagnostics, and error analysis.
+      </p>
+      <div class="meta"><span class="status live"></span> Results dashboard &middot; 15-slide deck &middot; 4 production ka values &middot; March 2026</div>
+    </a>
+
+    <a class="card" href="https://github.com/carlm451/BiasVAN1dIsing" style="border-left:4px solid var(--accent)">
+      <div class="tags">
+        <span class="tag physics">Statistical Mechanics</span>
+        <span class="tag ml">Variational Inference</span>
+        <span class="tag math">Ising Model</span>
+      </div>
+      <h3>VAN Sampling of 1D Ising Model in an External Field</h3>
+      <p>
+        Variational autoregressive network for sampling spin configurations of the 1D Ising model with an external magnetic field. Investigates the bias introduced by autoregressive factorization and compares VAN free energy estimates against exact transfer-matrix results.
+      </p>
+      <div class="meta"><span class="status wip"></span> In progress &middot; <a href="https://github.com/carlm451/BiasVAN1dIsing" style="color:var(--accent)">GitHub repo</a></div>
+    </a>
+  </div>
+
   <!-- ====== ACTIVE COURSES ====== -->
   <div class="section-label">Topological & Geometric Deep Learning</div>
 
@@ -171,22 +203,6 @@
     </div>
   </div>
 
-  <!-- ====== PROJECTS ====== -->
-  <div class="section-label" style="margin-top:3.5rem">Projects</div>
-
-  <a class="card featured" href="helmholtz/">
-    <span class="live-badge">Live</span>
-    <div class="tags">
-      <span class="tag physics">Acoustics</span>
-      <span class="tag ml">PINNs</span>
-      <span class="tag math">Helmholtz Equation</span>
-    </div>
-    <h3>Physics-Informed Neural Network for 2D Acoustic Scattering</h3>
-    <p>
-      PINN solver for plane-wave scattering off a rigid cylinder, validated against the exact Bessel/Hankel series solution across wavenumbers ka&nbsp;=&nbsp;0.5 to 2&pi;. Includes Fourier feature ablation, BGT2 absorbing boundary conditions, and a multi-scatterer honeycomb extension. Interactive results dashboard with field comparisons, training diagnostics, and error analysis.
-    </p>
-    <div class="meta"><span class="status live"></span> Results dashboard &middot; 15-slide deck &middot; 4 production ka values &middot; March 2026</div>
-  </a>
 
 </main>
 

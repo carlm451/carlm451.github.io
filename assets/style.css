@@ -231,6 +231,7 @@ a.card:hover {
   top: -1px;
 }
 .status.live    { background: var(--accent2); }
+.status.wip     { background: var(--accent); }
 .status.planned { background: #8a9e90; }
 
 .card-grid {
